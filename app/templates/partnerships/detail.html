@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Partnership — Crescopus{% endblock %}
+{% block content %}
+<span class="tag">{{ partnership.status }}</span>
+<h1>Partnership</h1>
+<p>{{ stream.stream_type }} · developer keeps {{ partnership.revenue_share }}%</p>
+
+{% if partnership.status == 'ended' %}
+  <p>Ended {{ partnership.ended_at }} — {{ partnership.end_reason }}</p>
+{% endif %}
+
+{% if partnership.status == 'active' %}
+  <h2>Report revenue</h2>
+  {% if stream.revenuecat_project_key %}
+    <form method="POST" action="{{ url_for('reporting.sync_revenuecat', partnership_id=partnership.id) }}">
+      <button type="submit">Sync from RevenueCat</button>
+    </form>
+  {% endif %}
+  <a href="{{ url_for('reporting.manual_report', partnership_id=partnership.id) }}"><button>Report manually</button></a>
+
+  <h2>End this partnership</h2>
+  <a href="{{ url_for('partnerships.end', partnership_id=partnership.id) }}"><button>End partnership</button></a>
+{% endif %}
+
+<h2>Revenue reports</h2>
+<div class="card-list">
+  {% for report in reports %}
+    <div class="card">
+      <span class="tag">{{ 'Verified — RevenueCat' if report.verified else 'Self-reported, unverified' }}</span>
+      <h3>{{ report.period_start }} to {{ report.period_end }}</h3>
+      <p>Gross: {{ report.gross_amount }} {{ report.currency }}</p>
+      <p>Developer: {{ report.developer_share }} · Grower: {{ report.grower_share }}</p>
+      {% if report.settled %}
+        <p class="tag">Settled</p>
+      {% else %}
+        <form method="POST" action="{{ url_for('reporting.mark_settled', report_id=report.id) }}">
+          <button type="submit">Mark as settled</button>
+        </form>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="empty">No revenue reported yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}

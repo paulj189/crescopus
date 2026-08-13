@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Crescopus{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<nav class="app-nav">
+  <a href="{{ url_for('index') }}" class="brand-lockup">
+    <svg class="brand-icon" viewBox="0 0 200 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Crescopus">
+      <path d="M75 130 C55 145,40 155,38 175" fill="none" stroke="#1E8A4C" stroke-width="14" stroke-linecap="round"/>
+      <path d="M90 135 C86 150,84 165,88 178" fill="none" stroke="#1E8A4C" stroke-width="13" stroke-linecap="round"/>
+      <path d="M100 137 C100 152,100 167,100 180" fill="none" stroke="#1E8A4C" stroke-width="12" stroke-linecap="round"/>
+      <path d="M112 135 C116 150,118 165,114 178" fill="none" stroke="#1E8A4C" stroke-width="13" stroke-linecap="round"/>
+      <path d="M126 130 C146 145,160 155,163 175" fill="none" stroke="#1E8A4C" stroke-width="14" stroke-linecap="round"/>
+      <path d="M52 95 C52 55,72 32,100 32 C128 32,148 55,148 95 C148 122,128 138,100 138 C72 138,52 122,52 95 Z" fill="#1E8A4C" stroke="#17231A" stroke-width="4"/>
+      <circle cx="82" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
+      <circle cx="118" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
+      <circle cx="84" cy="90" r="3.5" fill="#17231A"/>
+      <circle cx="120" cy="90" r="3.5" fill="#17231A"/>
+      <path d="M88 108 C94 114,106 114,112 108" fill="none" stroke="#17231A" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <span class="brand-mark">Crescopus</span>
+  </a>
+  <div class="nav-links">
+    {% if session.get('user_id') %}
+      <a href="{{ url_for('dashboard.index') }}">Dashboard</a>
+      <a href="{{ url_for('listings.browse') }}">Browse</a>
+      <a href="{{ url_for('settings.index') }}">Settings</a>
+      <a href="{{ url_for('auth.logout') }}">Log out</a>
+    {% else %}
+      <a href="{{ url_for('auth.login') }}">Log in</a>
+      <a href="{{ url_for('auth.signup') }}" class="btn-primary">Sign up</a>
+    {% endif %}
+  </div>
+</nav>
+
+<main class="app-main">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-stack">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

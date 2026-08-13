@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Report revenue — Crescopus{% endblock %}
+{% block content %}
+<h1>Report revenue for this period</h1>
+<p>This is self-reported and will show as unverified — Crescopus doesn't see this revenue directly, so it can't confirm the figure.</p>
+<form method="POST">
+  <div><label for="period_start">Period start</label><input type="date" id="period_start" name="period_start" required></div>
+  <div><label for="period_end">Period end</label><input type="date" id="period_end" name="period_end" required></div>
+  <div><label for="gross_amount">Gross revenue</label><input type="number" step="0.01" id="gross_amount" name="gross_amount" min="0" required></div>
+  <button type="submit">Report revenue</button>
+</form>
+{% endblock %}

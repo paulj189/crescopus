@@ -1,0 +1,19 @@
+I'd like to build an app using our current technology stack used for the FlipAll5 project as follows:
+- The app will be call Crescopus which is a combination of Latin words - Cresco=Grow + Opus=work. 
+- I've registered the domains: cresco.com, cresco.co.uk, cresco.net
+- Tagline: Grow apps together
+- Goal: The app brings together app developers and monetisers.
+- Premise; Many developers love developing apps but are either lack the necessary skills or unenthusiastic about building traction or monetising. 
+They will often want to retain control of the app and any ongoing development but are seeking a way of promoting the apps successfully
+to build  a larger user basis and maybe make some money from them.  Equally, there are people who have strong commercial, marketing and social media skills who
+are seeking products to promote and commercialise. 
+- Process: The intention of the app is to bring these people together to form a mutually-beneficial partnership to grow an app.
+- There would be a 1:1 relationship between the developer and monetiser with some sort of contract which ensures that the developer
+retains ownership of the product and gives rights to the monetiser to promote and sell the product. The monetary aspects would be on a share of revenue/profits using
+a shared payment rail (Stripe Connect / Revenue Cat) which would need to work for Web apps and Store apps (Android and Apple).  There might also be a buy-out option if the
+developer wants to consider selling the product and the monetiser would like to buy it. 
+- Initially Crescopus would not be monetised until it gains sufficient traction from both developers and monetisers. Monetisation would come later.
+- Developers would need to provide sufficient information about themselves and their products to attract monetisers.
+- Monetisers would need to provide sufficient information about themselves and their offering to enable developers to determine best fit.
+- The app will need to be strongly and attractively branded to gain traction.
+Can you help in the design and coding please?

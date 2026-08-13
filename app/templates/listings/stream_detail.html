@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ listing.title }} — {{ stream.stream_type }} — Crescopus{% endblock %}
+{% block content %}
+<span class="tag">{{ stream.stream_type }}</span>
+<h1>{{ listing.title }}</h1>
+<p>{{ listing.tagline }}</p>
+
+<h2>Looking for</h2>
+<p>{{ stream.looking_for }}</p>
+
+<h2>Not up for negotiation</h2>
+<p>{{ stream.control_boundaries }}</p>
+
+{% if stream.min_revenue_share %}
+  <p>Developer keeps at least {{ stream.min_revenue_share }}%.</p>
+{% endif %}
+
+{% if stream.status == 'open' %}
+  <a href="{{ url_for('proposals.new', stream_id=stream.id) }}"><button>Submit a proposal</button></a>
+{% else %}
+  <p class="tag">{{ stream.status }}</p>
+{% endif %}
+{% endblock %}

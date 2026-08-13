@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Crescopus{% endblock %}
+{% block content %}
+<h1>Welcome, {{ profile.full_name }}</h1>
+
+{% if profile.is_developer %}
+<h2>Your listings</h2>
+<a href="{{ url_for('listings.new') }}"><button>New listing</button></a>
+<div class="card-list">
+  {% for listing in listings %}
+    <div class="card">
+      <a href="{{ url_for('listings.detail', listing_id=listing.id) }}"><h3>{{ listing.title }}</h3></a>
+      {% for stream in listing.streams %}
+        <p><span class="tag">{{ stream.stream_type }}</span> {{ stream.status }}</p>
+      {% else %}
+        <p class="empty">No revenue streams yet — <a href="{{ url_for('listings.stream_new', listing_id=listing.id) }}">add one</a>.</p>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">You haven't listed an app yet.</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if profile.is_grower %}
+<h2>Your proposals</h2>
+<div class="card-list">
+  {% for proposal in proposals %}
+    <div class="card">
+      <h3>{{ proposal.status }}</h3>
+      <p>Offered {{ proposal.revenue_share_offered }}%</p>
+    </div>
+  {% else %}
+    <div class="empty">You haven't submitted a proposal yet.</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<h2>Partnerships</h2>
+<div class="card-list">
+  {% for p in partnerships %}
+    <a class="card" href="{{ url_for('partnerships.detail', partnership_id=p.id) }}">
+      <h3>{{ p.status }}</h3><p>{{ p.revenue_share }}% share</p>
+    </a>
+  {% else %}
+    <div class="empty">No partnerships yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}

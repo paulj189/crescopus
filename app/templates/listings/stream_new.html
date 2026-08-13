@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Add a revenue stream — Crescopus{% endblock %}
+{% block content %}
+<h1>Add a revenue stream to {{ listing.title }}</h1>
+<form method="POST">
+  <div>
+    <label for="stream_type">Type</label>
+    <select id="stream_type" name="stream_type" required>
+      <option value="store_iap">Store subscriptions / in-app purchases</option>
+      <option value="web_revenuecat">Web payments (via RevenueCat)</option>
+      <option value="advertising">Advertising</option>
+      <option value="existing_processor">Existing payment processor</option>
+      <option value="other">Other</option>
+    </select>
+  </div>
+  <div><label for="min_revenue_share">Minimum share you'll keep on this stream (%)</label><input type="number" id="min_revenue_share" name="min_revenue_share" min="0" max="100"></div>
+  <div><label for="looking_for">What are you looking for in a partner for this stream?</label><textarea id="looking_for" name="looking_for"></textarea></div>
+  <div><label for="control_boundaries">What should a partner not touch, on this stream?</label><textarea id="control_boundaries" name="control_boundaries"></textarea></div>
+  <button type="submit">Add stream</button>
+</form>
+{% endblock %}

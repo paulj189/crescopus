@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Settings — Crescopus{% endblock %}
+{% block content %}
+<h1>Profile settings</h1>
+<form method="POST">
+  <div>
+    <label for="full_name">Full name</label>
+    <input type="text" id="full_name" name="full_name" value="{{ profile.full_name }}">
+  </div>
+  <div>
+    <label for="country">Country</label>
+    <select id="country" name="country" required>
+      <option value="" disabled {% if not profile.country %}selected{% endif %}>Select your country</option>
+      {% for code, name in countries %}
+        <option value="{{ code }}" {% if profile.country == code %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit">Save</button>
+</form>
+{% endblock %}

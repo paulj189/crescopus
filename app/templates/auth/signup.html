@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Sign up — Crescopus{% endblock %}
+{% block content %}
+<h1>Create your account</h1>
+<form method="POST">
+  <div>
+    <label for="full_name">Full name</label>
+    <input type="text" id="full_name" name="full_name" required>
+  </div>
+  <div>
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" required>
+  </div>
+  <div>
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" minlength="8" required>
+  </div>
+  <div>
+    <label for="country">Country</label>
+    <select id="country" name="country" required>
+      <option value="" disabled selected>Select your country</option>
+      {% for code, name in countries %}
+        <option value="{{ code }}">{{ name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label>I am a...</label>
+    <label style="display:inline-flex;align-items:center;gap:6px;text-transform:none;font-family:var(--sans);font-size:14px;">
+      <input type="checkbox" name="role_developer" style="width:auto;"> Developer
+    </label>
+    <label style="display:inline-flex;align-items:center;gap:6px;text-transform:none;font-family:var(--sans);font-size:14px;margin-left:16px;">
+      <input type="checkbox" name="role_grower" style="width:auto;"> Grower
+    </label>
+  </div>
+  <button type="submit">Create account</button>
+</form>
+{% endblock %}

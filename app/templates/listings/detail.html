@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ listing.title }} — Crescopus{% endblock %}
+{% block content %}
+<span class="tag">{{ listing.category }}</span>
+<h1>{{ listing.title }}</h1>
+<p>{{ listing.tagline }}</p>
+<p>{{ listing.description }}</p>
+
+<h2>Revenue streams</h2>
+<div class="card-list">
+  {% for stream in streams %}
+    <a class="card" href="{{ url_for('listings.stream_detail', stream_id=stream.id) }}">
+      <span class="tag">{{ stream.stream_type }}</span>
+      <h3>{{ stream.status }}</h3>
+      <p>{{ stream.looking_for }}</p>
+    </a>
+  {% else %}
+    <div class="empty">No revenue streams listed yet.</div>
+  {% endfor %}
+</div>
+
+{% if session.get('user_id') %}
+  <a href="{{ url_for('listings.stream_new', listing_id=listing.id) }}"><button>Add a revenue stream</button></a>
+{% endif %}
+{% endblock %}
