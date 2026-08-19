@@ -10,6 +10,64 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+
+<svg class="site-seascape" viewBox="0 0 1400 3200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <linearGradient id="waterWash" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#BFE3E0" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#7FB8C9" stop-opacity="0.42"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="1400" height="3200" fill="url(#waterWash)"/>
+  <g opacity="0.28" fill="none" stroke="#FFF6DC">
+    <path d="M120 -20 C220 200,260 500,340 900" stroke-width="50" stroke-linecap="round"/>
+    <path d="M340 -20 C400 250,420 600,460 950" stroke-width="42" stroke-linecap="round"/>
+    <path d="M560 -20 C600 220,580 550,620 900" stroke-width="38" stroke-linecap="round"/>
+  </g>
+  <g opacity="0.38" fill="#EAF6F5">
+    <circle cx="180" cy="420" r="6"/>
+    <circle cx="220" cy="480" r="4"/>
+    <circle cx="1240" cy="150" r="8"/>
+    <circle cx="1280" cy="220" r="5"/>
+    <circle cx="1180" cy="90" r="4"/>
+    <circle cx="90" cy="260" r="5"/>
+    <circle cx="1320" cy="520" r="6"/>
+    <circle cx="150" cy="1080" r="5"/>
+    <circle cx="1250" cy="1040" r="6"/>
+    <circle cx="80" cy="1480" r="4"/>
+    <circle cx="1300" cy="1560" r="7"/>
+    <circle cx="200" cy="1940" r="5"/>
+    <circle cx="1180" cy="2010" r="4"/>
+    <circle cx="100" cy="2440" r="6"/>
+    <circle cx="1320" cy="2520" r="5"/>
+    <circle cx="250" cy="2780" r="4"/>
+  </g>
+  <g opacity="0.34" fill="#1E8A4C">
+    <ellipse cx="1060" cy="1150" rx="22" ry="10"/>
+    <path d="M1038 1150 L1016 1138 L1020 1150 L1016 1162 Z"/>
+  </g>
+  <g opacity="0.30" fill="#1E8A4C">
+    <ellipse cx="260" cy="2050" rx="16" ry="7"/>
+    <path d="M246 2050 L230 2041 L233 2050 L230 2059 Z"/>
+  </g>
+  <path d="M-50 2870 C150 2830,320 2880,520 2850 C740 2818,900 2875,1120 2840 C1260 2818,1360 2850,1450 2835 L1450 3200 L-50 3200 Z" fill="#D9B87C" opacity="0.40"/>
+  <g opacity="0.36" fill="none" stroke="#3F6238" stroke-linecap="round">
+    <path d="M40 3200 C30 3110,60 3060,40 2980" stroke-width="12"/>
+    <path d="M70 3200 C85 3100,55 3040,75 2960" stroke-width="10"/>
+    <path d="M1360 3200 C1370 3100,1340 3050,1365 2970" stroke-width="12"/>
+    <path d="M1330 3200 C1315 3110,1345 3055,1320 2980" stroke-width="10"/>
+  </g>
+  <g opacity="0.38" fill="#E0632E">
+    <circle cx="95" cy="2890" r="20"/>
+    <circle cx="120" cy="2905" r="26"/>
+    <circle cx="150" cy="2895" r="16"/>
+    <circle cx="1310" cy="2900" r="18"/>
+    <circle cx="1345" cy="2910" r="24"/>
+    <circle cx="1280" cy="2910" r="14"/>
+  </g>
+  <path d="M515 2875 L521 2888 L535 2888 L524 2896 L529 2910 L515 2901 L501 2910 L506 2896 L495 2888 L509 2888 Z" fill="#B98A2E" opacity="0.46"/>
+</svg>
+
 <nav class="app-nav">
   <a href="{{ url_for('index') }}" class="brand-lockup">
     <svg class="brand-icon" viewBox="0 0 200 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Crescopus">
@@ -52,5 +110,45 @@
   {% endwith %}
   {% block content %}{% endblock %}
 </main>
+
+<footer class="app-footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <svg class="footer-icon" viewBox="0 0 200 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Crescopus mark">
+        <path d="M75 130 C55 145,40 155,38 175" fill="none" stroke="#17231A" stroke-width="14" stroke-linecap="round"/>
+        <path d="M90 135 C86 150,84 165,88 178" fill="none" stroke="#B98A2E" stroke-width="13" stroke-linecap="round"/>
+        <path d="M100 137 C100 152,100 167,100 180" fill="none" stroke="#1E8A4C" stroke-width="12" stroke-linecap="round"/>
+        <path d="M112 135 C116 150,118 165,114 178" fill="none" stroke="#B98A2E" stroke-width="13" stroke-linecap="round"/>
+        <path d="M126 130 C146 145,160 155,163 175" fill="none" stroke="#17231A" stroke-width="14" stroke-linecap="round"/>
+        <path d="M52 95 C52 55,72 32,100 32 C128 32,148 55,148 95 C148 122,128 138,100 138 C72 138,52 122,52 95 Z" fill="#1E8A4C" stroke="#17231A" stroke-width="4"/>
+        <circle cx="82" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
+        <circle cx="118" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
+        <circle cx="84" cy="90" r="3.5" fill="#17231A"/>
+        <circle cx="120" cy="90" r="3.5" fill="#17231A"/>
+        <path d="M88 108 C94 114,106 114,112 108" fill="none" stroke="#17231A" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <span class="brand-mark">Crescopus</span>
+        <div class="footer-tag">Grow apps together</div>
+      </div>
+    </div>
+    <div class="domains">
+      <span>cresco.com</span>
+      <span>cresco.co.uk</span>
+      <span>cresco.net</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function sizeSeascape(){
+    const el = document.querySelector('.site-seascape');
+    if (el) { el.style.height = document.body.scrollHeight + 'px'; }
+  }
+  window.addEventListener('load', sizeSeascape);
+  window.addEventListener('resize', sizeSeascape);
+  document.addEventListener('DOMContentLoaded', sizeSeascape);
+  window.addEventListener('load', () => setTimeout(sizeSeascape, 400));
+</script>
 </body>
 </html>
