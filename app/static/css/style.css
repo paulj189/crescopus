@@ -89,7 +89,7 @@ a.card:hover{background:var(--panel-2);}
 /* Builder/grower brand colours — kept consistent with the marketing pages:
    builder/developer = ink, grower/monetiser = brass-ink. Use on any tag or
    inline text that is specifically about one role, on a white card background. */
-.tag-builder,.text-builder{color:var(--ink);}
+.tag-builder,.text-builder{color:var(--emerald);}
 .tag-grower,.text-grower{color:var(--brass-ink);}
 .empty{color:var(--muted);font-family:var(--mono);font-size:13px;padding:20px 0;}
 
@@ -147,7 +147,7 @@ h1 em{font-style:italic;color:var(--brass-ink);font-weight:500;}
 .roles{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);}
 .role{background:var(--panel);padding:36px;}
 .role-tag{font-family:var(--mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px;}
-.role.builder .role-tag{color:var(--ink);}
+.role.builder .role-tag{color:var(--emerald);}
 .role.grower .role-tag{color:var(--brass-ink);}
 .role h3{font-family:var(--serif);font-size:24px;font-weight:600;margin:0 0 12px;}
 .role p{color:var(--muted);font-size:15px;margin:0 0 18px;}
@@ -182,5 +182,11 @@ h1 em{font-style:italic;color:var(--brass-ink);font-weight:500;}
 }
 
 /* Builder/grower role colour fix — forced to win regardless of source order */
-.role.builder .role-tag,.tag-builder,.text-builder{color:var(--ink) !important;}
+.role.builder .role-tag,.tag-builder,.text-builder{color:var(--emerald) !important;}
 .role.grower .role-tag,.tag-grower,.text-grower{color:var(--brass-ink) !important;}
+
+/* Whole-card text tinted by role, not just the small label */
+.role.builder h3,.role.builder p,.role.builder li{color:var(--emerald) !important;}
+.role.grower h3,.role.grower p,.role.grower li{color:var(--brass-ink) !important;}
+.role.builder li::before{color:var(--emerald) !important;opacity:0.6;}
+.role.grower li::before{color:var(--brass-ink) !important;opacity:0.6;}
