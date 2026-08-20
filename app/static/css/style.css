@@ -85,7 +85,12 @@ button{align-self:flex-start;}
 a.card:hover{background:var(--panel-2);}
 .card h3{margin:0 0 6px;}
 .card p{margin:0;color:var(--muted);font-size:14px;}
-.tag{font-family:var(--mono);font-size:11px;text-transform:uppercase;color:var(--brass-ink);letter-spacing:0.05em;}
+.tag{font-family:var(--mono);font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:0.05em;}
+/* Builder/grower brand colours — kept consistent with the marketing pages:
+   builder/developer = ink, grower/monetiser = brass-ink. Use on any tag or
+   inline text that is specifically about one role, on a white card background. */
+.tag-builder,.text-builder{color:var(--ink);}
+.tag-grower,.text-grower{color:var(--brass-ink);}
 .empty{color:var(--muted);font-family:var(--mono);font-size:13px;padding:20px 0;}
 
 /* ---------- footer ---------- */
@@ -95,6 +100,22 @@ a.card:hover{background:var(--panel-2);}
 .app-footer .footer-icon{width:22px;height:22px;flex-shrink:0;}
 .app-footer .footer-tag{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:4px;}
 .app-footer .domains{display:flex;gap:16px;font-family:var(--mono);font-size:11px;color:var(--sage);flex-wrap:wrap;}
+.footer-legal{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--muted);}
+.footer-copy{white-space:nowrap;}
+.footer-link{color:var(--sage);text-decoration:underline;text-underline-offset:2px;}
+.footer-link:hover{color:var(--ink);}
+.info-icon{width:20px;height:20px;flex-shrink:0;border-radius:50%;border:1px solid var(--sage);background:transparent;color:var(--sage);font-family:var(--serif);font-style:italic;font-weight:600;font-size:12px;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;text-transform:none;letter-spacing:0;}
+.info-icon:hover{background:var(--sage);color:var(--bg);}
+
+/* ---------- modals ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(23,35,26,0.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:200;}
+.modal-overlay[hidden]{display:none;}
+.modal-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);max-width:520px;width:100%;max-height:80vh;overflow-y:auto;padding:32px;position:relative;}
+.modal-box h3{margin:0 0 16px;padding-right:20px;}
+.modal-box p{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 14px;}
+.modal-box p:last-child{margin-bottom:0;}
+.modal-close{position:absolute;top:12px;right:12px;width:auto;background:transparent;color:var(--muted);border:none;font-family:var(--sans);font-size:22px;line-height:1;padding:6px 10px;text-transform:none;letter-spacing:0;cursor:pointer;}
+.modal-close:hover{background:transparent;color:var(--ink);}
 
 /* ---------- landing page ---------- */
 .landing{max-width:1120px;}
@@ -159,3 +180,7 @@ h1 em{font-style:italic;color:var(--brass-ink);font-weight:500;}
   .app-footer{padding:28px 18px;}
   .hero{padding:8px 0 36px;}
 }
+
+/* Builder/grower role colour fix — forced to win regardless of source order */
+.role.builder .role-tag,.tag-builder,.text-builder{color:var(--ink) !important;}
+.role.grower .role-tag,.tag-grower,.text-grower{color:var(--brass-ink) !important;}

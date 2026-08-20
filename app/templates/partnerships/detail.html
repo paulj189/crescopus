@@ -3,7 +3,7 @@
 {% block content %}
 <span class="tag">{{ partnership.status }}</span>
 <h1>Partnership</h1>
-<p>{{ stream.stream_type }} · developer keeps {{ partnership.revenue_share }}%</p>
+<p><span class="tag tag-builder">{{ stream.stream_type }}</span> · <span class="text-builder">developer keeps {{ partnership.revenue_share }}%</span></p>
 
 {% if partnership.status == 'ended' %}
   <p>Ended {{ partnership.ended_at }} — {{ partnership.end_reason }}</p>
@@ -29,7 +29,7 @@
       <span class="tag">{{ 'Verified — RevenueCat' if report.verified else 'Self-reported, unverified' }}</span>
       <h3>{{ report.period_start }} to {{ report.period_end }}</h3>
       <p>Gross: {{ report.gross_amount }} {{ report.currency }}</p>
-      <p>Developer: {{ report.developer_share }} · Grower: {{ report.grower_share }}</p>
+      <p><span class="text-builder">Developer: {{ report.developer_share }}</span> · <span class="text-grower">Grower: {{ report.grower_share }}</span></p>
       {% if report.settled %}
         <p class="tag">Settled</p>
       {% else %}

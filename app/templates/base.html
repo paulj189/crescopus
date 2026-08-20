@@ -132,14 +132,60 @@
         <div class="footer-tag">Grow apps together</div>
       </div>
     </div>
+    <div class="footer-legal">
+      <button type="button" class="info-icon" onclick="crescoModal.open('modal-info')" aria-label="About Crescopus">i</button>
+      <span class="footer-copy">&copy; Paul Johnson 2026</span>
+      <a href="#" class="footer-link" onclick="crescoModal.open('modal-terms');return false;">Terms &amp; Conditions</a>
+      <a href="#" class="footer-link" onclick="crescoModal.open('modal-privacy');return false;">Privacy Policy</a>
+    </div>
     <div class="domains">
-      <span>cresco.com</span>
-      <span>cresco.co.uk</span>
-      <span>cresco.net</span>
+      <span>crescopus.com</span>
     </div>
   </div>
 </footer>
 
+<div class="modal-overlay" id="modal-info" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-info-title">
+    <button type="button" class="modal-close" onclick="crescoModal.close('modal-info')" aria-label="Close">&times;</button>
+    <h3 id="modal-info-title">About Crescopus</h3>
+    <p>Crescopus pairs developers who've built apps with monetisers who know how to grow them &mdash; matched by fit and track record, not the highest bid, and structured as an ongoing revenue-share partnership rather than a one-off sale.</p>
+    <p>Crescopus never holds or moves your money. Revenue is reported and the split is calculated on-platform; payment happens directly between the two parties.</p>
+    <p>Built by Paul Johnson, an independent developer.</p>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-terms" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-terms-title">
+    <button type="button" class="modal-close" onclick="crescoModal.close('modal-terms')" aria-label="Close">&times;</button>
+    <h3 id="modal-terms-title">Terms &amp; Conditions</h3>
+    <p>Crescopus helps developers and monetisers find each other and records the revenue-share agreements they reach. It does not hold, transmit or guarantee any payment &mdash; any partnership formed through the platform is a direct agreement between the two parties involved, who are responsible for honouring it.</p>
+    <p>Crescopus is provided "as is", without warranty of any kind. To the fullest extent permitted by law, Crescopus and Paul Johnson accept no liability for any loss, dispute, or lost revenue arising from a partnership, agreement, or use of the platform.</p>
+    <p>These terms are governed by the laws of England and Wales, and the courts of England and Wales have exclusive jurisdiction over any dispute arising from them.</p>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-privacy" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-privacy-title">
+    <button type="button" class="modal-close" onclick="crescoModal.close('modal-privacy')" aria-label="Close">&times;</button>
+    <h3 id="modal-privacy-title">Privacy Policy</h3>
+    <p>Crescopus collects only what's needed to run the platform: your account details, listing and proposal content, and the revenue figures you or connected services (such as RevenueCat) report for calculating partnership splits.</p>
+    <p>Your data is never sold. It's used solely to operate the matching, proposal and reporting features, and is stored securely with our infrastructure providers (Supabase, Render, Cloudflare).</p>
+    <p>You can request a copy of your data, or ask for it to be deleted, at any time by contacting Paul Johnson.</p>
+  </div>
+</div>
+
+<script>
+  const crescoModal = {
+    open(id){ const el = document.getElementById(id); if (el) el.hidden = false; },
+    close(id){ const el = document.getElementById(id); if (el) el.hidden = true; }
+  };
+  document.querySelectorAll('.modal-overlay').forEach(function(overlay){
+    overlay.addEventListener('click', function(e){ if (e.target === overlay) overlay.hidden = true; });
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') document.querySelectorAll('.modal-overlay:not([hidden])').forEach(function(el){ el.hidden = true; });
+  });
+</script>
 <script>
   function sizeSeascape(){
     const el = document.querySelector('.site-seascape');

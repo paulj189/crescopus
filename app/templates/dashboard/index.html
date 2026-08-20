@@ -11,7 +11,7 @@
     <div class="card">
       <a href="{{ url_for('listings.detail', listing_id=listing.id) }}"><h3>{{ listing.title }}</h3></a>
       {% for stream in listing.streams %}
-        <p><span class="tag">{{ stream.stream_type }}</span> {{ stream.status }}</p>
+        <p><span class="tag tag-builder">{{ stream.stream_type }}</span> {{ stream.status }}</p>
       {% else %}
         <p class="empty">No revenue streams yet — <a href="{{ url_for('listings.stream_new', listing_id=listing.id) }}">add one</a>.</p>
       {% endfor %}
@@ -27,7 +27,7 @@
 <div class="card-list">
   {% for proposal in proposals %}
     <div class="card">
-      <h3>{{ proposal.status }}</h3>
+      <h3 class="text-grower">{{ proposal.status }}</h3>
       <p>Offered {{ proposal.revenue_share_offered }}%</p>
     </div>
   {% else %}
