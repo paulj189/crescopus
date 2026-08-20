@@ -3,7 +3,7 @@
   --ink:#17231A;
   --panel:#FFFFFF;
   --panel-2:#E9ECE1;
-  --muted:#5C6858;
+  --muted:#48533F;
   --sage:#3F6238;
   --sage-dim:#9BB48D;
   --brass:#B98A2E;
@@ -18,7 +18,7 @@
 }
 *{box-sizing:border-box;}
 html{background:var(--bg);}
-body{margin:0;background:transparent;color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;position:relative;}
+body{margin:0;background:transparent;color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased;position:relative;}
 a{color:inherit;text-decoration:none;}
 .site-seascape{position:absolute;top:0;left:0;width:100%;z-index:-1;pointer-events:none;}
 
@@ -35,15 +35,17 @@ a{color:inherit;text-decoration:none;}
 .nav-links{display:flex;gap:22px;align-items:center;font-family:var(--mono);font-size:12px;letter-spacing:0.03em;text-transform:uppercase;}
 .nav-links a{color:var(--muted);transition:color 0.15s ease;}
 .nav-links a:hover{color:var(--ink);}
+.nav-links a.btn-primary{color:#FFFFFF;}
+.nav-links a.btn-primary:hover{color:#FFFFFF;}
 
 /* ---------- buttons ---------- */
 .btn-primary,button,input[type=submit]{
   font-family:var(--mono);font-size:12px;letter-spacing:0.04em;text-transform:uppercase;
-  background:var(--brass);color:var(--ink);border:none;padding:12px 20px;border-radius:var(--radius);
+  background:var(--brass-ink);color:#FFFFFF;border:none;padding:12px 20px;border-radius:var(--radius);
   cursor:pointer;text-align:center;display:inline-block;
   transition:background 0.2s ease;
 }
-.btn-primary:hover,button:hover,input[type=submit]:hover{background:#dcae5c;}
+.btn-primary:hover,button:hover,input[type=submit]:hover{background:#6E4A11;}
 button[disabled]{opacity:0.5;cursor:not-allowed;}
 .btn-secondary{
   font-family:var(--mono);font-size:12px;letter-spacing:0.04em;text-transform:uppercase;
@@ -66,7 +68,7 @@ h1{font-size:clamp(30px,4.5vw,42px);margin:0 0 20px;line-height:1.08;letter-spac
 h2{font-size:22px;margin:40px 0 16px;}
 h3{font-size:17px;margin:0 0 6px;}
 .kicker{font-family:var(--mono);font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:var(--brass-ink);margin-bottom:10px;}
-.lede{color:var(--muted);font-size:16px;max-width:56ch;}
+.lede{color:var(--muted);font-size:17px;max-width:56ch;}
 
 /* ---------- forms ---------- */
 form{display:flex;flex-direction:column;gap:14px;max-width:520px;margin-top:20px;}
@@ -84,7 +86,7 @@ button{align-self:flex-start;}
 .card{background:var(--panel);padding:20px;display:block;transition:background 0.15s ease;}
 a.card:hover{background:var(--panel-2);}
 .card h3{margin:0 0 6px;}
-.card p{margin:0;color:var(--muted);font-size:14px;}
+.card p{margin:0;color:var(--muted);font-size:15px;}
 .tag{font-family:var(--mono);font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:0.05em;}
 /* Builder/grower brand colours — kept consistent with the marketing pages:
    builder/developer = ink, grower/monetiser = brass-ink. Use on any tag or
@@ -123,12 +125,18 @@ a.card:hover{background:var(--panel-2);}
 .hero-grid{display:grid;grid-template-columns:1.05fr 0.95fr;gap:56px;align-items:center;}
 .eyebrow{
   font-family:var(--mono);font-size:12px;letter-spacing:0.12em;text-transform:uppercase;
-  color:var(--sage);margin-bottom:18px;display:flex;align-items:center;gap:10px;
+  color:var(--sage);margin-bottom:18px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
 }
-.eyebrow::before{content:"";width:22px;height:1px;background:var(--sage-dim);display:inline-block;}
+.eyebrow-text{display:inline;}
+.eyebrow em{
+  font-family:var(--serif);font-style:italic;font-weight:600;text-transform:none;
+  letter-spacing:0;font-size:15px;
+}
+.eyebrow em:first-of-type{color:var(--emerald);}
+.eyebrow em:last-of-type{color:var(--brass-ink);}
 .hero h1{font-size:clamp(36px,6vw,60px);}
 h1 em{font-style:italic;color:var(--brass-ink);font-weight:500;}
-.hero .lede{font-size:18px;margin-bottom:30px;}
+.hero .lede{font-size:19px;margin-bottom:30px;}
 .hero-ctas{display:flex;gap:14px;flex-wrap:wrap;}
 
 .mascot-arm{fill:none;stroke-width:26;stroke-linecap:round;stroke-dasharray:500;stroke-dashoffset:500;animation:draw 1.4s ease-out forwards;}
@@ -150,9 +158,9 @@ h1 em{font-style:italic;color:var(--brass-ink);font-weight:500;}
 .role.builder .role-tag{color:var(--emerald);}
 .role.grower .role-tag{color:var(--brass-ink);}
 .role h3{font-family:var(--serif);font-size:24px;font-weight:600;margin:0 0 12px;}
-.role p{color:var(--muted);font-size:15px;margin:0 0 18px;}
+.role p{color:var(--muted);font-size:16px;margin:0 0 18px;}
 .role ul{margin:0;padding:0;list-style:none;}
-.role li{font-size:14px;color:var(--ink);padding:9px 0;border-top:1px solid var(--line);display:flex;gap:10px;}
+.role li{font-size:15px;color:var(--ink);padding:9px 0;border-top:1px solid var(--line);display:flex;gap:10px;}
 .role li::before{content:"–";color:var(--muted);flex-shrink:0;}
 
 .promise-box{
