@@ -28,7 +28,7 @@
   {% for proposal in proposals %}
     <div class="card">
       <h3 class="text-grower">{{ proposal.status }}</h3>
-      <p>Offered {{ proposal.revenue_share_offered }}%</p>
+      <p>Offered {{ proposal.revenue_share_offered }} CrescoShares</p>
     </div>
   {% else %}
     <div class="empty">You haven't submitted a proposal yet.</div>
@@ -36,14 +36,14 @@
 </div>
 {% endif %}
 
-<h2>Partnerships</h2>
+<h2>CrescoPacts</h2>
 <div class="card-list">
   {% for p in partnerships %}
     <a class="card" href="{{ url_for('partnerships.detail', partnership_id=p.id) }}">
-      <h3>{{ p.status }}</h3><p>{{ p.revenue_share }}% share</p>
+      <h3>{{ p.status }}</h3><p>{{ p.revenue_share }} CrescoShares</p>
     </a>
   {% else %}
-    <div class="empty">No partnerships yet.</div>
+    <div class="empty">No CrescoPacts yet.</div>
   {% endfor %}
 </div>
 {% endblock %}

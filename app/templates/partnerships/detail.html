@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Partnership — Crescopus{% endblock %}
+{% block title %}CrescoPact — Crescopus{% endblock %}
 {% block content %}
 <span class="tag">{{ partnership.status }}</span>
-<h1>Partnership</h1>
-<p><span class="tag tag-builder">{{ stream.stream_type }}</span> · <span class="text-builder">developer keeps {{ partnership.revenue_share }}%</span></p>
+<h1>CrescoPact</h1>
+<p><span class="tag tag-builder">{{ stream.stream_type }}</span> · <span class="text-builder">developer keeps {{ partnership.revenue_share }} CrescoShares</span></p>
 
 {% if partnership.status == 'ended' %}
   <p>Ended {{ partnership.ended_at }} — {{ partnership.end_reason }}</p>
@@ -18,8 +18,8 @@
   {% endif %}
   <a href="{{ url_for('reporting.manual_report', partnership_id=partnership.id) }}"><button>Report manually</button></a>
 
-  <h2>End this partnership</h2>
-  <a href="{{ url_for('partnerships.end', partnership_id=partnership.id) }}"><button>End partnership</button></a>
+  <h2>End this CrescoPact</h2>
+  <a href="{{ url_for('partnerships.end', partnership_id=partnership.id) }}"><button>End CrescoPact</button></a>
 {% endif %}
 
 <h2>Revenue reports</h2>
@@ -29,7 +29,7 @@
       <span class="tag">{{ 'Verified — RevenueCat' if report.verified else 'Self-reported, unverified' }}</span>
       <h3>{{ report.period_start }} to {{ report.period_end }}</h3>
       <p>Gross: {{ report.gross_amount }} {{ report.currency }}</p>
-      <p><span class="text-builder">Developer: {{ report.developer_share }}</span> · <span class="text-grower">Grower: {{ report.grower_share }}</span></p>
+      <p><span class="text-builder">Developer: {{ report.developer_share }} CrescoShares</span> · <span class="text-grower">Grower: {{ report.grower_share }} CrescoShares</span></p>
       {% if report.settled %}
         <p class="tag">Settled</p>
       {% else %}
