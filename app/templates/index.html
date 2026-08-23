@@ -15,19 +15,45 @@
       </div>
     </div>
     <div>
-      <svg viewBox="0 0 680 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The Crescopus octopus mascot: a sage arm for developers and a brass arm for growers on each side, joined by an emerald center arm representing Crescopus itself" style="width:100%;height:auto;overflow:visible;">
-        <path class="mascot-arm" style="stroke:#17231A;animation-delay:0s" d="M260 270 C200 340,140 380,120 460 C105 510,130 545,160 555"/>
-        <path class="mascot-arm" style="stroke:#B98A2E;animation-delay:0.1s" d="M300 275 C260 350,220 420,210 500 C205 530,220 555,245 560"/>
-        <path class="mascot-arm" style="stroke:#1E8A4C;animation-delay:0.2s" d="M340 278 C338 360,335 440,335 540"/>
-        <path class="mascot-arm" style="stroke:#B98A2E;animation-delay:0.3s" d="M380 275 C420 350,460 420,470 500 C475 530,460 555,435 560"/>
-        <path class="mascot-arm" style="stroke:#17231A;animation-delay:0.4s" d="M420 270 C480 340,540 380,560 460 C575 510,550 545,520 555"/>
-        <g class="mascot-accent">
-          <path d="M215 195 C215 120,270 80,340 80 C410 80,465 120,465 195 C465 250,410 285,340 285 C270 285,215 250,215 195 Z" fill="#1E8A4C" stroke="#17231A" stroke-width="2"/>
-          <circle cx="300" cy="175" r="16" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
-          <circle cx="385" cy="175" r="16" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
-          <circle cx="304" cy="178" r="6" fill="#17231A"/>
-          <circle cx="389" cy="178" r="6" fill="#17231A"/>
-          <path d="M315 222 C330 234,350 234,365 222" fill="none" stroke="#17231A" stroke-width="3" stroke-linecap="round"/>
+      <svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The Crescopus badge, with a sage arm for developers and a brass arm for growers on each side, joined by an emerald center arm" style="width:100%;max-width:440px;height:auto;overflow:visible;">
+        <defs>
+          <radialGradient id="heroBadgeFill" cx="42%" cy="38%" r="75%">
+            <stop offset="0%" stop-color="#FCFBF6"/>
+            <stop offset="100%" stop-color="#E7EAD9"/>
+          </radialGradient>
+          <filter id="heroBadgeShadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#17231A" flood-opacity="0.28"/>
+          </filter>
+          <path id="heroTopArc" d="M40,160 A120,120 0 0 1 280,160" fill="none"/>
+          <path id="heroBotArc" d="M40,160 A120,120 0 0 0 280,160" fill="none"/>
+        </defs>
+        <g filter="url(#heroBadgeShadow)">
+          <circle cx="160" cy="160" r="140" fill="url(#heroBadgeFill)" stroke="#17231A" stroke-width="5"/>
+          <path d="M42,160 A118,118 0 0 1 92,63" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.55"/>
+          <path d="M228,63 A118,118 0 0 1 278,160" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.55"/>
+          <path d="M278,160 A118,118 0 0 1 228,257" fill="none" stroke="#17231A" stroke-width="3" opacity="0.12"/>
+          <path d="M92,257 A118,118 0 0 1 42,160" fill="none" stroke="#17231A" stroke-width="3" opacity="0.12"/>
+        </g>
+        <text font-family="var(--mono)" font-size="15" font-weight="600" fill="#17231A" letter-spacing="3">
+          <textPath href="#heroTopArc" startOffset="50%" text-anchor="middle">CRESCOPUS</textPath>
+        </text>
+        <text font-family="var(--mono)" font-size="9" fill="#5C6858" letter-spacing="2">
+          <textPath href="#heroBotArc" startOffset="50%" text-anchor="middle">GROW APPS TOGETHER</textPath>
+        </text>
+        <g transform="translate(60,62)">
+          <path class="mascot-arm" style="stroke:#17231A;animation-delay:0s" d="M75 130 C55 145,40 155,38 175"/>
+          <path class="mascot-arm" style="stroke:#B98A2E;animation-delay:0.1s" d="M90 135 C86 150,84 165,88 178"/>
+          <path class="mascot-arm" style="stroke:#1E8A4C;animation-delay:0.2s" d="M100 137 C100 152,100 167,100 180"/>
+          <path class="mascot-arm" style="stroke:#B98A2E;animation-delay:0.3s" d="M112 135 C116 150,118 165,114 178"/>
+          <path class="mascot-arm" style="stroke:#17231A;animation-delay:0.4s" d="M126 130 C146 145,160 155,163 175"/>
+          <g class="mascot-accent">
+            <path d="M52 95 C52 55,72 32,100 32 C128 32,148 55,148 95 C148 122,128 138,100 138 C72 138,52 122,52 95 Z" fill="#1E8A4C" stroke="#17231A" stroke-width="4"/>
+            <circle cx="82" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
+            <circle cx="118" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
+            <circle cx="84" cy="90" r="3.5" fill="#17231A"/>
+            <circle cx="120" cy="90" r="3.5" fill="#17231A"/>
+            <path d="M88 108 C94 114,106 114,112 108" fill="none" stroke="#17231A" stroke-width="3" stroke-linecap="round"/>
+          </g>
         </g>
       </svg>
     </div>
