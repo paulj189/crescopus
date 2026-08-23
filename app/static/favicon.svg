@@ -1,0 +1,24 @@
+<svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Crescopus">
+  <defs>
+    <radialGradient id="favBadgeFill" cx="42%" cy="38%" r="75%">
+      <stop offset="0%" stop-color="#FCFBF6"/>
+      <stop offset="100%" stop-color="#E7EAD9"/>
+    </radialGradient>
+  </defs>
+  <circle cx="160" cy="160" r="150" fill="url(#favBadgeFill)" stroke="#17231A" stroke-width="8"/>
+  <path d="M30,160 A130,130 0 0 1 290,160" fill="none" stroke="#FFFFFF" stroke-width="4" opacity="0.55"/>
+  <path d="M290,160 A130,130 0 0 1 30,160" fill="none" stroke="#17231A" stroke-width="4" opacity="0.12"/>
+  <g transform="translate(48,52) scale(1.08)">
+    <path d="M75 130 C55 145,40 155,38 175" fill="none" stroke="#17231A" stroke-width="14" stroke-linecap="round"/>
+    <path d="M90 135 C86 150,84 165,88 178" fill="none" stroke="#B98A2E" stroke-width="13" stroke-linecap="round"/>
+    <path d="M100 137 C100 152,100 167,100 180" fill="none" stroke="#1E8A4C" stroke-width="12" stroke-linecap="round"/>
+    <path d="M112 135 C116 150,118 165,114 178" fill="none" stroke="#B98A2E" stroke-width="13" stroke-linecap="round"/>
+    <path d="M126 130 C146 145,160 155,163 175" fill="none" stroke="#17231A" stroke-width="14" stroke-linecap="round"/>
+    <path d="M52 95 C52 55,72 32,100 32 C128 32,148 55,148 95 C148 122,128 138,100 138 C72 138,52 122,52 95 Z" fill="#1E8A4C" stroke="#17231A" stroke-width="4"/>
+    <circle cx="82" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
+    <circle cx="118" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
+    <circle cx="84" cy="90" r="3.5" fill="#17231A"/>
+    <circle cx="120" cy="90" r="3.5" fill="#17231A"/>
+    <path d="M88 108 C94 114,106 114,112 108" fill="none" stroke="#17231A" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

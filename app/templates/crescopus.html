@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Crescopus — Grow apps together</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -38,8 +39,8 @@
   a{color:inherit;}
   .wrap{max-width:1120px;margin:0 auto;padding:0 28px;}
 
-  .brand-icon{width:30px;height:30px;flex-shrink:0;}
-  .footer-icon{width:24px;height:24px;flex-shrink:0;}
+  .brand-icon{width:38px;height:38px;flex-shrink:0;}
+  .footer-icon{width:56px;height:56px;flex-shrink:0;}
   .octo-body{fill:var(--bg);stroke:var(--ink);stroke-width:2.2;}
   .octo-arm{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;}
   .octo-bud-sage{fill:var(--sage);}
@@ -327,18 +328,34 @@
 <nav>
   <div class="wrap">
     <div class="brand">
-      <svg class="brand-icon" viewBox="0 0 200 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Crescopus mark">
-        <path d="M75 130 C55 145,40 155,38 175" fill="none" stroke="#17231A" stroke-width="14" stroke-linecap="round"/>
-        <path d="M90 135 C86 150,84 165,88 178" fill="none" stroke="#B98A2E" stroke-width="13" stroke-linecap="round"/>
-        <path d="M100 137 C100 152,100 167,100 180" fill="none" stroke="#1E8A4C" stroke-width="12" stroke-linecap="round"/>
-        <path d="M112 135 C116 150,118 165,114 178" fill="none" stroke="#B98A2E" stroke-width="13" stroke-linecap="round"/>
-        <path d="M126 130 C146 145,160 155,163 175" fill="none" stroke="#17231A" stroke-width="14" stroke-linecap="round"/>
-        <path d="M52 95 C52 55,72 32,100 32 C128 32,148 55,148 95 C148 122,128 138,100 138 C72 138,52 122,52 95 Z" fill="#1E8A4C" stroke="#17231A" stroke-width="4"/>
-        <circle cx="82" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
-        <circle cx="118" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
-        <circle cx="84" cy="90" r="3.5" fill="#17231A"/>
-        <circle cx="120" cy="90" r="3.5" fill="#17231A"/>
-        <path d="M88 108 C94 114,106 114,112 108" fill="none" stroke="#17231A" stroke-width="3" stroke-linecap="round"/>
+      <svg class="brand-icon" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Crescopus">
+        <defs>
+          <radialGradient id="navBadgeFill" cx="42%" cy="38%" r="75%">
+            <stop offset="0%" stop-color="#FCFBF6"/>
+            <stop offset="100%" stop-color="#E7EAD9"/>
+          </radialGradient>
+          <filter id="navBadgeShadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#17231A" flood-opacity="0.25"/>
+          </filter>
+        </defs>
+        <g filter="url(#navBadgeShadow)">
+          <circle cx="160" cy="160" r="150" fill="url(#navBadgeFill)" stroke="#17231A" stroke-width="8"/>
+          <path d="M30,160 A130,130 0 0 1 290,160" fill="none" stroke="#FFFFFF" stroke-width="4" opacity="0.55"/>
+          <path d="M290,160 A130,130 0 0 1 30,160" fill="none" stroke="#17231A" stroke-width="4" opacity="0.12"/>
+        </g>
+        <g transform="translate(48,52) scale(1.08)">
+          <path d="M75 130 C55 145,40 155,38 175" fill="none" stroke="#17231A" stroke-width="14" stroke-linecap="round"/>
+          <path d="M90 135 C86 150,84 165,88 178" fill="none" stroke="#B98A2E" stroke-width="13" stroke-linecap="round"/>
+          <path d="M100 137 C100 152,100 167,100 180" fill="none" stroke="#1E8A4C" stroke-width="12" stroke-linecap="round"/>
+          <path d="M112 135 C116 150,118 165,114 178" fill="none" stroke="#B98A2E" stroke-width="13" stroke-linecap="round"/>
+          <path d="M126 130 C146 145,160 155,163 175" fill="none" stroke="#17231A" stroke-width="14" stroke-linecap="round"/>
+          <path d="M52 95 C52 55,72 32,100 32 C128 32,148 55,148 95 C148 122,128 138,100 138 C72 138,52 122,52 95 Z" fill="#1E8A4C" stroke="#17231A" stroke-width="4"/>
+          <circle cx="82" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
+          <circle cx="118" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
+          <circle cx="84" cy="90" r="3.5" fill="#17231A"/>
+          <circle cx="120" cy="90" r="3.5" fill="#17231A"/>
+          <path d="M88 108 C94 114,106 114,112 108" fill="none" stroke="#17231A" stroke-width="3" stroke-linecap="round"/>
+        </g>
       </svg>
       <span class="brand-mark">Crescopus</span>
       <span class="brand-tag">cresco + opus</span>
@@ -490,19 +507,43 @@
 <footer>
   <div class="wrap">
     <div class="footer-grid">
-      <div class="footer-brand" style="display:flex;align-items:center;gap:10px;">
-        <svg class="footer-icon" viewBox="0 0 200 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Crescopus mark">
-          <path d="M75 130 C55 145,40 155,38 175" fill="none" stroke="#17231A" stroke-width="14" stroke-linecap="round"/>
-          <path d="M90 135 C86 150,84 165,88 178" fill="none" stroke="#B98A2E" stroke-width="13" stroke-linecap="round"/>
-          <path d="M100 137 C100 152,100 167,100 180" fill="none" stroke="#1E8A4C" stroke-width="12" stroke-linecap="round"/>
-          <path d="M112 135 C116 150,118 165,114 178" fill="none" stroke="#B98A2E" stroke-width="13" stroke-linecap="round"/>
-          <path d="M126 130 C146 145,160 155,163 175" fill="none" stroke="#17231A" stroke-width="14" stroke-linecap="round"/>
-          <path d="M52 95 C52 55,72 32,100 32 C128 32,148 55,148 95 C148 122,128 138,100 138 C72 138,52 122,52 95 Z" fill="#1E8A4C" stroke="#17231A" stroke-width="4"/>
-          <circle cx="82" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
-          <circle cx="118" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
-          <circle cx="84" cy="90" r="3.5" fill="#17231A"/>
-          <circle cx="120" cy="90" r="3.5" fill="#17231A"/>
-          <path d="M88 108 C94 114,106 114,112 108" fill="none" stroke="#17231A" stroke-width="3" stroke-linecap="round"/>
+      <div class="footer-brand" style="display:flex;align-items:center;gap:16px;">
+        <svg class="footer-icon" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Crescopus badge">
+          <defs>
+            <radialGradient id="footerBadgeFill" cx="42%" cy="38%" r="75%">
+              <stop offset="0%" stop-color="#FCFBF6"/>
+              <stop offset="100%" stop-color="#E7EAD9"/>
+            </radialGradient>
+            <filter id="footerBadgeShadow" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#17231A" flood-opacity="0.28"/>
+            </filter>
+            <path id="footerTopArc" d="M40,160 A120,120 0 0 1 280,160" fill="none"/>
+            <path id="footerBotArc" d="M280,160 A120,120 0 0 1 40,160" fill="none"/>
+          </defs>
+          <g filter="url(#footerBadgeShadow)">
+            <circle cx="160" cy="160" r="140" fill="url(#footerBadgeFill)" stroke="#17231A" stroke-width="5"/>
+            <path d="M42,160 A118,118 0 0 1 278,160" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.55"/>
+            <path d="M278,160 A118,118 0 0 1 42,160" fill="none" stroke="#17231A" stroke-width="3" opacity="0.12"/>
+          </g>
+          <text font-family="var(--mono)" font-size="15" font-weight="600" fill="#17231A" letter-spacing="3">
+            <textPath href="#footerTopArc" startOffset="50%" text-anchor="middle">CRESCOPUS</textPath>
+          </text>
+          <text font-family="var(--mono)" font-size="9" fill="#5C6858" letter-spacing="2">
+            <textPath href="#footerBotArc" startOffset="50%" text-anchor="middle">GROW APPS TOGETHER</textPath>
+          </text>
+          <g transform="translate(60,62)">
+            <path d="M75 130 C55 145,40 155,38 175" fill="none" stroke="#17231A" stroke-width="14" stroke-linecap="round"/>
+            <path d="M90 135 C86 150,84 165,88 178" fill="none" stroke="#B98A2E" stroke-width="13" stroke-linecap="round"/>
+            <path d="M100 137 C100 152,100 167,100 180" fill="none" stroke="#1E8A4C" stroke-width="12" stroke-linecap="round"/>
+            <path d="M112 135 C116 150,118 165,114 178" fill="none" stroke="#B98A2E" stroke-width="13" stroke-linecap="round"/>
+            <path d="M126 130 C146 145,160 155,163 175" fill="none" stroke="#17231A" stroke-width="14" stroke-linecap="round"/>
+            <path d="M52 95 C52 55,72 32,100 32 C128 32,148 55,148 95 C148 122,128 138,100 138 C72 138,52 122,52 95 Z" fill="#1E8A4C" stroke="#17231A" stroke-width="4"/>
+            <circle cx="82" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
+            <circle cx="118" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
+            <circle cx="84" cy="90" r="3.5" fill="#17231A"/>
+            <circle cx="120" cy="90" r="3.5" fill="#17231A"/>
+            <path d="M88 108 C94 114,106 114,112 108" fill="none" stroke="#17231A" stroke-width="3" stroke-linecap="round"/>
+          </g>
         </svg>
         <div>
           <span class="brand-mark">Crescopus</span>
