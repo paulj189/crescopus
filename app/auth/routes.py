@@ -12,8 +12,14 @@ def signup():
         password = request.form["password"]
         full_name = request.form.get("full_name", "")
         country = request.form.get("country", "")
-        is_developer = "role_developer" in request.form
-        is_grower = "role_grower" in request.form
+        role = request.form.get("role")
+
+        if role not in ("developer", "grower"):
+            flash("Please choose whether you're a builder or a grower.", "error")
+            return render_template("auth/signup.html", countries=COUNTRIES)
+
+        is_developer = role == "developer"
+        is_grower = role == "grower"
 
         supabase = get_supabase()
         result = supabase.auth.sign_up({

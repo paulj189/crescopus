@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Delete {{ listing.title }} — Crescopus{% endblock %}
+{% block content %}
+<h1>Delete this listing?</h1>
+<p>This permanently removes {{ listing.title }} and any revenue streams attached to it. This can't be undone.</p>
+<form method="POST">
+  <button type="submit">Delete listing</button>
+</form>
+<p><a href="{{ url_for('listings.detail', listing_id=listing.id) }}">Cancel</a></p>
+{% endblock %}

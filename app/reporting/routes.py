@@ -21,6 +21,14 @@ def manual_report(partnership_id):
     partnership = supabase.table("partnerships").select("*").eq("id", partnership_id).single().execute().data
 
     if request.method == "POST":
+        if not profile:
+            flash("Please log in again to report revenue.", "error")
+            return redirect(url_for("auth.login"))
+
+        if not partnership.get("revenue_share"):
+            flash("Set revenue terms on this CrescoPact before reporting revenue.", "error")
+            return redirect(url_for("partnerships.set_revenue_terms", partnership_id=partnership_id))
+
         gross = float(request.form["gross_amount"])
         developer_share, grower_share = _compute_split(gross, float(partnership["revenue_share"]))
 
@@ -42,28 +50,59 @@ def manual_report(partnership_id):
     return render_template("reporting/manual_report.html", partnership=partnership)
 
 
+@reporting_bp.route("/partnership/<partnership_id>/engagement/new", methods=["GET", "POST"])
+@login_required
+def manual_engagement_report(partnership_id):
+    profile = current_profile()
+    supabase = get_supabase()
+    partnership = supabase.table("partnerships").select("*").eq("id", partnership_id).single().execute().data
+
+    if request.method == "POST":
+        if not profile:
+            flash("Please log in again to report engagement.", "error")
+            return redirect(url_for("auth.login"))
+
+        supabase.table("engagement_reports").insert({
+            "partnership_id": partnership_id,
+            "period_start": request.form["period_start"],
+            "period_end": request.form["period_end"],
+            "views": request.form.get("views") or None,
+            "clicks": request.form.get("clicks") or None,
+            "downloads": request.form.get("downloads") or None,
+            "notes": request.form.get("notes"),
+            "reported_by": profile["id"],
+        }).execute()
+
+        flash("Engagement reported.", "success")
+        return redirect(url_for("partnerships.detail", partnership_id=partnership_id))
+
+    return render_template("reporting/engagement_report.html", partnership=partnership)
+
+
 @reporting_bp.route("/partnership/<partnership_id>/report/sync", methods=["POST"])
 @login_required
 def sync_revenuecat(partnership_id):
     supabase = get_supabase()
     partnership = supabase.table("partnerships").select("*").eq("id", partnership_id).single().execute().data
-    stream = (
-        supabase.table("revenue_streams")
-        .select("*")
-        .eq("id", partnership["revenue_stream_id"])
-        .single()
-        .execute()
-        .data
-    )
 
-    if not stream.get("revenuecat_project_key"):
-        flash("This stream has no RevenueCat project key on file.", "error")
+    if not partnership.get("listing_id"):
+        flash("This CrescoPact predates the current app version and can't be synced. Please contact support.", "error")
+        return redirect(url_for("dashboard.index"))
+
+    listing = supabase.table("listings").select("*").eq("id", partnership["listing_id"]).single().execute().data
+
+    if not listing.get("revenuecat_project_key"):
+        flash("This app has no RevenueCat project key on file — the developer can add one from the listing's edit page.", "error")
         return redirect(url_for("partnerships.detail", partnership_id=partnership_id))
 
-    period_start, period_end, gross = fetch_revenuecat_totals(stream["revenuecat_project_key"])
+    if not partnership.get("revenue_share"):
+        flash("Set revenue terms on this CrescoPact before syncing revenue.", "error")
+        return redirect(url_for("partnerships.set_revenue_terms", partnership_id=partnership_id))
+
+    period_start, period_end, gross = fetch_revenuecat_totals(listing["revenuecat_project_key"])
 
     if gross is None:
-        flash("RevenueCat sync isn't wired up yet for this stream type.", "error")
+        flash("RevenueCat sync isn't wired up yet for this app.", "error")
         return redirect(url_for("partnerships.detail", partnership_id=partnership_id))
 
     developer_share, grower_share = _compute_split(gross, float(partnership["revenue_share"]))

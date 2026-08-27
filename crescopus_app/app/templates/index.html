@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Crescopus — Grow apps together{% endblock %}
+{% block content %}
+<div class="landing">
+
+<header class="hero">
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow"><span class="eyebrow-text">From the Latin: <em>cresco</em>, to grow &amp; <em>opus</em>, a work</span></div>
+      <h1>Grow apps <em>together</em></h1>
+      <p class="lede">Crescopus pairs developers who love building with growth people who love finding an audience — one app, one CrescoPact, shared upside.</p>
+      <div class="hero-ctas">
+        <a href="{{ url_for('auth.signup') }}" class="btn-primary">Sign up →</a>
+        <a href="{{ url_for('auth.login') }}" class="btn-secondary">Log in →</a>
+      </div>
+    </div>
+    <div>
+      <svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The Crescopus badge, with a sage arm for developers and a brass arm for growers on each side, joined by an emerald center arm" style="width:100%;max-width:440px;height:auto;overflow:visible;">
+        <defs>
+          <radialGradient id="heroBadgeFill" cx="42%" cy="38%" r="75%">
+            <stop offset="0%" stop-color="#FCFBF6"/>
+            <stop offset="100%" stop-color="#E7EAD9"/>
+          </radialGradient>
+          <filter id="heroBadgeShadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#17231A" flood-opacity="0.28"/>
+          </filter>
+          <path id="heroTopArc" d="M40,160 A120,120 0 0 1 280,160" fill="none"/>
+          <path id="heroBotArc" d="M40,160 A120,120 0 0 0 280,160" fill="none"/>
+        </defs>
+        <g filter="url(#heroBadgeShadow)">
+          <circle cx="160" cy="160" r="140" fill="url(#heroBadgeFill)" stroke="#17231A" stroke-width="5"/>
+          <path d="M42,160 A118,118 0 0 1 92,63" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.55"/>
+          <path d="M228,63 A118,118 0 0 1 278,160" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.55"/>
+          <path d="M278,160 A118,118 0 0 1 228,257" fill="none" stroke="#17231A" stroke-width="3" opacity="0.12"/>
+          <path d="M92,257 A118,118 0 0 1 42,160" fill="none" stroke="#17231A" stroke-width="3" opacity="0.12"/>
+        </g>
+        <text font-family="var(--mono)" font-size="15" font-weight="600" fill="#17231A" letter-spacing="3">
+          <textPath href="#heroTopArc" startOffset="50%" text-anchor="middle">CRESCOPUS</textPath>
+        </text>
+        <text font-family="var(--mono)" font-size="9" fill="#5C6858" letter-spacing="2">
+          <textPath href="#heroBotArc" startOffset="50%" text-anchor="middle">GROW APPS TOGETHER</textPath>
+        </text>
+        <g transform="translate(60,62)">
+          <path class="mascot-arm" style="stroke:#17231A;animation-delay:0s" d="M75 130 C55 145,40 155,38 175"/>
+          <path class="mascot-arm" style="stroke:#B98A2E;animation-delay:0.1s" d="M90 135 C86 150,84 165,88 178"/>
+          <path class="mascot-arm" style="stroke:#1E8A4C;animation-delay:0.2s" d="M100 137 C100 152,100 167,100 180"/>
+          <path class="mascot-arm" style="stroke:#B98A2E;animation-delay:0.3s" d="M112 135 C116 150,118 165,114 178"/>
+          <path class="mascot-arm" style="stroke:#17231A;animation-delay:0.4s" d="M126 130 C146 145,160 155,163 175"/>
+          <g class="mascot-accent">
+            <path d="M52 95 C52 55,72 32,100 32 C128 32,148 55,148 95 C148 122,128 138,100 138 C72 138,52 122,52 95 Z" fill="#1E8A4C" stroke="#17231A" stroke-width="4"/>
+            <circle cx="82" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
+            <circle cx="118" cy="88" r="9" fill="#F3F4EF" stroke="#17231A" stroke-width="2"/>
+            <circle cx="84" cy="90" r="3.5" fill="#17231A"/>
+            <circle cx="120" cy="90" r="3.5" fill="#17231A"/>
+            <path d="M88 108 C94 114,106 114,112 108" fill="none" stroke="#17231A" stroke-width="3" stroke-linecap="round"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<section id="premise">
+  <div class="section-head">
+    <div class="kicker">The CrescoPact</div>
+    <h2>Two skill sets, rarely in one person</h2>
+    <p>Most apps stall for the same reason: the person who built it isn't the person who can sell it. Crescopus exists for the moment they meet: a builder's work and a grower's reach, joined into one CrescoPact.</p>
+  </div>
+  <div class="roles">
+    <div class="role builder">
+      <span class="role-tag">The builder</span>
+      <h3>Made something that works</h3>
+      <p>You'd rather build the product than run ad campaigns. Traction, ASO, marketing — not your craft, and not how you want to spend your time.</p>
+      <ul>
+        <li>Keeps control of the ownership of your product, always</li>
+        <li>Sets what a partner can and can't touch</li>
+        <li>Wants a real audience, not another side project</li>
+      </ul>
+    </div>
+    <div class="role grower">
+      <span class="role-tag">The grower</span>
+      <h3>Knows how to find an audience</h3>
+      <p>Marketing, social, growth loops, deal-making — that's your craft. What you're missing is a product worth putting it behind.</p>
+      <ul>
+        <li>Brings a growth plan, not just enthusiasm</li>
+        <li>Earns a share of what they help create</li>
+        <li>Wants a track record they can point to</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="section-head" style="margin-bottom:0;">
+    <div class="kicker">How it works</div>
+    <h2>A CrescoPact, not a marketplace scramble</h2>
+    <p>Developers describe what they've built and what they're looking for. Growers respond with how they'd take it further. Where there's a fit, both sides agree terms and get to work.</p>
+  </div>
+</section>
+
+<section id="trust">
+  <div class="section-head">
+    <div class="kicker">Built on trust</div>
+    <h2>Fair to both sides, by design</h2>
+    <p>That's what a CrescoPact is for: the point where a builder's risk and a grower's risk both get addressed, not left to chance. Neither side has to take the other's word for it — and unlike a typical marketplace, Crescopus never holds or moves your money, so there's nothing to freeze, delay, or quietly take a cut of.</p>
+  </div>
+  <div class="roles">
+    <div class="role builder">
+      <span class="role-tag">For builders</span>
+      <h3>You keep what's yours</h3>
+      <ul>
+        <li>Keeps control of the ownership of your product, always</li>
+        <li>You set what a partner can and can't touch</li>
+        <li>If you ever sell, it's your call and your terms</li>
+      </ul>
+    </div>
+    <div class="role grower">
+      <span class="role-tag">For growers</span>
+      <h3>You earn what you build</h3>
+      <ul>
+        <li>Revenue is tracked and verified, not taken on trust</li>
+        <li>Every CrescoPact builds a track record you can show</li>
+        <li>If the developer sells, you get first right to buy</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="section-head">
+    <div class="kicker">Where this is headed</div>
+    <h2>Free now. Free for you, later too.</h2>
+    <p>Crescopus doesn't charge anything today — no fee on listings, matching, or the revenue you split with a partner. That won't be true forever: once there's real traction on both sides, we'll introduce a fee on CrescoPacts formed from that point on.</p>
+  </div>
+  <div class="promise-box">
+    <p>Join before that happens, and it never applies to you. <strong>Any CrescoPact formed while Crescopus is free stays free for its lifetime</strong> — that's not an introductory offer, it's permanent.</p>
+  </div>
+  <div class="founder-note">The earliest developers and growers also carry a founding member mark on their profile, permanently.</div>
+</section>
+
+<section id="get-started">
+  <div class="cta-box">
+    <div class="kicker">Get started</div>
+    <h2>Be one of the first</h2>
+    <p class="lede">Create an account to list an app, put yourself forward as a grower, or just see what's already on the platform.</p>
+    <div class="hero-ctas">
+      <a href="{{ url_for('auth.signup') }}" class="btn-primary">Sign up →</a>
+      <a href="{{ url_for('auth.login') }}" class="btn-secondary">Log in →</a>
+    </div>
+  </div>
+</section>
+
+</div>
+{% endblock %}

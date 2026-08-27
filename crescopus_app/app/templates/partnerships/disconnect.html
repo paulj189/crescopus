@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Disconnect — Crescopus{% endblock %}
+{% block content %}
+<h1>Disconnect this Trial</h1>
+<p>This completely ends the relationship. It's recorded and visible to the other party, and factors into track record.</p>
+<form method="POST">
+  <div><label for="reason">Why are you disconnecting?</label><textarea id="reason" name="reason" required></textarea></div>
+  <button type="submit">Disconnect</button>
+</form>
+{% endblock %}

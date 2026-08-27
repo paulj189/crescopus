@@ -25,7 +25,29 @@ def detail(listing_id):
         .execute()
         .data
     )
-    return render_template("listings/detail.html", listing=listing, streams=streams)
+
+    profile = current_profile()
+    is_owner = bool(profile and listing["developer_id"] == profile["id"])
+
+    pending_requests = []
+    if is_owner:
+        pending_requests = (
+            supabase.table("connection_requests")
+            .select("*")
+            .eq("listing_id", listing_id)
+            .eq("status", "pending")
+            .order("created_at", desc=True)
+            .execute()
+            .data
+        )
+
+    return render_template(
+        "listings/detail.html",
+        listing=listing,
+        streams=streams,
+        is_owner=is_owner,
+        pending_requests=pending_requests,
+    )
 
 
 @listings_bp.route("/new", methods=["GET", "POST"])
@@ -47,7 +69,7 @@ def new():
             "platform": request.form.get("platform"),
         }).execute()
         listing_id = result.data[0]["id"]
-        flash("Listing published. Add a revenue stream to start attracting growers.", "success")
+        flash("Listing published — add a revenue stream if you know your monetisation plan, or leave it for later.", "success")
         return redirect(url_for("listings.detail", listing_id=listing_id))
 
     return render_template("listings/new.html")
@@ -60,7 +82,7 @@ def stream_new(listing_id):
     supabase = get_supabase()
     listing = supabase.table("listings").select("*").eq("id", listing_id).single().execute().data
 
-    if not listing or listing["developer_id"] != profile["id"]:
+    if not listing or not profile or listing["developer_id"] != profile["id"]:
         flash("Only the listing's developer can add a revenue stream.", "error")
         return redirect(url_for("listings.detail", listing_id=listing_id))
 
@@ -80,9 +102,91 @@ def stream_new(listing_id):
     return render_template("listings/stream_new.html", listing=listing)
 
 
+@listings_bp.route("/<listing_id>/delete", methods=["GET", "POST"])
+@login_required
+def delete(listing_id):
+    profile = current_profile()
+    supabase = get_supabase()
+    listing = supabase.table("listings").select("*").eq("id", listing_id).single().execute().data
+
+    if not listing or not profile or listing["developer_id"] != profile["id"]:
+        flash("Only the listing's developer can delete it.", "error")
+        return redirect(url_for("dashboard.index"))
+
+    has_requests = supabase.table("connection_requests").select("id").eq("listing_id", listing_id).execute().data
+    has_partnerships = supabase.table("partnerships").select("id").eq("listing_id", listing_id).execute().data
+
+    if has_requests or has_partnerships:
+        flash("This listing has connection requests or CrescoPacts on record and can't be deleted, to keep that history intact. Editing it is still fine.", "error")
+        return redirect(url_for("listings.detail", listing_id=listing_id))
+
+    if request.method == "POST":
+        supabase.table("revenue_streams").delete().eq("listing_id", listing_id).execute()
+        supabase.table("listings").delete().eq("id", listing_id).execute()
+        flash("Listing deleted.", "success")
+        return redirect(url_for("dashboard.index"))
+
+    return render_template("listings/delete.html", listing=listing)
+
+
+@listings_bp.route("/<listing_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit(listing_id):
+    profile = current_profile()
+    supabase = get_supabase()
+    listing = supabase.table("listings").select("*").eq("id", listing_id).single().execute().data
+
+    if not listing or not profile or listing["developer_id"] != profile["id"]:
+        flash("Only the listing's developer can edit it.", "error")
+        return redirect(url_for("dashboard.index"))
+
+    if request.method == "POST":
+        supabase.table("listings").update({
+            "title": request.form["title"],
+            "tagline": request.form.get("tagline"),
+            "description": request.form.get("description"),
+            "category": request.form.get("category"),
+            "platform": request.form.get("platform"),
+            "revenuecat_project_key": request.form.get("revenuecat_project_key") or None,
+        }).eq("id", listing_id).execute()
+        flash("Listing updated.", "success")
+        return redirect(url_for("listings.detail", listing_id=listing_id))
+
+    return render_template("listings/edit.html", listing=listing)
+
+
+@listings_bp.route("/streams/<stream_id>/edit", methods=["GET", "POST"])
+@login_required
+def stream_edit(stream_id):
+    profile = current_profile()
+    supabase = get_supabase()
+    stream = supabase.table("revenue_streams").select("*").eq("id", stream_id).single().execute().data
+    listing = supabase.table("listings").select("*").eq("id", stream["listing_id"]).single().execute().data
+
+    if not listing or not profile or listing["developer_id"] != profile["id"]:
+        flash("Only the listing's developer can edit this revenue stream.", "error")
+        return redirect(url_for("listings.stream_detail", stream_id=stream_id))
+
+    if request.method == "POST":
+        supabase.table("revenue_streams").update({
+            "stream_type": request.form["stream_type"],
+            "min_revenue_share": request.form.get("min_revenue_share") or None,
+            "looking_for": request.form.get("looking_for"),
+            "control_boundaries": request.form.get("control_boundaries"),
+        }).eq("id", stream_id).execute()
+        flash("Revenue stream updated.", "success")
+        return redirect(url_for("listings.stream_detail", stream_id=stream_id))
+
+    return render_template("listings/stream_edit.html", stream=stream, listing=listing)
+
+
 @listings_bp.route("/streams/<stream_id>")
 def stream_detail(stream_id):
     supabase = get_supabase()
     stream = supabase.table("revenue_streams").select("*").eq("id", stream_id).single().execute().data
     listing = supabase.table("listings").select("*").eq("id", stream["listing_id"]).single().execute().data
-    return render_template("listings/stream_detail.html", stream=stream, listing=listing)
+
+    profile = current_profile()
+    is_owner = bool(profile and listing["developer_id"] == profile["id"])
+
+    return render_template("listings/stream_detail.html", stream=stream, listing=listing, is_owner=is_owner)

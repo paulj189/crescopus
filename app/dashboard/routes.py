@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, redirect, url_for, flash
 from app.extensions import get_supabase
 from app.utils import login_required, current_profile
 
@@ -9,6 +9,10 @@ dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard", templat
 @login_required
 def index():
     profile = current_profile()
+    if not profile:
+        flash("We couldn't find your account profile. Please try signing up again or contact support.", "error")
+        return redirect(url_for("auth.logout"))
+
     supabase = get_supabase()
 
     my_listings = []

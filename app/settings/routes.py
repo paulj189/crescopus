@@ -10,6 +10,9 @@ settings_bp = Blueprint("settings", __name__, url_prefix="/settings", template_f
 @login_required
 def index():
     profile = current_profile()
+    if not profile:
+        flash("We couldn't find your account profile. Please try signing up again or contact support.", "error")
+        return redirect(url_for("dashboard.index"))
 
     if request.method == "POST":
         supabase = get_supabase()

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}List your app — Crescopus{% endblock %}
+{% block content %}
+<h1>List your app</h1>
+<form method="POST">
+  <div><label for="title">Title</label><input type="text" id="title" name="title" required></div>
+  <div><label for="tagline">Tagline</label><input type="text" id="tagline" name="tagline"></div>
+  <div><label for="description">Description</label><textarea id="description" name="description"></textarea></div>
+  <div><label for="category">Category</label><input type="text" id="category" name="category"></div>
+  <div>
+    <label for="platform">Platform</label>
+    <select id="platform" name="platform">
+      <option value="web">Web</option>
+      <option value="ios">iOS</option>
+      <option value="android">Android</option>
+      <option value="multi">Multiple</option>
+    </select>
+  </div>
+  <button type="submit">Publish listing</button>
+</form>
+{% endblock %}

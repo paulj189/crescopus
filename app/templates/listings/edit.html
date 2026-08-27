@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ listing.title }} — Crescopus{% endblock %}
+{% block content %}
+<h1>Edit listing</h1>
+<form method="POST">
+  <div><label for="title">Title</label><input type="text" id="title" name="title" value="{{ listing.title }}" required></div>
+  <div><label for="tagline">Tagline</label><input type="text" id="tagline" name="tagline" value="{{ listing.tagline or '' }}"></div>
+  <div><label for="description">Description</label><textarea id="description" name="description">{{ listing.description or '' }}</textarea></div>
+  <div><label for="category">Category</label><input type="text" id="category" name="category" value="{{ listing.category or '' }}"></div>
+  <div>
+    <label for="platform">Platform</label>
+    <select id="platform" name="platform">
+      <option value="web" {% if listing.platform == 'web' %}selected{% endif %}>Web</option>
+      <option value="ios" {% if listing.platform == 'ios' %}selected{% endif %}>iOS</option>
+      <option value="android" {% if listing.platform == 'android' %}selected{% endif %}>Android</option>
+      <option value="multi" {% if listing.platform == 'multi' %}selected{% endif %}>Multiple</option>
+    </select>
+  </div>
+  <div>
+    <label for="revenuecat_project_key">RevenueCat project key <span style="color:var(--muted);font-weight:normal;">(optional — enables verified revenue sync for any CrescoPact on this app)</span></label>
+    <input type="text" id="revenuecat_project_key" name="revenuecat_project_key" value="{{ listing.revenuecat_project_key or '' }}">
+  </div>
+  <button type="submit">Save changes</button>
+</form>
+<p><a href="{{ url_for('listings.delete', listing_id=listing.id) }}">Delete this listing</a></p>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Browse listings — Crescopus{% endblock %}
+{% block content %}
+<h1>Listed apps</h1>
+<div class="card-list">
+  {% for listing in listings %}
+    <a class="card" href="{{ url_for('listings.detail', listing_id=listing.id) }}">
+      <span class="tag">{{ listing.category or 'Uncategorised' }}</span>
+      <h3>{{ listing.title }}</h3>
+      <p>{{ listing.tagline }}</p>
+    </a>
+  {% else %}
+    <div class="empty">No listings yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}

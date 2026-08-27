@@ -10,7 +10,7 @@
 <div class="card-list">
   {% for stream in streams %}
     <a class="card" href="{{ url_for('listings.stream_detail', stream_id=stream.id) }}">
-      <span class="tag">{{ stream.stream_type }}</span>
+      <span class="tag">{{ stream.stream_type | stream_type_label }}</span>
       <h3>{{ stream.status }}</h3>
       <p>{{ stream.looking_for }}</p>
     </a>
@@ -19,7 +19,26 @@
   {% endfor %}
 </div>
 
-{% if session.get('user_id') %}
+{% if is_owner %}
   <a href="{{ url_for('listings.stream_new', listing_id=listing.id) }}"><button>Add a revenue stream</button></a>
+{% endif %}
+
+{% if has_active_partnership %}
+  <p class="tag tag-grower">This app already has an active CrescoPact.</p>
+{% elif not is_owner %}
+  <a href="{{ url_for('proposals.new', listing_id=listing.id) }}"><button>Submit a pitch</button></a>
+{% endif %}
+
+{% if proposals %}
+  <h2>Pitches</h2>
+  <div class="card-list">
+    {% for p in proposals %}
+      <div class="card">
+        <p><span class="text-grower">{{ p.revenue_share_offered }} CrescoShares</span> offered</p>
+        {% if p.growth_plan %}<p>{{ p.growth_plan }}</p>{% endif %}
+        <a href="{{ url_for('proposals.accept_confirm', proposal_id=p.id) }}"><button>Review &amp; form CrescoPact</button></a>
+      </div>
+    {% endfor %}
+  </div>
 {% endif %}
 {% endblock %}

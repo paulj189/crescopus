@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}CrescoPact — {{ listing.title }} — Crescopus{% endblock %}
+{% block content %}
+<span class="tag {% if partnership.status == 'formalised' %}tag-builder{% endif %}">{{ partnership.status }}</span>
+<h1>{{ listing.title }}</h1>
+
+{% if partnership.status == 'disconnected' %}
+  <p>Disconnected — {{ partnership.disconnect_reason }}</p>
+{% elif partnership.status == 'ended' %}
+  <p>Ended {{ partnership.ended_at }} — {{ partnership.end_reason }}</p>
+{% endif %}
+
+{% if partnership.status in ('trial', 'formalised') %}
+
+  {% if partnership.formalise_status == 'proposed' %}
+    {% if partnership.formalise_proposed_by == profile.id %}
+      <p>You've proposed formalising this CrescoPact — waiting on the other side.</p>
+    {% else %}
+      <p>The other side has proposed formalising this CrescoPact.</p>
+      <form method="POST" action="{{ url_for('partnerships.formalise_accept', partnership_id=partnership.id) }}" style="display:inline;">
+        <button type="submit">Accept formalise</button>
+      </form>
+      <form method="POST" action="{{ url_for('partnerships.formalise_decline', partnership_id=partnership.id) }}" style="display:inline;margin-left:8px;">
+        <input type="text" name="reason" placeholder="Reason (optional)" style="width:auto;display:inline-block;">
+        <button type="submit">Decline</button>
+      </form>
+    {% endif %}
+  {% elif partnership.status == 'trial' %}
+    <form method="POST" action="{{ url_for('partnerships.formalise_propose', partnership_id=partnership.id) }}" style="display:inline;">
+      <button type="submit">Propose formalising</button>
+    </form>
+    <a href="{{ url_for('partnerships.disconnect', partnership_id=partnership.id) }}"><button>Disconnect</button></a>
+  {% endif %}
+
+  {% if partnership.formalise_status == 'declined' and partnership.formalise_declined_reason %}
+    <p class="tag">Last formalise proposal was declined: {{ partnership.formalise_declined_reason }}</p>
+  {% endif %}
+
+  <h2>Messages</h2>
+  <div class="card-list">
+    {% for m in messages %}
+      <div class="card">
+        <p><span class="{% if m.sender_id == profile.id %}text-builder{% else %}text-grower{% endif %}">{{ m.body }}</span></p>
+      </div>
+    {% else %}
+      <div class="empty">No messages yet — say hello!</div>
+    {% endfor %}
+  </div>
+  <form method="POST" action="{{ url_for('partnerships.send_message', partnership_id=partnership.id) }}">
+    <textarea name="body" rows="3" placeholder="Write a message..." required></textarea>
+    <button type="submit">Send</button>
+  </form>
+
+{% endif %}
+
+{% if partnership.status == 'formalised' %}
+  <h2>Revenue terms</h2>
+  {% if partnership.revenue_share %}
+    <p><span class="text-builder">developer keeps {{ partnership.revenue_share }} CrescoShares</span></p>
+    <a href="{{ url_for('partnerships.set_revenue_terms', partnership_id=partnership.id) }}">Change</a>
+  {% else %}
+    <p>No revenue terms attached yet. This is entirely optional — only set these up once you're both ready.</p>
+    <a href="{{ url_for('partnerships.set_revenue_terms', partnership_id=partnership.id) }}"><button>Set revenue terms</button></a>
+  {% endif %}
+
+  <h2>Report revenue</h2>
+  {% if listing.revenuecat_project_key %}
+    <form method="POST" action="{{ url_for('reporting.sync_revenuecat', partnership_id=partnership.id) }}">
+      <button type="submit">Sync from RevenueCat</button>
+    </form>
+  {% endif %}
+  <a href="{{ url_for('reporting.manual_report', partnership_id=partnership.id) }}"><button>Report manually</button></a>
+
+  <h2>Report engagement</h2>
+  <p>No revenue yet? Report views, clicks, or downloads instead.</p>
+  <a href="{{ url_for('reporting.manual_engagement_report', partnership_id=partnership.id) }}"><button>Report engagement</button></a>
+
+  <h2>End this CrescoPact</h2>
+  <a href="{{ url_for('partnerships.end', partnership_id=partnership.id) }}"><button>End CrescoPact</button></a>
+
+  <h2>Revenue reports</h2>
+  <div class="card-list">
+    {% for r in reports %}
+      <div class="card">
+        <h3>{{ r.period_start }} to {{ r.period_end }}</h3>
+        <p>Gross: {{ r.gross_amount }}{% if not r.verified %} <span class="tag">unverified</span>{% endif %}</p>
+      </div>
+    {% else %}
+      <div class="empty">No revenue reported yet.</div>
+    {% endfor %}
+  </div>
+
+  <h2>Engagement reports</h2>
+  <div class="card-list">
+    {% for e in engagement_reports %}
+      <div class="card">
+        <h3>{{ e.period_start }} to {{ e.period_end }}</h3>
+        <p>
+          {% if e.views %}Views: {{ e.views }}{% endif %}
+          {% if e.clicks %}{% if e.views %} &middot; {% endif %}Clicks: {{ e.clicks }}{% endif %}
+          {% if e.downloads %}{% if e.views or e.clicks %} &middot; {% endif %}Downloads: {{ e.downloads }}{% endif %}
+        </p>
+        {% if e.notes %}<p>{{ e.notes }}</p>{% endif %}
+      </div>
+    {% else %}
+      <div class="empty">No engagement reported yet.</div>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

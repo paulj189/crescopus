@@ -10,8 +10,9 @@
   {% for listing in listings %}
     <div class="card">
       <a href="{{ url_for('listings.detail', listing_id=listing.id) }}"><h3>{{ listing.title }}</h3></a>
+      <a href="{{ url_for('listings.edit', listing_id=listing.id) }}">Edit listing</a>
       {% for stream in listing.streams %}
-        <p><span class="tag tag-builder">{{ stream.stream_type }}</span> {{ stream.status }}</p>
+        <p><span class="tag tag-builder">{{ stream.stream_type | stream_type_label }}</span> {{ stream.status }} &middot; <a href="{{ url_for('listings.stream_edit', stream_id=stream.id) }}">Edit</a></p>
       {% else %}
         <p class="empty">No revenue streams yet — <a href="{{ url_for('listings.stream_new', listing_id=listing.id) }}">add one</a>.</p>
       {% endfor %}
@@ -23,15 +24,18 @@
 {% endif %}
 
 {% if profile.is_grower %}
-<h2>Your proposals</h2>
+<h2>Your pitches</h2>
 <div class="card-list">
   {% for proposal in proposals %}
     <div class="card">
       <h3 class="text-grower">{{ proposal.status }}</h3>
       <p>Offered {{ proposal.revenue_share_offered }} CrescoShares</p>
+      {% if proposal.status == 'pending' %}
+        <a href="{{ url_for('proposals.edit', proposal_id=proposal.id) }}">Edit pitch</a>
+      {% endif %}
     </div>
   {% else %}
-    <div class="empty">You haven't submitted a proposal yet.</div>
+    <div class="empty">You haven't submitted a pitch yet.</div>
   {% endfor %}
 </div>
 {% endif %}
