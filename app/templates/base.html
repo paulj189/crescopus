@@ -104,19 +104,14 @@
   </a>
   <div class="nav-links">
     {% if nav_profile %}
+      <a href="{{ url_for('listings.browse') }}" class="nav-cta nav-cta-apps">Apps</a>
+      <a href="{{ url_for('growers.browse') }}" class="nav-cta nav-cta-growers">Growers</a>
       <a href="{{ url_for('dashboard.index') }}">Dashboard{% if attention_count %} <span class="nav-badge">{{ attention_count }}</span>{% endif %}</a>
-      {% if nav_profile.is_developer %}
-        <a href="{{ url_for('growers.browse') }}">Growers</a>
-      {% else %}
-        <a href="{{ url_for('listings.browse') }}">Apps</a>
-      {% endif %}
       <a href="{{ url_for('settings.index') }}">Settings</a>
       <a href="{{ url_for('auth.logout') }}">Log out</a>
     {% else %}
-      <a href="{{ url_for('listings.browse') }}">Apps</a>
-      <a href="{{ url_for('growers.browse') }}">Growers</a>
-      <a href="{{ url_for('auth.login') }}">Log in</a>
-      <a href="{{ url_for('auth.signup') }}" class="btn-primary">Sign up</a>
+      <a href="{{ url_for('listings.browse') }}" class="nav-cta nav-cta-apps">Apps</a>
+      <a href="{{ url_for('growers.browse') }}" class="nav-cta nav-cta-growers">Growers</a>
     {% endif %}
   </div>
 </nav>
