@@ -2,6 +2,13 @@
 {% block title %}Settings — Crescopus{% endblock %}
 {% block content %}
 <h1>Profile settings</h1>
+<p>
+  {% if profile.is_developer %}
+    <span class="tag tag-builder">Builder account</span>
+  {% elif profile.is_grower %}
+    <span class="tag tag-grower">Grower account</span>
+  {% endif %}
+</p>
 <form method="POST">
   <div>
     <label for="full_name">Full name</label>
@@ -15,6 +22,10 @@
         <option value="{{ code }}" {% if profile.country == code %}selected{% endif %}>{{ name }}</option>
       {% endfor %}
     </select>
+  </div>
+  <div>
+    <label for="bio">About you <span style="color:var(--muted);font-weight:normal;">(public — helps others decide whether to reach out)</span></label>
+    <textarea id="bio" name="bio" placeholder="What you're good at, what you're drawn to, anything worth knowing about your track record.">{{ profile.bio or '' }}</textarea>
   </div>
   <button type="submit">Save</button>
 </form>

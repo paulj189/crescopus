@@ -5,6 +5,7 @@
 <h1>{{ listing.title }}</h1>
 <p>{{ listing.tagline }}</p>
 <p>{{ listing.description }}</p>
+<p><a href="{{ url_for('builders.detail', builder_id=listing.developer_id) }}">View builder profile →</a></p>
 
 <h2>Revenue streams</h2>
 <div class="card-list">
@@ -23,20 +24,17 @@
   <a href="{{ url_for('listings.stream_new', listing_id=listing.id) }}"><button>Add a revenue stream</button></a>
 {% endif %}
 
-{% if has_active_partnership %}
-  <p class="tag tag-grower">This app already has an active CrescoPact.</p>
-{% elif not is_owner %}
-  <a href="{{ url_for('proposals.new', listing_id=listing.id) }}"><button>Submit a pitch</button></a>
+{% if not is_owner %}
+  <a href="{{ url_for('connection_requests.new_from_listing', listing_id=listing.id) }}"><button>Connect</button></a>
 {% endif %}
 
-{% if proposals %}
-  <h2>Pitches</h2>
+{% if pending_requests %}
+  <h2>Connection requests</h2>
   <div class="card-list">
-    {% for p in proposals %}
+    {% for r in pending_requests %}
       <div class="card">
-        <p><span class="text-grower">{{ p.revenue_share_offered }} CrescoShares</span> offered</p>
-        {% if p.growth_plan %}<p>{{ p.growth_plan }}</p>{% endif %}
-        <a href="{{ url_for('proposals.accept_confirm', proposal_id=p.id) }}"><button>Review &amp; form CrescoPact</button></a>
+        <p>{{ r.message }}</p>
+        <a href="{{ url_for('connection_requests.respond', request_id=r.id) }}"><button>Review</button></a>
       </div>
     {% endfor %}
   </div>

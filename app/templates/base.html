@@ -103,14 +103,18 @@
     <span class="brand-mark">Crescopus</span>
   </a>
   <div class="nav-links">
-    {% if session.get('user_id') %}
-      <a href="{{ url_for('dashboard.index') }}">Dashboard</a>
-      <a href="{{ url_for('listings.browse') }}">Browse</a>
-      <a href="{{ url_for('growers.browse') }}">Growers</a>
-      <a href="{{ url_for('listings.new') }}">List your app</a>
+    {% if nav_profile %}
+      <a href="{{ url_for('dashboard.index') }}">Dashboard{% if attention_count %} <span class="nav-badge">{{ attention_count }}</span>{% endif %}</a>
+      {% if nav_profile.is_developer %}
+        <a href="{{ url_for('growers.browse') }}">Growers</a>
+      {% else %}
+        <a href="{{ url_for('listings.browse') }}">Apps</a>
+      {% endif %}
       <a href="{{ url_for('settings.index') }}">Settings</a>
       <a href="{{ url_for('auth.logout') }}">Log out</a>
     {% else %}
+      <a href="{{ url_for('listings.browse') }}">Apps</a>
+      <a href="{{ url_for('growers.browse') }}">Growers</a>
       <a href="{{ url_for('auth.login') }}">Log in</a>
       <a href="{{ url_for('auth.signup') }}" class="btn-primary">Sign up</a>
     {% endif %}
@@ -195,10 +199,24 @@
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-info-title">
     <button type="button" class="modal-close" onclick="crescoModal.close('modal-info')" aria-label="Close">&times;</button>
     <h3 id="modal-info-title">About Crescopus</h3>
-    <p>Crescopus pairs developers who've built apps with monetisers who know how to grow them &mdash; matched by fit and track record, not the highest bid, and structured as an ongoing revenue-share partnership rather than a one-off sale.</p>
-    <p>We call that partnership a <em>CrescoPact</em>: an opportunity for a developer and a grower to explore working together. Crescopus doesn't draft it as a formal legal contract, isn't a party to it, and doesn't oversee, vet, or guarantee it &mdash; it's a clear, mutual starting point where both sides agree terms and set <em>CrescoShares</em> to represent the stake each of you holds. If it works out, you're free to formalise it separately (for example with a written agreement) as the relationship grows; if it doesn't, either side can walk away. A CrescoPact can cover one or several of an app's revenue streams.</p>
-    <p>Crescopus never holds or moves your money. Revenue is reported and the split is calculated on-platform; payment happens directly between the two parties.</p>
+    <p>Crescopus is a low-risk way for app developers ("Builders") and growth people ("Growers") to find each other and explore working together &mdash; matched by fit and track record, not the highest bid.</p>
+    <p>Every relationship starts as a <em>Trial CrescoPact</em>: no commitment, no numbers, just an introduction and a chat. If it's a fit, either side can propose to <em>Formalise</em> it. Revenue-sharing terms ("CrescoShares") are entirely optional and only come into play after that, whenever you're both ready.</p>
+    <p>Crescopus never holds or moves your money, isn't a party to any CrescoPact, and doesn't broker, manage, or guarantee the relationship between you.</p>
     <p>Built by Paul Johnson, an independent developer.</p>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-how" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-how-title">
+    <button type="button" class="modal-close" onclick="crescoModal.close('modal-how')" aria-label="Close">&times;</button>
+    <h3 id="modal-how-title">How Crescopus works</h3>
+    <p><strong>Builders</strong> are the people who've built an app &mdash; developers. <strong>Growers</strong> are the people who know how to find it an audience &mdash; marketing, growth, ASO, that kind of thing. Most people are naturally one or the other, rarely both.</p>
+    <p><strong>1. A Builder lists an app.</strong> Just the basics &mdash; no revenue details required to get started.</p>
+    <p><strong>2. Either side reaches out.</strong> A Grower browsing listings can send a short message about a app that interests them, or a Builder browsing Growers can do the same. No forms, no numbers &mdash; just a quick intro.</p>
+    <p><strong>3. If accepted, you're connected.</strong> This is a <em>Trial CrescoPact</em>: email addresses are shared and an in-app chat opens. Nothing's been agreed yet &mdash; it's just a conversation.</p>
+    <p><strong>4. Talk it through.</strong> A Builder can be chatting with several Growers on the same app at once. Either side can end a Trial at any point if it's not a fit &mdash; that's recorded, but it's a normal part of exploring, not a failure.</p>
+    <p><strong>5. If it clicks, propose to Formalise.</strong> This is a mutual step that signals you're committing to work together on this app specifically.</p>
+    <p><strong>6. Revenue terms are optional, and later.</strong> Once formalised, you can set up a revenue split ("CrescoShares") whenever you're both ready &mdash; it's never required to start exploring.</p>
   </div>
 </div>
 

@@ -19,6 +19,7 @@ def index():
         supabase.table("profiles").update({
             "full_name": request.form.get("full_name", profile["full_name"]),
             "country": request.form.get("country") or None,
+            "bio": request.form.get("bio", "").strip() or None,
         }).eq("id", profile["id"]).execute()
         flash("Profile updated.", "success")
         return redirect(url_for("settings.index"))

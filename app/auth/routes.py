@@ -20,6 +20,7 @@ def signup():
 
         is_developer = role == "developer"
         is_grower = role == "grower"
+        bio = request.form.get("bio", "").strip()
 
         supabase = get_supabase()
         result = supabase.auth.sign_up({
@@ -31,6 +32,7 @@ def signup():
                     "is_developer": is_developer,
                     "is_grower": is_grower,
                     "country": country,
+                    "bio": bio,
                 }
             },
         })

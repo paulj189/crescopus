@@ -34,3 +34,46 @@ STREAM_TYPE_LABELS = {
 
 def stream_type_label(value):
     return STREAM_TYPE_LABELS.get(value, value)
+
+
+def get_pending_received_requests(supabase, profile):
+    """Connection requests addressed to this profile, still awaiting a response."""
+    if profile.get("is_grower"):
+        return (
+            supabase.table("connection_requests")
+            .select("*")
+            .eq("grower_id", profile["id"])
+            .neq("initiated_by", profile["id"])
+            .eq("status", "pending")
+            .order("created_at", desc=True)
+            .execute()
+            .data
+        )
+    my_listings = supabase.table("listings").select("id").eq("developer_id", profile["id"]).execute().data
+    listing_ids = [l["id"] for l in my_listings]
+    if not listing_ids:
+        return []
+    return (
+        supabase.table("connection_requests")
+        .select("*")
+        .in_("listing_id", listing_ids)
+        .neq("initiated_by", profile["id"])
+        .eq("status", "pending")
+        .order("created_at", desc=True)
+        .execute()
+        .data
+    )
+
+
+def get_formalise_waiting_on_me(supabase, profile):
+    """Trial CrescoPacts where the other side proposed formalising and it's waiting on this profile."""
+    return (
+        supabase.table("partnerships")
+        .select("*")
+        .or_(f"developer_id.eq.{profile['id']},grower_id.eq.{profile['id']}")
+        .eq("status", "trial")
+        .eq("formalise_status", "proposed")
+        .neq("formalise_proposed_by", profile["id"])
+        .execute()
+        .data
+    )

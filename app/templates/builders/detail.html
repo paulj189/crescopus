@@ -1,7 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Browse listings — Crescopus{% endblock %}
+{% block title %}{{ builder.full_name }} — Crescopus{% endblock %}
 {% block content %}
-<h1>Listed apps</h1>
+<span class="tag tag-builder">Builder</span>
+<h1>{{ builder.full_name }}</h1>
+<p>{{ builder.bio or "This builder hasn't added a bio yet." }}</p>
+
+<h2>Listings</h2>
 <div class="card-list">
   {% for listing in listings %}
     <a class="card" href="{{ url_for('listings.detail', listing_id=listing.id) }}">
