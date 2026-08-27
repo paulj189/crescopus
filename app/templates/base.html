@@ -117,6 +117,9 @@
 </nav>
 
 <main class="app-main">
+  {% if request.endpoint != 'index' %}
+    <a href="#" onclick="history.back();return false;" class="back-link">&larr; Back</a>
+  {% endif %}
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       <div class="flash-stack">

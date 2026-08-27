@@ -61,6 +61,8 @@ button[disabled]{opacity:0.5;cursor:not-allowed;}
 .btn-secondary:hover{background:#2b3c24;}
 
 .app-main{max-width:960px;margin:0 auto;padding:40px 28px;}
+.back-link{display:inline-block;margin-bottom:20px;font-family:var(--mono);font-size:12px;letter-spacing:0.03em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.15s ease;}
+.back-link:hover{color:var(--ink);}
 
 /* ---------- flash ---------- */
 .flash-stack{margin-bottom:24px;}
