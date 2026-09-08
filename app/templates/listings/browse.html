@@ -1,7 +1,17 @@
 {% extends "base.html" %}
 {% block title %}Apps — Crescopus{% endblock %}
 {% block content %}
-<h1>Listed apps</h1>
+<div class="section-head-row">
+  <h1>Listed apps</h1>
+  {% if nav_profile and nav_profile.is_developer %}
+    <a href="{{ url_for('listings.new') }}"><button>List your app</button></a>
+  {% endif %}
+</div>
+{% if not nav_profile %}
+  <p class="empty">Got an app to list? You'll need a builder account. <a href="{{ url_for('auth.login') }}">Log in</a> if you already have one, or <a href="{{ url_for('auth.signup') }}">sign up</a> as a builder.</p>
+{% elif not nav_profile.is_developer %}
+  <p class="empty">Listing an app needs a builder account — yours is set up as a grower.</p>
+{% endif %}
 <div class="card-list">
   {% for listing in listings %}
     <a class="card" href="{{ url_for('listings.detail', listing_id=listing.id) }}">
