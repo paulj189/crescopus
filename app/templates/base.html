@@ -106,6 +106,12 @@
     <span></span><span></span><span></span>
   </button>
   <div class="nav-links">
+    <a href="{{ url_for('index') }}" class="nav-home" aria-label="Home">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 11L12 4L21 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M5 10V19C5 19.5523 5.44772 20 6 20H9V15C9 14.4477 9.44772 14 10 14H14C14.5523 14 15 14.4477 15 15V20H18C18.5523 20 19 19.5523 19 19V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
     {% if nav_profile %}
       <a href="{{ url_for('listings.browse') }}" class="nav-cta nav-cta-apps">Apps</a>
       <a href="{{ url_for('builders.browse') }}" class="nav-cta nav-cta-builders">Builders</a>
@@ -117,7 +123,7 @@
       <a href="{{ url_for('listings.browse') }}" class="nav-cta nav-cta-apps">Apps</a>
       <a href="{{ url_for('builders.browse') }}" class="nav-cta nav-cta-builders">Builders</a>
       <a href="{{ url_for('growers.browse') }}" class="nav-cta nav-cta-growers">Growers</a>
-      <a href="{{ url_for('auth.login') }}">Log in</a>
+      <a href="{{ url_for('auth.login') }}" class="nav-cta">Log in</a>
       <a href="{{ url_for('auth.signup') }}" class="nav-cta">Sign up</a>
     {% endif %}
   </div>
