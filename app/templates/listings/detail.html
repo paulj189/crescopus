@@ -5,10 +5,19 @@
 <h1>{{ listing.title }}</h1>
 <p>{{ listing.tagline }}</p>
 <p>{{ listing.description }}</p>
+{% if listing.store_urls %}
+  <p class="link-row">
+    {% if listing.store_urls.web %}<a href="{{ listing.store_urls.web }}" target="_blank" rel="noopener noreferrer">Website →</a>{% endif %}
+    {% if listing.store_urls.ios %}<a href="{{ listing.store_urls.ios }}" target="_blank" rel="noopener noreferrer">App Store →</a>{% endif %}
+    {% if listing.store_urls.android %}<a href="{{ listing.store_urls.android }}" target="_blank" rel="noopener noreferrer">Google Play →</a>{% endif %}
+  </p>
+{% endif %}
 <p><a href="{{ url_for('builders.detail', builder_id=listing.developer_id) }}">View builder profile →</a></p>
 
 {% if not is_owner %}
   <a href="{{ url_for('connection_requests.new_from_listing', listing_id=listing.id) }}"><button>Connect</button></a>
+{% else %}
+  <a href="{{ url_for('listings.edit', listing_id=listing.id) }}"><button>Edit listing</button></a>
 {% endif %}
 
 {% if pending_requests %}

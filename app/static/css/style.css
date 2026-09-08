@@ -173,6 +173,7 @@ h1 em{font-style:italic;color:var(--brass-ink);font-weight:500;}
 .section-head p{color:var(--muted);font-size:16px;max-width:52ch;}
 .section-head-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:32px;}
 .section-head-row h1{margin:0;}
+.link-row{display:flex;gap:20px;flex-wrap:wrap;}
 .landing h2{font-family:var(--serif);font-weight:600;font-size:clamp(26px,3.4vw,36px);margin:0 0 14px;line-height:1.1;}
 
 .roles{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);}

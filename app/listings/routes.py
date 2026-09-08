@@ -50,6 +50,13 @@ def new():
 
     if request.method == "POST":
         supabase = get_supabase()
+        store_urls = {
+            k: v for k, v in {
+                "web": request.form.get("app_url_web", "").strip(),
+                "ios": request.form.get("app_url_ios", "").strip(),
+                "android": request.form.get("app_url_android", "").strip(),
+            }.items() if v
+        }
         result = supabase.table("listings").insert({
             "developer_id": profile["id"],
             "title": request.form["title"],
@@ -57,6 +64,7 @@ def new():
             "description": request.form.get("description"),
             "category": request.form.get("category"),
             "platform": request.form.get("platform"),
+            "store_urls": store_urls,
         }).execute()
         listing_id = result.data[0]["id"]
         flash("Listing published.", "success")
@@ -103,6 +111,13 @@ def edit(listing_id):
         return redirect(url_for("dashboard.index"))
 
     if request.method == "POST":
+        store_urls = {
+            k: v for k, v in {
+                "web": request.form.get("app_url_web", "").strip(),
+                "ios": request.form.get("app_url_ios", "").strip(),
+                "android": request.form.get("app_url_android", "").strip(),
+            }.items() if v
+        }
         supabase.table("listings").update({
             "title": request.form["title"],
             "tagline": request.form.get("tagline"),
@@ -110,6 +125,7 @@ def edit(listing_id):
             "category": request.form.get("category"),
             "platform": request.form.get("platform"),
             "revenuecat_project_key": request.form.get("revenuecat_project_key") or None,
+            "store_urls": store_urls,
         }).eq("id", listing_id).execute()
         flash("Listing updated.", "success")
         return redirect(url_for("listings.detail", listing_id=listing_id))
