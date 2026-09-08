@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Builders — Crescopus{% endblock %}
+{% block content %}
+<h1>Builders</h1>
+<div class="card-list">
+  {% for builder in builders %}
+    <a class="card" href="{{ url_for('builders.detail', builder_id=builder.id) }}">
+      <h3 class="text-builder">{{ builder.full_name }}</h3>
+      <p>{{ builder.bio or "No bio yet." }}</p>
+    </a>
+  {% else %}
+    <div class="empty">No builders listed yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}

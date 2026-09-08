@@ -5,9 +5,6 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object("app.config.Config")
 
-    from app.utils import stream_type_label
-    app.jinja_env.filters["stream_type_label"] = stream_type_label
-
     from app.auth.routes import auth_bp
     from app.listings.routes import listings_bp
     from app.growers.routes import growers_bp

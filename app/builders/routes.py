@@ -4,6 +4,19 @@ from app.extensions import get_supabase
 builders_bp = Blueprint("builders", __name__, url_prefix="/builders", template_folder="../templates/builders")
 
 
+@builders_bp.route("/")
+def browse():
+    supabase = get_supabase()
+    res = (
+        supabase.table("profiles")
+        .select("*")
+        .eq("is_developer", True)
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return render_template("builders/browse.html", builders=res.data)
+
+
 @builders_bp.route("/<builder_id>")
 def detail(builder_id):
     supabase = get_supabase()

@@ -46,6 +46,8 @@ a{color:inherit;text-decoration:none;}
 .nav-cta{padding:6px 14px;border-radius:var(--radius);border:1px solid currentColor;font-weight:600;transition:background 0.15s ease,color 0.15s ease;}
 .nav-cta-apps{color:var(--emerald);}
 .nav-cta-apps:hover{background:var(--emerald);color:#FFFFFF;}
+.nav-cta-builders{color:var(--sage);}
+.nav-cta-builders:hover{background:var(--sage);color:#FFFFFF;}
 .nav-cta-growers{color:var(--brass-ink);}
 .nav-cta-growers:hover{background:var(--brass-ink);color:#FFFFFF;}
 

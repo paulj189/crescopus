@@ -22,20 +22,6 @@ def current_profile():
     return res.data[0]
 
 
-STREAM_TYPE_LABELS = {
-    "store_iap": "Store subscriptions / in-app purchases",
-    "web_revenuecat": "Web payments (via RevenueCat)",
-    "advertising": "Advertising",
-    "existing_processor": "Existing payment processor",
-    "no_stream_yet": "No revenue stream yet",
-    "other": "Other",
-}
-
-
-def stream_type_label(value):
-    return STREAM_TYPE_LABELS.get(value, value)
-
-
 def get_pending_received_requests(supabase, profile):
     """Connection requests addressed to this profile, still awaiting a response."""
     if profile.get("is_grower"):

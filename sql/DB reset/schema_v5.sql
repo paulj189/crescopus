@@ -311,13 +311,14 @@ create policy "Involved parties leave a review" on reviews for insert with check
 create function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, full_name, is_developer, is_grower, country)
+  insert into public.profiles (id, full_name, is_developer, is_grower, country, bio)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'full_name', ''),
     coalesce((new.raw_user_meta_data->>'is_developer')::boolean, false),
     coalesce((new.raw_user_meta_data->>'is_grower')::boolean, false),
-    new.raw_user_meta_data->>'country'
+    new.raw_user_meta_data->>'country',
+    nullif(new.raw_user_meta_data->>'bio', '')
   );
   return new;
 end;

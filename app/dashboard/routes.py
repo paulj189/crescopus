@@ -19,10 +19,6 @@ def index():
     my_listing_ids = []
     if profile.get("is_developer"):
         listings = supabase.table("listings").select("*").eq("developer_id", profile["id"]).execute().data
-        for listing in listings:
-            listing["streams"] = (
-                supabase.table("revenue_streams").select("*").eq("listing_id", listing["id"]).execute().data
-            )
         my_listings = listings
         my_listing_ids = [l["id"] for l in listings]
 
@@ -42,7 +38,7 @@ def index():
         supabase.table("partnerships")
         .select("*")
         .or_(f"developer_id.eq.{profile['id']},grower_id.eq.{profile['id']}")
-        .order("created_at", desc=True)
+        .order("started_at", desc=True)
         .execute()
         .data
     )
