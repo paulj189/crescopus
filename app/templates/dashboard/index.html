@@ -2,20 +2,29 @@
 {% block title %}Dashboard — Crescopus{% endblock %}
 {% block content %}
 <h1>Welcome, {{ profile.full_name }}</h1>
+<svg class="dashboard-flourish" width="180" height="20" viewBox="0 0 180 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path d="M2 10 C40 -4,60 24,98 10 C130 -2,150 20,178 8"/>
+</svg>
 
-{% if received_requests or formalise_waiting %}
+{% if received_requests or formalise_waiting or unread_partnerships %}
 <h2>Needs your attention</h2>
 <div class="card-list">
   {% for r in received_requests %}
-    <a class="card" href="{{ url_for('connection_requests.respond', request_id=r.id) }}">
-      <span class="tag tag-grower">Connection request</span>
+    <a class="card accent-grower" href="{{ url_for('connection_requests.respond', request_id=r.id) }}">
+      <span class="status-badge status-trial">Connection request</span>
       <p>{{ r.message }}</p>
     </a>
   {% endfor %}
   {% for p in formalise_waiting %}
-    <a class="card" href="{{ url_for('partnerships.detail', partnership_id=p.id) }}">
-      <span class="tag tag-builder">Formalise proposed</span>
+    <a class="card accent-builder" href="{{ url_for('partnerships.detail', partnership_id=p.id) }}">
+      <span class="status-badge status-formalised">Formalise proposed</span>
       <h3>{{ p.listing_title }}</h3>
+    </a>
+  {% endfor %}
+  {% for p in unread_partnerships %}
+    <a class="card accent-pact" href="{{ url_for('partnerships.detail', partnership_id=p.id) }}">
+      <span class="status-badge status-trial">New message — {{ p.listing_title }}</span>
+      <p>{{ p.unread_message.body }}</p>
     </a>
   {% endfor %}
 </div>
@@ -26,12 +35,12 @@
 <a href="{{ url_for('listings.new') }}"><button>New listing</button></a>
 <div class="card-list">
   {% for listing in listings %}
-    <div class="card">
+    <div class="card accent-builder">
       <a href="{{ url_for('listings.detail', listing_id=listing.id) }}"><h3>{{ listing.title }}</h3></a>
       <a href="{{ url_for('listings.edit', listing_id=listing.id) }}">Edit listing</a>
     </div>
   {% else %}
-    <div class="empty">You haven't listed an app yet.</div>
+    <div class="empty-cta">Nothing here yet — <a href="{{ url_for('listings.new') }}">list your first app</a> to get started.</div>
   {% endfor %}
 </div>
 {% endif %}
@@ -39,12 +48,13 @@
 <h2>CrescoPacts</h2>
 <div class="card-list">
   {% for p in partnerships %}
-    <a class="card" href="{{ url_for('partnerships.detail', partnership_id=p.id) }}">
-      <span class="tag {% if p.status == 'formalised' %}tag-builder{% endif %}">{{ p.status }}</span>
+    <a class="card accent-pact" href="{{ url_for('partnerships.detail', partnership_id=p.id) }}">
+      <span class="status-badge status-{{ p.status }}">{{ p.status }}</span>
+      {% if p.unread_message %}<span class="unread-dot" title="New message"></span>{% endif %}
       <h3>{{ p.listing_title }}</h3>
     </a>
   {% else %}
-    <div class="empty">No CrescoPacts yet.</div>
+    <div class="empty-cta">No CrescoPacts yet — connect with a {{ 'grower' if profile.is_developer else 'builder' }} to start one.</div>
   {% endfor %}
 </div>
 
@@ -52,7 +62,7 @@
 <h2>Connection requests you've sent</h2>
 <div class="card-list">
   {% for r in sent_requests %}
-    <div class="card">
+    <div class="card accent-grower">
       <h3 class="text-grower">{{ r.status }}</h3>
       <p>{{ r.message }}</p>
       {% if r.status == 'rejected' and r.reject_reason %}<p>Reason: {{ r.reject_reason }}</p>{% endif %}

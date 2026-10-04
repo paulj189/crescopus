@@ -31,7 +31,12 @@ def create_app():
 
     @app.context_processor
     def inject_nav_context():
-        from app.utils import current_profile, get_pending_received_requests, get_formalise_waiting_on_me
+        from app.utils import (
+            current_profile,
+            get_pending_received_requests,
+            get_formalise_waiting_on_me,
+            get_unread_partnerships,
+        )
         from app.extensions import get_supabase
 
         profile = current_profile()
@@ -40,7 +45,8 @@ def create_app():
             supabase = get_supabase()
             received = get_pending_received_requests(supabase, profile)
             formalise_waiting = get_formalise_waiting_on_me(supabase, profile)
-            attention_count = len(received) + len(formalise_waiting)
+            unread = get_unread_partnerships(supabase, profile)
+            attention_count = len(received) + len(formalise_waiting) + len(unread)
         return dict(nav_profile=profile, attention_count=attention_count)
 
     return app

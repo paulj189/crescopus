@@ -1,6 +1,12 @@
 from flask import Blueprint, render_template, redirect, url_for, flash
 from app.extensions import get_supabase
-from app.utils import login_required, current_profile, get_pending_received_requests, get_formalise_waiting_on_me
+from app.utils import (
+    login_required,
+    current_profile,
+    get_pending_received_requests,
+    get_formalise_waiting_on_me,
+    get_unread_partnerships,
+)
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard", template_folder="../templates/dashboard")
 
@@ -47,10 +53,15 @@ def index():
     if listing_ids:
         rows = supabase.table("listings").select("id,title").in_("id", listing_ids).execute().data
         listings_by_id = {row["id"]: row["title"] for row in rows}
+
+    unread = get_unread_partnerships(supabase, profile)
     for p in partnerships:
         p["listing_title"] = listings_by_id.get(p["listing_id"], "")
+        p["unread_message"] = unread.get(p["id"])
     for p in formalise_waiting:
         p["listing_title"] = listings_by_id.get(p["listing_id"], "")
+
+    unread_partnerships = [p for p in partnerships if p["unread_message"]]
 
     return render_template(
         "dashboard/index.html",
@@ -60,4 +71,5 @@ def index():
         received_requests=received_requests,
         formalise_waiting=formalise_waiting,
         partnerships=partnerships,
+        unread_partnerships=unread_partnerships,
     )

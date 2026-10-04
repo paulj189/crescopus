@@ -3,7 +3,14 @@
 {% block content %}
 <span class="tag tag-grower">Grower</span>
 <h1>{{ grower.full_name }}</h1>
-<p>{{ grower.bio or "This grower hasn't added a bio yet." }}</p>
+{% if grower.hero_image_url %}
+  <img src="{{ grower.hero_image_url }}" alt="{{ grower.full_name }}" style="max-width:100%;border-radius:8px;margin:12px 0;">
+{% endif %}
+{% if grower.pitch_html %}
+  <div class="listing-pitch">{{ grower.pitch_html | safe }}</div>
+{% else %}
+  <p>{{ grower.bio or "This grower hasn't added a bio yet." }}</p>
+{% endif %}
 
 {% if is_builder_viewer %}
   <h2>Connect on one of your listings</h2>

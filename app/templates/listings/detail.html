@@ -4,13 +4,13 @@
 <span class="tag">{{ listing.category }}</span>
 <h1>{{ listing.title }}</h1>
 <p>{{ listing.tagline }}</p>
-<p>{{ listing.description }}</p>
-{% if listing.store_urls %}
-  <p class="link-row">
-    {% if listing.store_urls.web %}<a href="{{ listing.store_urls.web }}" target="_blank" rel="noopener noreferrer">Website →</a>{% endif %}
-    {% if listing.store_urls.ios %}<a href="{{ listing.store_urls.ios }}" target="_blank" rel="noopener noreferrer">App Store →</a>{% endif %}
-    {% if listing.store_urls.android %}<a href="{{ listing.store_urls.android }}" target="_blank" rel="noopener noreferrer">Google Play →</a>{% endif %}
-  </p>
+{% if listing.hero_image_url %}
+  <img src="{{ listing.hero_image_url }}" alt="{{ listing.title }} hero image" style="max-width:100%;border-radius:8px;margin:12px 0;">
+{% endif %}
+{% if listing.pitch_html %}
+  <div class="listing-pitch">{{ listing.pitch_html | safe }}</div>
+{% else %}
+  <p>{{ listing.description }}</p>
 {% endif %}
 <p><a href="{{ url_for('builders.detail', builder_id=listing.developer_id) }}">View builder profile →</a></p>
 

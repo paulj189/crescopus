@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.extensions import get_supabase
-from app.utils import login_required, current_profile
+from app.utils import login_required, current_profile, mark_partnership_read
 
 partnerships_bp = Blueprint(
     "partnerships", __name__, url_prefix="/partnerships", template_folder="../templates/partnerships"
@@ -57,6 +57,8 @@ def detail(partnership_id):
         .execute()
         .data
     )
+
+    mark_partnership_read(supabase, partnership_id, profile["id"])
 
     return render_template(
         "partnerships/detail.html",

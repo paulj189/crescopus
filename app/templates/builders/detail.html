@@ -3,7 +3,14 @@
 {% block content %}
 <span class="tag tag-builder">Builder</span>
 <h1>{{ builder.full_name }}</h1>
-<p>{{ builder.bio or "This builder hasn't added a bio yet." }}</p>
+{% if builder.hero_image_url %}
+  <img src="{{ builder.hero_image_url }}" alt="{{ builder.full_name }}" style="max-width:100%;border-radius:8px;margin:12px 0;">
+{% endif %}
+{% if builder.pitch_html %}
+  <div class="listing-pitch">{{ builder.pitch_html | safe }}</div>
+{% else %}
+  <p>{{ builder.bio or "This builder hasn't added a bio yet." }}</p>
+{% endif %}
 
 <h2>Listings</h2>
 <div class="card-list">

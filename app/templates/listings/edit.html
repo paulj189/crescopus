@@ -5,11 +5,19 @@
 <form method="POST">
   <div><label for="title">Title</label><input type="text" id="title" name="title" value="{{ listing.title }}" required></div>
   <div><label for="tagline">Tagline</label><input type="text" id="tagline" name="tagline" value="{{ listing.tagline or '' }}"></div>
-  <div><label for="description">Description</label><textarea id="description" name="description">{{ listing.description or '' }}</textarea></div>
+  <div>
+    <label>Thumbnail image <span style="color:var(--muted);font-weight:normal;">(shown on browse cards)</span></label>
+    <div id="hero-preview">{% if listing.hero_image_url %}<img src="{{ listing.hero_image_url }}" alt="" style="max-width:180px;display:block;margin-bottom:8px;">{% endif %}</div>
+    <input type="file" id="hero-file-input" accept="image/jpeg,image/png,image/webp">
+    <input type="hidden" id="hero_image_url" name="hero_image_url" value="{{ listing.hero_image_url or '' }}">
+    <p id="hero-upload-message" style="color:var(--muted);"></p>
+  </div>
+  <div>
+    <label for="pitch_html">Your pitch <span style="color:var(--muted);font-weight:normal;">(text, images, fonts — build your advert)</span></label>
+    <textarea id="pitch-editor-textarea"></textarea>
+    <input type="hidden" id="pitch_html" name="pitch_html" value="{{ listing.pitch_html or '' }}">
+  </div>
   <div><label for="category">Category</label><input type="text" id="category" name="category" value="{{ listing.category or '' }}"></div>
-  <div><label for="app_url_web">Website link <span style="color:var(--muted);font-weight:normal;">(optional)</span></label><input type="url" id="app_url_web" name="app_url_web" placeholder="https://" value="{{ listing.store_urls.web or '' }}" onfocus="var f=this;setTimeout(function(){f.setSelectionRange(f.value.length,f.value.length)},0)"></div>
-  <div><label for="app_url_ios">App Store link <span style="color:var(--muted);font-weight:normal;">(optional)</span></label><input type="url" id="app_url_ios" name="app_url_ios" placeholder="https://apps.apple.com/..." value="{{ listing.store_urls.ios or '' }}" onfocus="var f=this;setTimeout(function(){f.setSelectionRange(f.value.length,f.value.length)},0)"></div>
-  <div><label for="app_url_android">Google Play link <span style="color:var(--muted);font-weight:normal;">(optional)</span></label><input type="url" id="app_url_android" name="app_url_android" placeholder="https://play.google.com/..." value="{{ listing.store_urls.android or '' }}" onfocus="var f=this;setTimeout(function(){f.setSelectionRange(f.value.length,f.value.length)},0)"></div>
   <div>
     <label for="platform">Platform</label>
     <select id="platform" name="platform">
@@ -26,4 +34,37 @@
   <button type="submit">Save changes</button>
 </form>
 <p><a href="{{ url_for('listings.delete', listing_id=listing.id) }}">Delete this listing</a></p>
+
+<script type="module">
+  import { mountPitchEditor } from "{{ url_for('static', filename='js/pitch-editor.js') }}";
+  import { uploadListingImage } from "{{ url_for('static', filename='js/image-uploader.js') }}";
+
+  const LISTING_ID = "{{ listing.id }}";
+  const supabase = window.supabaseClient;
+
+  async function uploadImage(file) {
+    return uploadListingImage(supabase, file, LISTING_ID, (msg) => window.alert(msg));
+  }
+
+  const pitchHidden = document.getElementById('pitch_html');
+  mountPitchEditor(document.getElementById('pitch-editor-textarea'), pitchHidden.value, (html) => {
+    pitchHidden.value = html;
+  }, uploadImage);
+
+  const heroInput = document.getElementById('hero-file-input');
+  const heroHidden = document.getElementById('hero_image_url');
+  const heroMsg = document.getElementById('hero-upload-message');
+  const heroPreview = document.getElementById('hero-preview');
+  heroInput.addEventListener('change', async () => {
+    const file = heroInput.files[0];
+    if (!file) return;
+    heroMsg.textContent = 'Uploading…';
+    const url = await uploadListingImage(supabase, file, LISTING_ID, (msg) => { heroMsg.textContent = msg; });
+    if (url) {
+      heroHidden.value = url;
+      heroPreview.innerHTML = `<img src="${url}" alt="" style="max-width:180px;display:block;margin-bottom:8px;">`;
+      heroMsg.textContent = 'Thumbnail updated — click "Save changes" to keep it.';
+    }
+  });
+</script>
 {% endblock %}
