@@ -6,4 +6,5 @@ PyJWT[crypto]
 gunicorn==22.0.0
 email-validator==2.2.0
 requests==2.32.3
+anthropic
 modcontent @ git+https://${MODCONTENT_TOKEN}@github.com/paulj189/modcontent.git@v0.2.0
