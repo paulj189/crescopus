@@ -6,4 +6,5 @@ class Config:
     SUPABASE_URL = os.environ.get("SUPABASE_URL")
     SUPABASE_PUBLISHABLE_KEY = os.environ.get("SUPABASE_PUBLISHABLE_KEY")
     SUPABASE_SECRET_KEY = os.environ.get("SUPABASE_SECRET_KEY")
+    MC_TENANT_ID = os.environ.get("MC_TENANT_ID")
     REVENUECAT_API_KEY = os.environ.get("REVENUECAT_API_KEY")
