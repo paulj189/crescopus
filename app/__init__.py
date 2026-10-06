@@ -48,6 +48,7 @@ def create_app():
     app.register_blueprint(
         create_blueprint(mc_store, Settings(
             identity_loader=mc_identity,
+            allow_self_approval=os.environ.get("MC_ALLOW_SELF_APPROVAL") == "1",
             tenant_resolver=lambda request: app.config["MC_TENANT_ID"],
             image_base_url=f"{app.config['SUPABASE_URL']}/storage/v1/object/public/mc-images/",
             default_tenant_settings=TenantSettings(allow_anonymous=False, llm_calls_per_hour=20),
