@@ -307,3 +307,11 @@ form.cu-editor{display:block;max-width:none;margin:0;}
   .cu-edit-two,.cu-field-row{grid-template-columns:1fr;}
   .cu-edit-panel{padding:16px;}
 }
+
+/* ---------- popup loading state ---------- */
+.cu-profile-loading .cu-loading-head{padding:8px 24px 0;}
+.cu-profile-loading .cu-loading{padding:32px 24px;}
+.cu-loading p{margin:0 0 16px;}
+.cu-loading-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;}
+.cu-loading-actions .cu-btn{align-self:auto;}
+@media (max-width:639px){ .cu-profile-loading .cu-loading-head{padding:8px 18px 0;} }

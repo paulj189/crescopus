@@ -93,9 +93,11 @@ def create_app():
         )
         from app.extensions import get_supabase
 
+        from flask import request
         profile = current_profile()
         attention_count = 0
-        if profile:
+        is_popup = request.args.get("partial") == "1" or request.headers.get("X-Requested-With") == "fetch"
+        if profile and not is_popup:
             supabase = get_supabase()
             received = get_pending_received_requests(supabase, profile)
             formalise_waiting = get_formalise_waiting_on_me(supabase, profile)

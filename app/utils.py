@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import session, redirect, url_for
+from flask import session, redirect, url_for, g
 from app.extensions import get_supabase
 
 
@@ -13,13 +13,14 @@ def login_required(view):
 
 
 def current_profile():
+    """The signed-in user's profile. Looked up once per request and reused."""
     if "user_id" not in session:
         return None
-    supabase = get_supabase()
-    res = supabase.table("profiles").select("*").eq("id", session["user_id"]).execute()
-    if not res.data:
-        return None
-    return res.data[0]
+    if "current_profile" not in g:
+        supabase = get_supabase()
+        res = supabase.table("profiles").select("*").eq("id", session["user_id"]).execute()
+        g.current_profile = res.data[0] if res.data else None
+    return g.current_profile
 
 
 def get_pending_received_requests(supabase, profile):

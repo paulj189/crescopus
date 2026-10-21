@@ -154,13 +154,15 @@ def _render_detail(partial_template, **ctx):
 @browse_bp.route("/app/<listing_id>")
 def app_detail(listing_id):
     supabase = get_supabase()
-    rows = supabase.table("listings").select("*").eq("id", listing_id).execute().data
+    # One round trip: the app, its builder and the builder's badges together.
+    rows = (supabase.table("listings")
+            .select("*, profiles(*, profile_verifications(kind))")
+            .eq("id", listing_id).execute().data)
     if not rows:
         abort(404)
     listing = rows[0]
-    builder = supabase.table("profiles").select("*").eq("id", listing["developer_id"]).execute().data
-    builder = builder[0] if builder else {"id": listing["developer_id"], "full_name": "Unknown"}
-    badges = get_verifications(supabase, [builder["id"]]).get(builder["id"], set())
+    builder = listing.pop("profiles", None) or {"id": listing["developer_id"], "full_name": "Unknown"}
+    badges = {v["kind"] for v in builder.pop("profile_verifications", None) or []}
 
     viewer = current_profile()
     action = {"kind": "login"}
@@ -200,11 +202,12 @@ def app_detail(listing_id):
 @browse_bp.route("/grower/<grower_id>")
 def grower_detail(grower_id):
     supabase = get_supabase()
-    rows = supabase.table("profiles").select("*").eq("id", grower_id).eq("is_grower", True).execute().data
+    rows = (supabase.table("profiles").select("*, profile_verifications(kind)")
+            .eq("id", grower_id).eq("is_grower", True).execute().data)
     if not rows:
         abort(404)
     grower = rows[0]
-    badges = get_verifications(supabase, [grower_id]).get(grower_id, set())
+    badges = {v["kind"] for v in grower.pop("profile_verifications", None) or []}
 
     viewer = current_profile()
     action = {"kind": "login"}
