@@ -45,7 +45,7 @@
         {% elif action.kind == "need_listing" %}
           <a class="cu-btn cu-btn-primary" href="{{ url_for('listings.new') }}">List your app first</a>
         {% elif action.kind == "owner" %}
-          <a class="cu-btn cu-btn-primary" href="{{ url_for('settings.index') }}">Edit your profile</a>
+          <a class="cu-btn cu-btn-primary" href="{{ url_for('browse.edit_my_card') }}">Edit card</a>
         {% elif action.kind == "login" %}
           <a class="cu-btn cu-btn-primary" href="{{ url_for('auth.login') }}">Log in to start a CrescoPlan</a>
         {% else %}

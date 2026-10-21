@@ -65,8 +65,8 @@
         {% elif action.kind == "open" %}
           <a class="cu-btn cu-btn-primary" href="{{ url_for('partnerships.detail', partnership_id=action.partnership_id) }}">Open your CrescoPlan</a>
         {% elif action.kind == "owner" %}
-          <a class="cu-btn cu-btn-primary" href="{{ url_for('listings.edit', listing_id=listing.id) }}">Edit this listing</a>
-          <a class="cu-btn cu-btn-secondary" href="{{ url_for('listings.detail', listing_id=listing.id) }}">Requests and settings</a>
+          <a class="cu-btn cu-btn-primary" href="{{ url_for('browse.edit_app_card', listing_id=listing.id) }}">Edit card</a>
+          <a class="cu-btn cu-btn-secondary" href="{{ url_for('listings.detail', listing_id=listing.id) }}">Connection requests</a>
         {% elif action.kind == "login" %}
           <a class="cu-btn cu-btn-primary" href="{{ url_for('auth.login') }}">Log in to start a CrescoPlan</a>
         {% else %}

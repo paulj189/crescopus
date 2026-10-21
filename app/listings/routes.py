@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.extensions import get_supabase
-from app.utils import login_required, current_profile, clean_list_html, clean_pitch_html, tags_from_form
-from app.constants import BUILDER_NEEDS_TAGS, BUILDER_OFFERS_TAGS
+from app.utils import login_required, current_profile
 
 listings_bp = Blueprint("listings", __name__, url_prefix="/listings", template_folder="../templates/listings")
 
@@ -60,8 +59,8 @@ def new():
             "platform": request.form.get("platform"),
         }).execute()
         listing_id = result.data[0]["id"]
-        flash("Listing published.", "success")
-        return redirect(url_for("listings.detail", listing_id=listing_id))
+        flash("Listing published. Now finish your card: add a photo, Needs and Offers.", "success")
+        return redirect(url_for("browse.edit_app_card", listing_id=listing_id))
 
     return render_template("listings/new.html")
 
@@ -92,39 +91,8 @@ def delete(listing_id):
     return render_template("listings/delete.html", listing=listing)
 
 
-@listings_bp.route("/<listing_id>/edit", methods=["GET", "POST"])
+@listings_bp.route("/<listing_id>/edit")
 @login_required
 def edit(listing_id):
-    profile = current_profile()
-    supabase = get_supabase()
-    listing = supabase.table("listings").select("*").eq("id", listing_id).single().execute().data
-
-    if not listing or not profile or listing["developer_id"] != profile["id"]:
-        flash("Only the listing's developer can edit it.", "error")
-        return redirect(url_for("dashboard.index"))
-
-    if request.method == "POST":
-        supabase.table("listings").update({
-            "title": request.form["title"],
-            "tagline": request.form.get("tagline"),
-            "description": request.form.get("description"),
-            "pitch_html": clean_pitch_html(request.form.get("pitch_html")),
-            "hero_image_url": request.form.get("hero_image_url") or None,
-            "needs_html": clean_list_html(request.form.get("needs_html")),
-            "offers_html": clean_list_html(request.form.get("offers_html")),
-            "needs_tags": tags_from_form(request.form, "needs_tags", BUILDER_NEEDS_TAGS),
-            "offers_tags": tags_from_form(request.form, "offers_tags", BUILDER_OFFERS_TAGS),
-            "category": request.form.get("category"),
-            "platform": request.form.get("platform"),
-            "revenuecat_project_key": request.form.get("revenuecat_project_key") or None,
-        }).eq("id", listing_id).execute()
-        flash("Listing updated.", "success")
-        return redirect(url_for("listings.detail", listing_id=listing_id))
-
-    return render_template(
-        "listings/edit.html", listing=listing,
-        needs_options=BUILDER_NEEDS_TAGS, offers_options=BUILDER_OFFERS_TAGS,
-    )
-
-
-
+    """Old edit page — editing now happens on the app's card."""
+    return redirect(url_for("browse.edit_app_card", listing_id=listing_id))

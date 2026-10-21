@@ -24,9 +24,10 @@ const FONT_FORMATS = CRESCOPUS_FONTS.map(f => `${f.label}=${f.value}`).join(';')
  * @param {(html: string) => void} onChange - called on content change
  * @param {(file: File|Blob) => Promise<string|null>} uploadImage - uploads a
  *   file and resolves to its public URL (or null on failure)
+ * @param {{height?: number}} [opts] - optional settings, e.g. a shorter editor
  * @returns {Promise} resolves once TinyMCE has initialized
  */
-export function mountPitchEditor(textareaEl, initialHtml, onChange, uploadImage) {
+export function mountPitchEditor(textareaEl, initialHtml, onChange, uploadImage, opts = {}) {
     if (!textareaEl.id) {
         textareaEl.id = 'pitch-editor-' + Math.random().toString(36).slice(2);
     }
@@ -35,7 +36,7 @@ export function mountPitchEditor(textareaEl, initialHtml, onChange, uploadImage)
     return tinymce.init({
         target: textareaEl,
         license_key: 'gpl',
-        height: 420,
+        height: opts.height || 420,
         menubar: false,
         branding: false,
         plugins: 'link image lists',

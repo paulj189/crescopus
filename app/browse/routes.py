@@ -7,10 +7,13 @@ links still work without JavaScript and can be shared or bookmarked.
 import re
 import zlib
 
-from flask import Blueprint, render_template, request, url_for, abort
+from flask import Blueprint, render_template, request, url_for, abort, redirect, flash
 
 from app.extensions import get_supabase
-from app.utils import current_profile, get_verifications, get_id_verified_ids
+from app.utils import (
+    current_profile, get_verifications, get_id_verified_ids, login_required,
+    clean_list_html, clean_pitch_html, tags_from_form,
+)
 from app.constants import (
     TAG_LABELS,
     BUILDER_NEEDS_TAGS, BUILDER_OFFERS_TAGS,
@@ -225,4 +228,122 @@ def grower_detail(grower_id):
         badges=[VERIFICATION_LABELS[k] for k in VERIFICATION_LABELS if k in badges],
         id_verified="id" in badges,
         action=action, my_listings=my_listings,
+    )
+
+
+# ---------- Edit card (owner only) ----------
+# One editor laid out like the popup, with a live preview of the browse card.
+# Growers edit their own card; builders edit one card per app.
+
+PLATFORMS = [("web", "Web"), ("ios", "iOS"), ("android", "Android"), ("multi", "Multiple")]
+
+
+def _clean_url(url):
+    url = (url or "").strip()
+    return url if url.startswith(("https://", "http://")) else None
+
+
+@browse_bp.route("/card/edit", methods=["GET", "POST"])
+@login_required
+def edit_my_card():
+    """A grower's own card. Builders are sent to their app cards instead."""
+    profile = current_profile()
+    if not profile:
+        abort(403)
+    if not profile.get("is_grower"):
+        supabase = get_supabase()
+        apps = (supabase.table("listings").select("id").eq("developer_id", profile["id"])
+                .order("created_at", desc=True).limit(1).execute().data)
+        if apps:
+            return redirect(url_for("browse.edit_app_card", listing_id=apps[0]["id"]))
+        flash("Your card is made from an app listing. List your app to create one.", "success")
+        return redirect(url_for("listings.new"))
+
+    if request.method == "POST":
+        name = (request.form.get("full_name") or "").strip()
+        if not name:
+            flash("Please add your name.", "error")
+            return redirect(url_for("browse.edit_my_card"))
+        get_supabase().table("profiles").update({
+            "full_name": name[:120],
+            "bio": (request.form.get("bio") or "").strip()[:200] or None,
+            "pitch_html": clean_pitch_html(request.form.get("pitch_html")),
+            "hero_image_url": _clean_url(request.form.get("hero_image_url")),
+            "needs_html": clean_list_html(request.form.get("needs_html")),
+            "offers_html": clean_list_html(request.form.get("offers_html")),
+            "needs_tags": tags_from_form(request.form, "needs_tags", GROWER_NEEDS_TAGS),
+            "offers_tags": tags_from_form(request.form, "offers_tags", GROWER_OFFERS_TAGS),
+        }).eq("id", profile["id"]).execute()
+        flash("Card saved.", "success")
+        return redirect(url_for("browse.edit_my_card"))
+
+    badges = get_verifications(get_supabase(), [profile["id"]]).get(profile["id"], set())
+    return render_template(
+        "browse/edit_card.html", kind="grower",
+        person=profile, listing=None,
+        needs_options=GROWER_NEEDS_TAGS, offers_options=GROWER_OFFERS_TAGS,
+        id_verified="id" in badges,
+        tint=_tint(profile["id"]), view_url=url_for("browse.grower_detail", grower_id=profile["id"]),
+    )
+
+
+@browse_bp.route("/app/<listing_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_app_card(listing_id):
+    profile = current_profile()
+    supabase = get_supabase()
+    rows = supabase.table("listings").select("*").eq("id", listing_id).execute().data
+    if not rows or not profile or rows[0]["developer_id"] != profile["id"]:
+        flash("Only the app's builder can edit its card.", "error")
+        return redirect(url_for("browse.index"))
+    listing = rows[0]
+
+    if request.method == "POST":
+        name = (request.form.get("full_name") or "").strip()
+        title = (request.form.get("title") or "").strip()
+        if not name or not title:
+            flash("Please add your name and the app's name.", "error")
+            return redirect(url_for("browse.edit_app_card", listing_id=listing_id))
+        supabase.table("profiles").update({
+            "full_name": name[:120],
+            "pitch_html": clean_pitch_html(request.form.get("person_pitch_html")),
+            "hero_image_url": _clean_url(request.form.get("person_image_url")),
+        }).eq("id", profile["id"]).execute()
+
+        store_urls = dict(listing.get("store_urls") or {})
+        app_url = _clean_url(request.form.get("app_url"))
+        if app_url:
+            store_urls["website"] = app_url
+        else:
+            store_urls.pop("website", None)
+        platform = request.form.get("platform") or listing.get("platform")
+        supabase.table("listings").update({
+            "title": title[:120],
+            "tagline": (request.form.get("tagline") or "").strip()[:160] or None,
+            "category": (request.form.get("category") or "").strip()[:60] or None,
+            "platform": platform,
+            "hero_image_url": _clean_url(request.form.get("app_image_url")),
+            "pitch_html": clean_pitch_html(request.form.get("app_pitch_html")),
+            "store_urls": store_urls,
+            "needs_html": clean_list_html(request.form.get("needs_html")),
+            "offers_html": clean_list_html(request.form.get("offers_html")),
+            "needs_tags": tags_from_form(request.form, "needs_tags", BUILDER_NEEDS_TAGS),
+            "offers_tags": tags_from_form(request.form, "offers_tags", BUILDER_OFFERS_TAGS),
+            "revenuecat_project_key": (request.form.get("revenuecat_project_key") or "").strip() or None,
+        }).eq("id", listing_id).execute()
+        flash("Card saved.", "success")
+        return redirect(url_for("browse.edit_app_card", listing_id=listing_id))
+
+    badges = get_verifications(supabase, [profile["id"]]).get(profile["id"], set())
+    platforms = list(PLATFORMS)
+    if listing.get("platform") and listing["platform"] not in dict(PLATFORMS):
+        platforms.insert(0, (listing["platform"], listing["platform"]))
+    return render_template(
+        "browse/edit_card.html", kind="app",
+        person=profile, listing=listing, platforms=platforms,
+        app_url=(listing.get("store_urls") or {}).get("website", ""),
+        needs_options=BUILDER_NEEDS_TAGS, offers_options=BUILDER_OFFERS_TAGS,
+        id_verified="id" in badges,
+        tint=_tint(listing_id), person_tint=_tint(profile["id"]),
+        view_url=url_for("browse.app_detail", listing_id=listing_id),
     )
