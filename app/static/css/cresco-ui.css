@@ -315,3 +315,15 @@ form.cu-editor{display:block;max-width:none;margin:0;}
 .cu-loading-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;}
 .cu-loading-actions .cu-btn{align-self:auto;}
 @media (max-width:639px){ .cu-profile-loading .cu-loading-head{padding:8px 18px 0;} }
+
+/* ---------- show-password eye ---------- */
+.cu-pw{position:relative;display:block;}
+.cu-pw input{padding-right:52px;}
+.cu-pw-toggle,button.cu-pw-toggle{
+  position:absolute;top:50%;right:4px;transform:translateY(-50%);
+  width:44px;height:44px;padding:0;border:0;border-radius:var(--cu-radius-sm);
+  background:transparent;color:var(--cu-muted);display:flex;align-items:center;justify-content:center;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.cu-pw-toggle:hover,button.cu-pw-toggle:hover{background:var(--panel-2);color:var(--ink);}
+.cu-pw-toggle svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
