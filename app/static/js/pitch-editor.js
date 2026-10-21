@@ -53,3 +53,31 @@ export function mountPitchEditor(textareaEl, initialHtml, onChange, uploadImage)
         },
     });
 }
+
+/**
+ * A smaller editor for the Needs / Offers boxes: bold, italics, bullet lists, links.
+ * @param {HTMLTextAreaElement} textareaEl
+ * @param {string} initialHtml
+ * @param {(html: string) => void} onChange
+ */
+export function mountListEditor(textareaEl, initialHtml, onChange) {
+    if (!textareaEl.id) {
+        textareaEl.id = 'list-editor-' + Math.random().toString(36).slice(2);
+    }
+    textareaEl.value = initialHtml || '';
+
+    return tinymce.init({
+        target: textareaEl,
+        license_key: 'gpl',
+        height: 220,
+        menubar: false,
+        branding: false,
+        statusbar: false,
+        plugins: 'link lists',
+        link_assume_external_targets: true,
+        toolbar: 'bold italic | bullist numlist | link | removeformat',
+        setup: (editor) => {
+            editor.on('change keyup undo redo', () => onChange(editor.getContent()));
+        },
+    });
+}

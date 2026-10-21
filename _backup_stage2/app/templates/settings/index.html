@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Settings — Crescopus{% endblock %}
+{% block content %}
+<h1>Profile settings</h1>
+<p>
+  {% if profile.is_developer %}
+    <span class="tag tag-builder">Builder account</span>
+  {% elif profile.is_grower %}
+    <span class="tag tag-grower">Grower account</span>
+  {% endif %}
+</p>
+<form method="POST">
+  <div>
+    <label for="full_name">Full name</label>
+    <input type="text" id="full_name" name="full_name" value="{{ profile.full_name }}">
+  </div>
+  <div>
+    <label for="country">Country</label>
+    <select id="country" name="country" required>
+      <option value="" disabled {% if not profile.country %}selected{% endif %}>Select your country</option>
+      {% for code, name in countries %}
+        <option value="{{ code }}" {% if profile.country == code %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label>Thumbnail image <span style="color:var(--muted);font-weight:normal;">(shown on browse cards)</span></label>
+    <div id="hero-preview">{% if profile.hero_image_url %}<img src="{{ profile.hero_image_url }}" alt="" style="max-width:180px;display:block;margin-bottom:8px;">{% endif %}</div>
+    <input type="file" id="hero-file-input" accept="image/jpeg,image/png,image/webp">
+    <input type="hidden" id="hero_image_url" name="hero_image_url" value="{{ profile.hero_image_url or '' }}">
+    <p id="hero-upload-message" style="color:var(--muted);"></p>
+  </div>
+  <div>
+    <label for="pitch_html">Your pitch <span style="color:var(--muted);font-weight:normal;">(text, images, fonts — public, helps others decide whether to reach out)</span></label>
+    <textarea id="pitch-editor-textarea"></textarea>
+    <input type="hidden" id="pitch_html" name="pitch_html" value="{{ profile.pitch_html or '' }}">
+  </div>
+  <button type="submit">Save</button>
+</form>
+
+<script type="module">
+  import { mountPitchEditor } from "{{ url_for('static', filename='js/pitch-editor.js') }}";
+  import { uploadListingImage } from "{{ url_for('static', filename='js/image-uploader.js') }}";
+
+  const PROFILE_ID = "{{ profile.id }}";
+  const supabase = window.supabaseClient;
+
+  async function uploadImage(file) {
+    return uploadListingImage(supabase, file, PROFILE_ID, (msg) => window.alert(msg));
+  }
+
+  const pitchHidden = document.getElementById('pitch_html');
+  mountPitchEditor(document.getElementById('pitch-editor-textarea'), pitchHidden.value, (html) => {
+    pitchHidden.value = html;
+  }, uploadImage);
+
+  const heroInput = document.getElementById('hero-file-input');
+  const heroHidden = document.getElementById('hero_image_url');
+  const heroMsg = document.getElementById('hero-upload-message');
+  const heroPreview = document.getElementById('hero-preview');
+  heroInput.addEventListener('change', async () => {
+    const file = heroInput.files[0];
+    if (!file) return;
+    heroMsg.textContent = 'Uploading…';
+    const url = await uploadListingImage(supabase, file, PROFILE_ID, (msg) => { heroMsg.textContent = msg; });
+    if (url) {
+      heroHidden.value = url;
+      heroPreview.innerHTML = `<img src="${url}" alt="" style="max-width:180px;display:block;margin-bottom:8px;">`;
+      heroMsg.textContent = 'Thumbnail updated — click "Save" to keep it.';
+    }
+  });
+</script>
+{% endblock %}

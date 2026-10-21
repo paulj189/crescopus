@@ -1,0 +1,60 @@
+{# Shared bits for browse cards and profile popups. #}
+
+{% macro verified_icon(size=16) -%}
+<svg class="cu-verified" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" role="img" aria-label="ID verified"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+{%- endmacro %}
+
+{% macro avatar(image, initials, tint, cls="") -%}
+{% if image %}
+  <img class="cu-avatar {{ cls }}" src="{{ image }}" alt="">
+{% else %}
+  <span class="cu-avatar {{ cls }}" style="background:{{ tint }}" aria-hidden="true">{{ initials }}</span>
+{% endif %}
+{%- endmacro %}
+
+{% macro tag_row(label, items, kind) -%}
+{% if items %}
+<div class="cu-tag-row">
+  <span class="cu-tag-label cu-{{ kind }}-ink">{{ label }}</span>
+  <span class="cu-tags">{% for t in items %}<span class="cu-tag cu-tag-{{ kind }}">{{ t }}</span>{% endfor %}</span>
+</div>
+{% endif %}
+{%- endmacro %}
+
+{% macro card(c) -%}
+<a class="cu-card" href="{{ c.url }}" data-popup>
+  <div class="cu-card-head">
+    {{ avatar(c.image, c.initials, c.tint, "cu-avatar-sq") }}
+    <div class="cu-card-title">
+      <span class="cu-card-name">{{ c.name }}{% if c.verified %} {{ verified_icon() }}{% endif %}</span>
+      <span class="cu-card-by">{{ c.by }}</span>
+    </div>
+  </div>
+  {% if c.pitch %}<p class="cu-card-pitch">{{ c.pitch }}</p>{% endif %}
+  <div class="cu-card-tags">
+    {{ tag_row("Needs", c.needs, "needs") }}
+    {{ tag_row("Offers", c.offers, "offers") }}
+  </div>
+</a>
+{%- endmacro %}
+
+{% macro needs_offers(needs_html, offers_html, needs_tags, offers_tags) -%}
+<section class="cu-box cu-box-needs">
+  <h3 class="cu-section-label cu-needs-ink">Needs</h3>
+  {% if needs_html %}<div class="cu-rich">{{ needs_html | clean_list | safe }}</div>
+  {% elif needs_tags %}<ul>{% for t in needs_tags %}<li>{{ t }}</li>{% endfor %}</ul>
+  {% else %}<p class="cu-muted">Not added yet.</p>{% endif %}
+</section>
+<section class="cu-box cu-box-offers">
+  <h3 class="cu-section-label cu-offers-ink">Offers</h3>
+  {% if offers_html %}<div class="cu-rich">{{ offers_html | clean_list | safe }}</div>
+  {% elif offers_tags %}<ul>{% for t in offers_tags %}<li>{{ t }}</li>{% endfor %}</ul>
+  {% else %}<p class="cu-muted">Not added yet.</p>{% endif %}
+</section>
+{%- endmacro %}
+
+{% macro close_button() -%}
+<button type="button" class="cu-icon-btn cu-close" data-close aria-label="Close">
+  <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+</button>
+{%- endmacro %}

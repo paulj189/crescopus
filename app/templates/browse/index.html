@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "browse/_macros.html" import card %}
+{% block title %}{{ "Growers" if tab == "growers" else "Builders & apps" }} — Crescopus{% endblock %}
+{% block main_class %}app-main-wide{% endblock %}
+{% block content %}
+{% set filter_count = (needs | length) + (offers | length) + (1 if verified_only else 0) %}
+<div class="cu-browse">
+  <div class="cu-browse-head">
+    <h1>Browse</h1>
+    <nav class="cu-seg" aria-label="Browse">
+      <a href="{{ url_for('browse.index') }}" {% if tab == 'builders' %}aria-current="page"{% endif %}>Builders &amp; apps</a>
+      <a href="{{ url_for('browse.index', tab='growers') }}" {% if tab == 'growers' %}aria-current="page"{% endif %}>Growers</a>
+    </nav>
+  </div>
+
+  <form class="cu-browse-layout" method="get" action="{{ url_for('browse.index') }}" id="cu-filter-form">
+    {% if tab == 'growers' %}<input type="hidden" name="tab" value="growers">{% endif %}
+
+    <details class="cu-filters" open>
+      <summary class="cu-filters-toggle">Filters{% if filter_count %} ({{ filter_count }}){% endif %}</summary>
+      <div class="cu-filters-body">
+        <fieldset>
+          <legend class="cu-section-label">Trust</legend>
+          <label class="cu-check"><input type="checkbox" name="verified" value="1" {% if verified_only %}checked{% endif %}> ID verified only</label>
+        </fieldset>
+        <fieldset>
+          <legend class="cu-section-label cu-needs-ink">Needs</legend>
+          {% for slug, label in needs_options %}
+            <label class="cu-check"><input type="checkbox" name="need" value="{{ slug }}" {% if slug in needs %}checked{% endif %}> {{ label }}</label>
+          {% endfor %}
+        </fieldset>
+        <fieldset>
+          <legend class="cu-section-label cu-offers-ink">Offers</legend>
+          {% for slug, label in offers_options %}
+            <label class="cu-check"><input type="checkbox" name="offer" value="{{ slug }}" {% if slug in offers %}checked{% endif %}> {{ label }}</label>
+          {% endfor %}
+        </fieldset>
+        <div class="cu-filter-actions">
+          <button type="submit" class="cu-btn cu-btn-primary">Apply</button>
+          {% if filter_count or q %}<a class="cu-btn cu-btn-secondary" href="{{ url_for('browse.index', tab=tab if tab == 'growers' else None) }}">Clear</a>{% endif %}
+        </div>
+      </div>
+    </details>
+
+    <section class="cu-results" aria-live="polite">
+      <div class="cu-results-bar">
+        <label class="cu-search">
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <span class="cu-sr">Search</span>
+          <input type="search" name="q" value="{{ q }}" placeholder="{{ 'Search growers' if tab == 'growers' else 'Search apps, categories' }}">
+        </label>
+        <span class="cu-muted cu-small">{{ cards | length }} {{ "grower" if tab == "growers" else "app" }}{{ "" if cards | length == 1 else "s" }}</span>
+      </div>
+
+      {% if cards %}
+        <div class="cu-grid">
+          {% for c in cards %}{{ card(c) }}{% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-cta">Nothing matches yet.{% if filter_count or q %} Try removing a filter.{% endif %}</p>
+      {% endif %}
+    </section>
+  </form>
+</div>
+
+<dialog class="cu-dialog" id="cu-popup" aria-label="Profile">
+  <div class="cu-dialog-body"></div>
+</dialog>
+
+<script src="{{ url_for('static', filename='js/browse.js') }}" defer></script>
+{% endblock %}

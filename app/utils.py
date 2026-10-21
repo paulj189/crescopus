@@ -125,3 +125,69 @@ def mark_partnership_read(supabase, partnership_id, profile_id):
 def datetime_now_iso():
     from datetime import datetime, timezone
     return datetime.now(timezone.utc).isoformat()
+
+
+# ---------- Rich text cleaning ----------
+# Anything users type into a rich-text box is cleaned before it's saved or
+# shown, so nobody can slip scripts or tracking into someone else's page.
+import nh3
+
+_LIST_TAGS = {"p", "br", "ul", "ol", "li", "strong", "b", "em", "i", "a"}
+_PITCH_TAGS = _LIST_TAGS | {"h2", "h3", "span", "img", "blockquote"}
+_STYLE_PROPS = {"font-family", "font-weight", "font-style", "text-align", "text-decoration"}
+
+
+def clean_list_html(html):
+    """For Needs / Offers boxes: paragraphs, lists, bold, italics, links."""
+    if not html:
+        return None
+    cleaned = nh3.clean(html, tags=_LIST_TAGS, attributes={"a": {"href", "title"}},
+                        url_schemes={"http", "https", "mailto"}, link_rel="noopener noreferrer nofollow")
+    return cleaned.strip() or None
+
+
+def clean_pitch_html(html):
+    """For pitches: as above plus headings, images and font choices."""
+    if not html:
+        return ""
+    return nh3.clean(
+        html,
+        tags=_PITCH_TAGS,
+        attributes={"a": {"href", "title"}, "img": {"src", "alt", "width", "height"},
+                    "*": {"style"}},
+        url_schemes={"http", "https", "mailto"},
+        link_rel="noopener noreferrer nofollow",
+        filter_style_properties=_STYLE_PROPS,
+    )
+
+
+def tags_from_form(form, field, allowed):
+    """Checkbox values from a form, kept only if they're in the allowed (slug, label) list."""
+    allowed_slugs = {slug for slug, _ in allowed}
+    return [t for t in form.getlist(field) if t in allowed_slugs]
+
+
+# ---------- Trust badges ----------
+
+def get_verifications(supabase, profile_ids):
+    """{profile_id: set of verification kinds} for the given profiles."""
+    ids = [i for i in set(profile_ids) if i]
+    if not ids:
+        return {}
+    rows = (
+        supabase.table("profile_verifications")
+        .select("profile_id,kind")
+        .in_("profile_id", ids)
+        .execute()
+        .data
+    )
+    out = {}
+    for r in rows:
+        out.setdefault(r["profile_id"], set()).add(r["kind"])
+    return out
+
+
+def get_id_verified_ids(supabase):
+    """Profile ids holding an ID check — for the 'Verified only' filter."""
+    rows = supabase.table("profile_verifications").select("profile_id").eq("kind", "id").execute().data
+    return [r["profile_id"] for r in rows]

@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}{{ (listing.title if listing else grower.full_name) }} — Crescopus{% endblock %}
+{% block main_class %}app-main-wide{% endblock %}
+{% block content %}
+<div class="cu-page">
+  {% include partial_template %}
+</div>
+{% endblock %}

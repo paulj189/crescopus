@@ -10,6 +10,7 @@
 <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
 <script src="{{ url_for('static', filename='vendor/tinymce/tinymce.min.js') }}"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cresco-ui.css') }}">
 </head>
 <body>
 
@@ -114,23 +115,21 @@
       </svg>
     </a>
     {% if nav_profile %}
-      <a href="{{ url_for('listings.browse') }}" class="nav-cta nav-cta-apps">Apps</a>
-      <a href="{{ url_for('builders.browse') }}" class="nav-cta nav-cta-builders">Builders</a>
-      <a href="{{ url_for('growers.browse') }}" class="nav-cta nav-cta-growers">Growers</a>
+      <a href="{{ url_for('browse.index') }}" class="nav-cta nav-cta-apps">Builders &amp; apps</a>
+      <a href="{{ url_for('browse.index', tab='growers') }}" class="nav-cta nav-cta-growers">Growers</a>
       <a href="{{ url_for('dashboard.index') }}">Dashboard{% if attention_count %} <span class="nav-badge">{{ attention_count }}</span>{% endif %}</a>
       <a href="{{ url_for('settings.index') }}">Settings</a>
       <a href="{{ url_for('auth.logout') }}">Log out</a>
     {% else %}
-      <a href="{{ url_for('listings.browse') }}" class="nav-cta nav-cta-apps">Apps</a>
-      <a href="{{ url_for('builders.browse') }}" class="nav-cta nav-cta-builders">Builders</a>
-      <a href="{{ url_for('growers.browse') }}" class="nav-cta nav-cta-growers">Growers</a>
+      <a href="{{ url_for('browse.index') }}" class="nav-cta nav-cta-apps">Builders &amp; apps</a>
+      <a href="{{ url_for('browse.index', tab='growers') }}" class="nav-cta nav-cta-growers">Growers</a>
       <a href="{{ url_for('auth.login') }}" class="nav-cta">Log in</a>
       <a href="{{ url_for('auth.signup') }}" class="nav-cta">Sign up</a>
     {% endif %}
   </div>
 </nav>
 
-<main class="app-main">
+<main class="app-main {% block main_class %}{% endblock %}">
   {% if request.endpoint != 'index' %}
     <a href="#" onclick="history.back();return false;" class="back-link">&larr; Back</a>
   {% endif %}

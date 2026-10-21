@@ -35,6 +35,14 @@
     <textarea id="pitch-editor-textarea"></textarea>
     <input type="hidden" id="pitch_html" name="pitch_html" value="{{ profile.pitch_html or '' }}">
   </div>
+  {% if profile.is_grower %}
+    {% set record = profile %}
+    {% set needs_hint = "What would help you succeed? For example product access, data or an ad budget." %}
+    {% set offers_hint = "What you bring. For example channels, skills, audience or campaign ideas." %}
+    {% include "_needs_offers_fields.html" %}
+  {% else %}
+    <p class="cu-muted cu-small">Your Needs and Offers are set on each app you list, so they can differ from app to app.</p>
+  {% endif %}
   <button type="submit">Save</button>
 </form>
 

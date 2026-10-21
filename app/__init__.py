@@ -15,6 +15,7 @@ def create_app():
     from app.dashboard.routes import dashboard_bp
     from app.settings.routes import settings_bp
     from app.reporting.routes import reporting_bp
+    from app.browse.routes import browse_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(listings_bp)
@@ -25,6 +26,14 @@ def create_app():
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(settings_bp)
     app.register_blueprint(reporting_bp)
+    app.register_blueprint(browse_bp)
+
+    # Template filters: clean user rich text before showing it, and turn tag slugs into labels.
+    from app.utils import clean_list_html, clean_pitch_html
+    from app.constants import TAG_LABELS
+    app.jinja_env.filters["clean_list"] = lambda html: clean_list_html(html) or ""
+    app.jinja_env.filters["clean_pitch"] = clean_pitch_html
+    app.jinja_env.filters["tag_labels"] = lambda slugs: [TAG_LABELS.get(s, s) for s in (slugs or [])]
 
     import click
     from modcontent import Identity, Settings, SupabaseStore, create_blueprint, AnthropicMapper, TenantSettings

@@ -17,6 +17,10 @@
     <textarea id="pitch-editor-textarea"></textarea>
     <input type="hidden" id="pitch_html" name="pitch_html" value="{{ listing.pitch_html or '' }}">
   </div>
+  {% set record = listing %}
+  {% set needs_hint = "What would help this app grow? For example skills, reach or channels." %}
+  {% set offers_hint = "What you'll give in return. For example a revenue share, roadmap input or access." %}
+  {% include "_needs_offers_fields.html" %}
   <div><label for="category">Category</label><input type="text" id="category" name="category" value="{{ listing.category or '' }}"></div>
   <div>
     <label for="platform">Platform</label>
