@@ -116,8 +116,8 @@ def accept(request_id):
     }).execute()
 
     partnership_id = result.data[0]["id"]
-    flash("You're now connected. Say hello!", "success")
-    return redirect(url_for("partnerships.detail", partnership_id=partnership_id))
+    flash("You're now connected. Start your CrescoPlan together, or say hello in Messages.", "success")
+    return redirect(url_for("plans.view", partnership_id=partnership_id))
 
 
 @connection_requests_bp.route("/<request_id>/reject", methods=["POST"])

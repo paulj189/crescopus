@@ -4,8 +4,8 @@ from app.utils import (
     login_required,
     current_profile,
     get_pending_received_requests,
-    get_formalise_waiting_on_me,
     get_unread_partnerships,
+    get_ledger_waiting_on_me,
 )
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard", template_folder="../templates/dashboard")
@@ -14,62 +14,46 @@ dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard", templat
 @dashboard_bp.route("/")
 @login_required
 def index():
+    from app.plans.routes import plan_summaries  # imported here to avoid a circular import
+
     profile = current_profile()
     if not profile:
         flash("We couldn't find your account profile. Please try signing up again or contact support.", "error")
         return redirect(url_for("auth.logout"))
 
     supabase = get_supabase()
+    plans = plan_summaries(supabase, profile)
+    titles = {p["id"]: p["title"] for p in plans}
 
-    my_listings = []
-    my_listing_ids = []
+    # Your card(s)
+    my_apps = []
     if profile.get("is_developer"):
-        listings = supabase.table("listings").select("*").eq("developer_id", profile["id"]).execute().data
-        my_listings = listings
-        my_listing_ids = [l["id"] for l in listings]
+        my_apps = (supabase.table("listings").select("id,title,tagline,hero_image_url")
+                   .eq("developer_id", profile["id"]).order("created_at", desc=True).execute().data)
 
-    sent_requests = (
-        supabase.table("connection_requests")
-        .select("*")
-        .eq("initiated_by", profile["id"])
-        .order("created_at", desc=True)
-        .execute()
-        .data
-    )
+    # Needs your attention
+    received = get_pending_received_requests(supabase, profile)
+    listing_titles = {}
+    sent = (supabase.table("connection_requests").select("id,listing_id,status,reject_reason,created_at")
+            .eq("initiated_by", profile["id"]).order("created_at", desc=True).limit(20).execute().data)
+    wanted = {r["listing_id"] for r in received + sent}
+    if wanted:
+        listing_titles = {l["id"]: l["title"] for l in (supabase.table("listings").select("id,title")
+                          .in_("id", list(wanted)).execute().data)}
+    for r in received + sent:
+        r["listing_title"] = listing_titles.get(r["listing_id"], "an app")
 
-    received_requests = get_pending_received_requests(supabase, profile)
-    formalise_waiting = get_formalise_waiting_on_me(supabase, profile)
-
-    partnerships = (
-        supabase.table("partnerships")
-        .select("*")
-        .or_(f"developer_id.eq.{profile['id']},grower_id.eq.{profile['id']}")
-        .order("started_at", desc=True)
-        .execute()
-        .data
-    )
-    listing_ids = list({p["listing_id"] for p in partnerships} | set(my_listing_ids))
-    listings_by_id = {}
-    if listing_ids:
-        rows = supabase.table("listings").select("id,title").in_("id", listing_ids).execute().data
-        listings_by_id = {row["id"]: row["title"] for row in rows}
-
+    plans_waiting = [p for p in plans if p["state"][0] == "you"]
+    ledger_waiting = get_ledger_waiting_on_me(supabase, profile, [p["id"] for p in plans])
     unread = get_unread_partnerships(supabase, profile)
-    for p in partnerships:
-        p["listing_title"] = listings_by_id.get(p["listing_id"], "")
-        p["unread_message"] = unread.get(p["id"])
-    for p in formalise_waiting:
-        p["listing_title"] = listings_by_id.get(p["listing_id"], "")
+    unread_items = [{"id": pid, "title": titles.get(pid, "A partnership"), "body": m.get("body", "")}
+                    for pid, m in unread.items() if pid in titles]
 
-    unread_partnerships = [p for p in partnerships if p["unread_message"]]
-
+    attention = len(received) + len(plans_waiting) + len(ledger_waiting) + len(unread_items)
     return render_template(
         "dashboard/index.html",
-        profile=profile,
-        listings=my_listings,
-        sent_requests=sent_requests,
-        received_requests=received_requests,
-        formalise_waiting=formalise_waiting,
-        partnerships=partnerships,
-        unread_partnerships=unread_partnerships,
+        profile=profile, plans=plans, my_apps=my_apps,
+        received=received, sent=sent,
+        plans_waiting=plans_waiting, ledger_waiting=ledger_waiting, unread_items=unread_items,
+        titles=titles, attention=attention,
     )

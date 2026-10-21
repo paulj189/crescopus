@@ -3,6 +3,7 @@
 {% block content %}
 <span class="tag {% if partnership.status == 'formalised' %}tag-builder{% endif %}">{{ partnership.status }}</span>
 <h1>{{ listing.title }}</h1>
+<p><a class="cu-btn cu-btn-primary" href="{{ url_for('plans.view', partnership_id=partnership.id) }}">Open the CrescoPlan</a></p>
 
 {% if partnership.status == 'disconnected' %}
   <p>Disconnected — {{ partnership.disconnect_reason }}</p>

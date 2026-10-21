@@ -16,6 +16,7 @@ def create_app():
     from app.settings.routes import settings_bp
     from app.reporting.routes import reporting_bp
     from app.browse.routes import browse_bp
+    from app.plans.routes import plans_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(listings_bp)
@@ -27,6 +28,7 @@ def create_app():
     app.register_blueprint(settings_bp)
     app.register_blueprint(reporting_bp)
     app.register_blueprint(browse_bp)
+    app.register_blueprint(plans_bp)
 
     # Template filters: clean user rich text before showing it, and turn tag slugs into labels.
     from app.utils import clean_list_html, clean_pitch_html
@@ -91,24 +93,28 @@ def create_app():
 
     @app.context_processor
     def inject_nav_context():
+        from flask import request
         from app.utils import (
             current_profile,
             get_pending_received_requests,
-            get_formalise_waiting_on_me,
             get_unread_partnerships,
+            get_ledger_waiting_on_me,
         )
         from app.extensions import get_supabase
 
-        from flask import request
         profile = current_profile()
         attention_count = 0
         is_popup = request.args.get("partial") == "1" or request.headers.get("X-Requested-With") == "fetch"
         if profile and not is_popup:
+            from app.plans.routes import plan_summaries
             supabase = get_supabase()
+            plans = plan_summaries(supabase, profile)
+            plan_ids = {p["id"] for p in plans}
             received = get_pending_received_requests(supabase, profile)
-            formalise_waiting = get_formalise_waiting_on_me(supabase, profile)
-            unread = get_unread_partnerships(supabase, profile)
-            attention_count = len(received) + len(formalise_waiting) + len(unread)
+            unread = [pid for pid in get_unread_partnerships(supabase, profile) if pid in plan_ids]
+            ledger = get_ledger_waiting_on_me(supabase, profile, list(plan_ids))
+            attention_count = (len(received) + len(unread) + len(ledger)
+                               + sum(1 for p in plans if p["state"][0] == "you"))
         return dict(nav_profile=profile, attention_count=attention_count)
 
     return app

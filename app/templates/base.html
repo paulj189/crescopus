@@ -122,6 +122,7 @@
     {% if nav_profile %}
       <a href="{{ url_for('browse.index') }}" class="nav-cta nav-cta-apps">Builders &amp; apps</a>
       <a href="{{ url_for('browse.index', tab='growers') }}" class="nav-cta nav-cta-growers">Growers</a>
+      <a href="{{ url_for('plans.index') }}">My plans</a>
       <a href="{{ url_for('dashboard.index') }}">Dashboard{% if attention_count %} <span class="nav-badge">{{ attention_count }}</span>{% endif %}</a>
       <a href="{{ url_for('settings.index') }}">Settings</a>
       <a href="{{ url_for('auth.logout') }}">Log out</a>

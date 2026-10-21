@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Edit CrescoPlan — {{ listing.title }} — Crescopus{% endblock %}
+{% block main_class %}app-main-wide{% endblock %}
+
+{% macro role_select(name, value, label) -%}
+<select name="{{ name }}" aria-label="{{ label }}">
+  {% for v, l in roles %}<option value="{{ v }}" {% if value == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+</select>
+{%- endmacro %}
+
+{% macro action_row(a) -%}
+<div class="cu-edit-row cu-edit-row-actions" data-row>
+  <div class="cu-field cu-field-wide"><label>Action</label><input type="text" name="action_title" value="{{ a.title or '' }}" maxlength="200" placeholder="What needs doing"></div>
+  <div class="cu-field"><label>Owner</label>{{ role_select("action_owner", a.owner_role or "both", "Owner") }}</div>
+  <div class="cu-field"><label>By when</label><input type="date" name="action_due" value="{{ (a.due_date or '')[:10] }}"></div>
+  <div class="cu-field"><label>Status</label>
+    <select name="action_status" aria-label="Status">
+      {% for v, l in statuses %}<option value="{{ v }}" {% if (a.status or 'not_started') == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+    </select>
+  </div>
+  <button type="button" class="cu-icon-btn cu-row-remove" data-remove aria-label="Remove this action">
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+</div>
+{%- endmacro %}
+
+{% macro measure_row(m) -%}
+<div class="cu-edit-row cu-edit-row-measures" data-row>
+  <div class="cu-field cu-field-wide"><label>Measure</label><input type="text" name="measure_name" value="{{ m.measure or '' }}" maxlength="200" placeholder="For example monthly downloads"></div>
+  <div class="cu-field"><label>Target</label><input type="text" name="measure_target" value="{{ m.target or '' }}" maxlength="120"></div>
+  <div class="cu-field"><label>Evidence</label><input type="text" name="measure_evidence" value="{{ m.evidence or '' }}" maxlength="120" placeholder="Where it's checked"></div>
+  <div class="cu-field"><label>Review</label><input type="date" name="measure_review" value="{{ (m.review_date or '')[:10] }}"></div>
+  <div class="cu-field"><label>Owner</label>{{ role_select("measure_owner", m.owner_role or "both", "Owner") }}</div>
+  <button type="button" class="cu-icon-btn cu-row-remove" data-remove aria-label="Remove this measure">
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+</div>
+{%- endmacro %}
+
+{% block content %}
+<form method="POST" class="cu-editor" id="cu-plan-form">
+  <input type="hidden" name="base_version" value="{{ base_version }}">
+
+  <div class="cu-editor-head">
+    <div>
+      <p class="cu-plan-kicker">{{ listing.title }} · {{ builder.full_name }} &amp; {{ grower.full_name }}</p>
+      <h1>Edit CrescoPlan</h1>
+      <p class="cu-muted cu-small">Saving creates version {{ base_version + 1 }}. You'll both need to agree to it again.</p>
+    </div>
+    <div class="cu-editor-head-actions">
+      <a class="cu-btn cu-btn-secondary" href="{{ url_for('plans.view', partnership_id=partnership.id) }}">Cancel</a>
+      <button type="submit" class="cu-btn cu-btn-primary">Save plan</button>
+    </div>
+  </div>
+
+  {% if conflict %}
+    <p class="cu-conflict">
+      <a href="{{ url_for('plans.view', partnership_id=partnership.id) }}" target="_blank" rel="noopener">Open the latest version in a new tab</a>
+      to compare before saving.
+    </p>
+  {% endif %}
+
+  <div class="cu-editor-main cu-plan-edit">
+    <div class="cu-edit-two">
+      <section class="cu-edit-panel cu-box-needs">
+        <h2 class="cu-plan-h"><span class="cu-plan-num cu-needs-ink">01</span>Agreed needs</h2>
+        <p class="cu-small cu-muted">What each of you needs for this to work. Use one bullet per point, starting with who it's for.</p>
+        <textarea data-rich="list" data-target="needs_html"></textarea>
+        <input type="hidden" id="needs_html" name="needs_html" value="{{ draft.agreed_needs_html or '' }}">
+      </section>
+      <section class="cu-edit-panel cu-box-offers">
+        <h2 class="cu-plan-h"><span class="cu-plan-num cu-offers-ink">02</span>Agreed offers</h2>
+        <p class="cu-small cu-muted">What each of you will contribute: access, effort, resources and terms.</p>
+        <textarea data-rich="list" data-target="offers_html"></textarea>
+        <input type="hidden" id="offers_html" name="offers_html" value="{{ draft.agreed_offers_html or '' }}">
+      </section>
+    </div>
+
+    <section class="cu-edit-panel">
+      <h2 class="cu-plan-h"><span class="cu-plan-num cu-needs-ink">03</span>Plan of action</h2>
+      <p class="cu-small cu-muted">The commitments that move things forward. Rows left without an action are ignored.</p>
+      <div class="cu-edit-rows" data-rows="actions">
+        {% for a in draft.plan_actions %}{{ action_row(a) }}{% else %}{{ action_row({}) }}{% endfor %}
+      </div>
+      <button type="button" class="cu-btn cu-btn-secondary cu-add-row" data-add="actions">+ Add action</button>
+      <template id="tpl-actions">{{ action_row({}) }}</template>
+    </section>
+
+    <section class="cu-edit-panel">
+      <h2 class="cu-plan-h"><span class="cu-plan-num cu-offers-ink">04</span>Measures of success</h2>
+      <p class="cu-small cu-muted">How you'll both know it's working.</p>
+      <div class="cu-edit-rows" data-rows="measures">
+        {% for m in draft.plan_measures %}{{ measure_row(m) }}{% else %}{{ measure_row({}) }}{% endfor %}
+      </div>
+      <button type="button" class="cu-btn cu-btn-secondary cu-add-row" data-add="measures">+ Add measure</button>
+      <template id="tpl-measures">{{ measure_row({}) }}</template>
+    </section>
+  </div>
+
+  <div class="cu-editor-savebar">
+    <button type="submit" class="cu-btn cu-btn-primary">Save plan</button>
+  </div>
+</form>
+
+<script type="module" src="{{ url_for('static', filename='js/plan-editor.js') }}"></script>
+{% endblock %}

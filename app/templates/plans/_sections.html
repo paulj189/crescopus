@@ -1,0 +1,76 @@
+{# The four plan sections. Used by the plan page (with live status controls)
+   and by version history (read-only). #}
+{% macro plan_sections(needs_html, offers_html, actions, measures, roles, status_labels,
+                       statuses=None, partnership_id=None, editable=False) -%}
+<div class="cu-plan-two">
+  <section class="cu-plan-section">
+    <h2 class="cu-plan-h"><span class="cu-plan-num cu-needs-ink">01</span>Agreed needs</h2>
+    <div class="cu-box cu-box-needs">
+      {% if needs_html %}<div class="cu-rich">{{ needs_html | clean_list | safe }}</div>
+      {% else %}<p class="cu-muted">Not added yet.</p>{% endif %}
+    </div>
+  </section>
+  <section class="cu-plan-section">
+    <h2 class="cu-plan-h"><span class="cu-plan-num cu-offers-ink">02</span>Agreed offers</h2>
+    <div class="cu-box cu-box-offers">
+      {% if offers_html %}<div class="cu-rich">{{ offers_html | clean_list | safe }}</div>
+      {% else %}<p class="cu-muted">Not added yet.</p>{% endif %}
+    </div>
+  </section>
+</div>
+
+<section class="cu-plan-section" id="actions">
+  <h2 class="cu-plan-h"><span class="cu-plan-num cu-needs-ink">03</span>Plan of action</h2>
+  {% if actions %}
+  <div class="cu-rows">
+    <div class="cu-row cu-row-head cu-row-actions" aria-hidden="true">
+      <span>Action</span><span>Owner</span><span>By when</span><span>Status</span>
+    </div>
+    {% for a in actions %}
+    <div class="cu-row cu-row-actions">
+      <span class="cu-row-main">{{ a.title }}</span>
+      <span><span class="cu-chip">{{ roles.get(a.owner_role, a.owner_role) }}</span></span>
+      <span class="cu-row-meta"><span class="cu-row-label">Due </span>{{ a.due_date | short_date or "—" }}</span>
+      <span>
+        {% if editable and a.id %}
+        <form method="POST" action="{{ url_for('plans.action_status', partnership_id=partnership_id, action_id=a.id) }}" class="cu-status-form">
+          <label class="cu-sr" for="st-{{ a.id }}">Status of “{{ a.title }}”</label>
+          <select id="st-{{ a.id }}" name="status" class="cu-status cu-status-{{ a.status }}" data-autosubmit>
+            {% for value, label in statuses %}<option value="{{ value }}" {% if a.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+          <noscript><button type="submit" class="cu-btn cu-btn-secondary">Update</button></noscript>
+        </form>
+        {% else %}
+        <span class="cu-status cu-status-{{ a.status }}">{{ status_labels.get(a.status, a.status) }}</span>
+        {% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="cu-muted">No actions yet.</p>
+  {% endif %}
+</section>
+
+<section class="cu-plan-section">
+  <h2 class="cu-plan-h"><span class="cu-plan-num cu-offers-ink">04</span>Measures of success</h2>
+  {% if measures %}
+  <div class="cu-rows">
+    <div class="cu-row cu-row-head cu-row-measures" aria-hidden="true">
+      <span>Measure</span><span>Target</span><span>Evidence</span><span>Review</span><span>Owner</span>
+    </div>
+    {% for m in measures %}
+    <div class="cu-row cu-row-measures">
+      <span class="cu-row-main">{{ m.measure }}</span>
+      <span class="cu-row-target"><span class="cu-row-label">Target </span>{{ m.target or "—" }}</span>
+      <span class="cu-row-meta"><span class="cu-row-label">Evidence </span>{{ m.evidence or "—" }}</span>
+      <span class="cu-row-meta"><span class="cu-row-label">Review </span>{{ m.review_date | short_date or "—" }}</span>
+      <span><span class="cu-chip">{{ roles.get(m.owner_role, m.owner_role) }}</span></span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="cu-muted">No measures yet.</p>
+  {% endif %}
+</section>
+{%- endmacro %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "plans/_sections.html" import plan_sections %}
+{% block title %}Plan history — {{ listing.title }} — Crescopus{% endblock %}
+{% block main_class %}app-main-wide{% endblock %}
+{% block content %}
+<div class="cu-plan-head">
+  <div>
+    <p class="cu-plan-kicker">{{ listing.title }} · {{ builder.full_name }} &amp; {{ grower.full_name }}</p>
+    <h1>Plan history</h1>
+    <p class="cu-muted cu-small">Every saved version is kept and can't be changed.</p>
+  </div>
+  <div class="cu-plan-head-actions">
+    <a class="cu-btn cu-btn-primary" href="{{ url_for('plans.view', partnership_id=partnership.id) }}">Back to the plan</a>
+  </div>
+</div>
+
+{% if not versions %}
+  <p class="empty-cta">No saved versions yet. The first save of the plan creates version 2.</p>
+{% else %}
+<div class="cu-plan-layout">
+  <aside class="cu-plan-side cu-history-list">
+    <nav class="cu-panel" aria-label="Versions">
+      <h2 class="cu-section-label">Versions</h2>
+      <ol class="cu-versions">
+        {% for v in versions %}
+        <li>
+          <a href="{{ url_for('plans.history', partnership_id=partnership.id, v=v.version) }}" {% if selected and v.version == selected.version %}aria-current="true"{% endif %}>
+            <strong>Version {{ v.version }}</strong>{% if v.version == plan.version %} <span class="cu-pill cu-pill-small">Current</span>{% endif %}<br>
+            <span class="cu-small cu-muted">{{ names.get(v.created_by, "Someone") }} · {{ v.created_at | short_date }}</span>
+          </a>
+        </li>
+        {% endfor %}
+      </ol>
+    </nav>
+  </aside>
+  <div class="cu-plan-main">
+    {% if selected %}
+      <h2 class="cu-history-title">Version {{ selected.version }}</h2>
+      {% set s = selected.snapshot %}
+      {{ plan_sections(s.agreed_needs_html, s.agreed_offers_html, s.actions, s.measures, roles, status_labels) }}
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -192,3 +192,20 @@ def get_id_verified_ids(supabase):
     """Profile ids holding an ID check — for the 'Verified only' filter."""
     rows = supabase.table("profile_verifications").select("profile_id").eq("kind", "id").execute().data
     return [r["profile_id"] for r in rows]
+
+
+def get_ledger_waiting_on_me(supabase, profile, partnership_ids):
+    """Ledger entries that need this person: ones the other side added that they
+    haven't confirmed yet, and their own entries the other side has queried.
+    Returns {partnership_id: {"confirm": n, "queried": n}}."""
+    if not partnership_ids:
+        return {}
+    rows = (supabase.table("ledger_entries").select("partnership_id,status,added_by")
+            .in_("partnership_id", partnership_ids).in_("status", ["pending", "queried"]).execute().data)
+    out = {}
+    for r in rows:
+        mine = r["added_by"] == profile["id"]
+        key = "queried" if (r["status"] == "queried" and mine) else ("confirm" if (r["status"] == "pending" and not mine) else None)
+        if key:
+            out.setdefault(r["partnership_id"], {"confirm": 0, "queried": 0})[key] += 1
+    return out
