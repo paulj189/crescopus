@@ -79,6 +79,12 @@ def create_app():
                              "user_id": user_id, "role": role, "status": "active"})
         click.echo(f"{user_id} is now {role}")
 
+    # Browsers (Samsung Internet especially) ask for /favicon.ico directly.
+    @app.route("/favicon.ico")
+    def favicon():
+        from flask import send_from_directory
+        return send_from_directory(app.static_folder, "favicon.ico", mimetype="image/vnd.microsoft.icon", max_age=86400)
+
     @app.route("/")
     def index():
         return render_template("index.html")
