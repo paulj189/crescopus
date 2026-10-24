@@ -587,3 +587,17 @@ details.cu-decline summary::-webkit-details-marker{display:none;}
   .cu-chat-log{max-height:none;padding:14px;}
   .cu-msg{max-width:88%;}
 }
+
+/* ---------- Ledger currencies ---------- */
+.cu-led-money select.cu-led-currency{width:auto;border:0;border-right:1px solid var(--line);border-radius:0;background:transparent;padding:0 8px 0 12px;min-height:46px;font-weight:600;}
+.cu-led-money select.cu-led-currency:focus{outline:none;}
+.cu-led-fx{background:var(--cu-offers-box);border-radius:var(--cu-radius);padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
+.cu-led-fx[hidden]{display:none;}
+.cu-led-fx p{margin:0;}
+.cu-led-fx-result{font-weight:600;color:var(--cu-offers-tag);}
+.cu-led-orig{display:block;font-size:12px;font-weight:400;color:var(--cu-muted);}
+form.cu-led-currency-form{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 12px;max-width:none;margin:0 0 16px;
+  padding:12px 16px;background:var(--cu-card);border:1px dashed var(--sage-dim);border-radius:var(--cu-radius);}
+.cu-led-currency-form label{margin:0;}
+.cu-led-currency-form select{width:auto;min-width:220px;padding:8px 12px;}
+.cu-led-currency-form p{flex-basis:100%;margin:0;}

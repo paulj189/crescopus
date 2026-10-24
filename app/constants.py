@@ -76,3 +76,30 @@ VERIFICATION_LABELS = {
     "linkedin": "LinkedIn linked",
     "app_ownership": "App ownership verified",
 }
+
+
+# ---------- Ledger currencies ----------
+# The currencies the European Central Bank publishes daily rates for (used to
+# suggest exchange rates), as (code, symbol, name). Add more here if needed.
+CURRENCIES = [
+    ("GBP", "£", "British pound"),
+    ("EUR", "€", "Euro"),
+    ("USD", "$", "US dollar"),
+    ("CAD", "CA$", "Canadian dollar"),
+    ("AUD", "A$", "Australian dollar"),
+    ("NZD", "NZ$", "New Zealand dollar"),
+    ("CHF", "CHF ", "Swiss franc"),
+    ("SEK", "SEK ", "Swedish krona"),
+    ("NOK", "NOK ", "Norwegian krone"),
+    ("DKK", "DKK ", "Danish krone"),
+    ("PLN", "PLN ", "Polish złoty"),
+    ("CZK", "CZK ", "Czech koruna"),
+    ("JPY", "¥", "Japanese yen"),
+    ("SGD", "S$", "Singapore dollar"),
+    ("HKD", "HK$", "Hong Kong dollar"),
+    ("INR", "₹", "Indian rupee"),
+    ("ZAR", "R ", "South African rand"),
+    ("BRL", "R$", "Brazilian real"),
+    ("MXN", "MX$", "Mexican peso"),
+]
+CURRENCY_SYMBOLS = {code: symbol for code, symbol, _ in CURRENCIES}

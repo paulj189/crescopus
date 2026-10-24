@@ -8,6 +8,12 @@ so the rules hold even outside this website:
     (editing sends it back for confirmation)
   - confirmed entries are locked; mistakes are fixed with a correcting entry
 Totals only count confirmed entries.
+
+Currencies: each ledger has one currency, which can only be changed while the
+ledger is empty. An entry can be made in another currency; it then keeps the
+original amount and currency and the exchange rate, and its amount is the
+converted figure (worked out in the database). The form suggests the rate for
+the entry's date from the European Central Bank's published rates.
 """
 import csv
 import io
@@ -15,10 +21,14 @@ import re
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, Response
+import time
+
+import requests
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, Response, jsonify
 
 from app.extensions import get_supabase
 from app.utils import login_required, current_profile
+from app.constants import CURRENCIES, CURRENCY_SYMBOLS
 
 ledger_bp = Blueprint("ledger", __name__, url_prefix="/ledger")
 
@@ -26,6 +36,7 @@ KINDS = [("revenue", "Revenue"), ("cost", "Cost")]
 PARTIES = [("builder", "Builder"), ("grower", "Grower")]
 STATUS_LABELS = {"pending": "Awaiting confirmation", "confirmed": "Confirmed", "queried": "Queried"}
 FILTERS = [("all", "All"), ("revenue", "Revenue"), ("cost", "Costs"), ("open", "Not confirmed")]
+CURRENCY_CODES = {code for code, _, _ in CURRENCIES}
 
 
 def _rpc_error(err):
@@ -64,6 +75,7 @@ def _load(partnership_id):
         e["added_by_role"] = role_of.get(e.get("added_by"))          # None = system (e.g. RevenueCat)
         e["confirmed_by_role"] = role_of.get(e.get("confirmed_by"))
         e["receipt_is_link"] = bool(re.match(r"^https?://", e.get("receipt_url") or ""))
+        e["converted"] = bool(e.get("original_currency"))
         e["can_respond"] = (not e["mine"]) and e["status"] in ("pending", "queried") and e.get("added_by")
         e["can_change"] = e["mine"] and e["status"] != "confirmed"
 
@@ -95,8 +107,17 @@ def _load(partnership_id):
     }
 
 
-def _parse_form(form, me_role):
-    """Validate the add/edit form. Returns (values, errors)."""
+def _money(raw):
+    raw = re.sub(r"[£$€¥₹,\s]|[A-Za-z]", "", raw or "")
+    try:
+        value = Decimal(raw)
+    except (InvalidOperation, ValueError):
+        return None
+    return value if value.is_finite() else None
+
+
+def _parse_form(form, me_role, ledger_currency):
+    """Validate the add/edit form. Returns (values, rpc_amounts, errors)."""
     errors = []
     kind = form.get("kind")
     if kind not in dict(KINDS):
@@ -112,19 +133,39 @@ def _parse_form(form, me_role):
     description = (form.get("description") or "").strip()
     if not description:
         errors.append("Add a short description.")
-    raw = re.sub(r"[£$€,\s]", "", form.get("amount") or "")
-    try:
-        amount = Decimal(raw).quantize(Decimal("0.01"))
-        if amount <= 0 or amount > Decimal("10000000"):
-            raise InvalidOperation
-    except (InvalidOperation, ValueError):
-        amount = None
+
+    currency = (form.get("currency") or ledger_currency).upper()
+    if currency not in CURRENCY_CODES and currency != ledger_currency:
+        errors.append("Choose a currency from the list.")
+        currency = ledger_currency
+    amount = _money(form.get("amount"))
+    if amount is None or amount <= 0 or amount > Decimal("10000000"):
         errors.append("Enter an amount above zero, like 120 or 1,240.50.")
+        amount = None
+    else:
+        amount = amount.quantize(Decimal("0.01"))
+
+    fx_rate = None
+    rpc = {"p_amount": str(amount) if amount is not None else None,
+           "p_original_amount": None, "p_original_currency": None, "p_fx_rate": None}
+    if currency != ledger_currency:
+        fx_rate = _money(form.get("fx_rate"))
+        if fx_rate is None or fx_rate <= 0 or fx_rate > Decimal("100000"):
+            errors.append(f"Enter the exchange rate: how many {ledger_currency} one {currency} is worth.")
+            fx_rate = None
+        elif amount is not None:
+            rpc = {"p_amount": None, "p_original_amount": str(amount),
+                   "p_original_currency": currency, "p_fx_rate": str(fx_rate)}
+
     receipt = (form.get("receipt_url") or "").strip()[:500]
-    values = {"kind": kind, "party": party, "entry_date": entry_date.isoformat() if entry_date else (form.get("entry_date") or ""),
-              "description": description[:300], "amount": str(amount) if amount is not None else (form.get("amount") or ""),
+    values = {"kind": kind, "party": party,
+              "entry_date": entry_date.isoformat() if entry_date else (form.get("entry_date") or ""),
+              "description": description[:300],
+              "amount": str(amount) if amount is not None else (form.get("amount") or ""),
+              "currency": currency,
+              "fx_rate": str(fx_rate) if fx_rate is not None else (form.get("fx_rate") or ""),
               "receipt_url": receipt}
-    return values, errors
+    return values, rpc, errors
 
 
 # ---------- pages ----------
@@ -145,7 +186,7 @@ def view(partnership_id):
     elif show == "open":
         entries = [e for e in entries if e["status"] != "confirmed"]
     return render_template("ledger/view.html", shown=entries, show=show, filters=FILTERS,
-                           status_labels=STATUS_LABELS, **ctx)
+                           status_labels=STATUS_LABELS, currencies=CURRENCIES, **ctx)
 
 
 @ledger_bp.route("/<partnership_id>/new", methods=["GET", "POST"])
@@ -158,16 +199,17 @@ def new(partnership_id):
         flash("This partnership has ended, so new entries can't be added.", "error")
         return redirect(url_for("ledger.view", partnership_id=partnership_id))
     values = {"kind": request.args.get("kind", "cost"), "party": ctx["me_role"],
-              "entry_date": date.today().isoformat(), "description": "", "amount": "", "receipt_url": ""}
+              "entry_date": date.today().isoformat(), "description": "", "amount": "",
+              "currency": ctx["currency"], "fx_rate": "", "receipt_url": ""}
     if request.method == "POST":
-        values, errors = _parse_form(request.form, ctx["me_role"])
+        values, amounts, errors = _parse_form(request.form, ctx["me_role"], ctx["currency"])
         if not errors:
             try:
                 get_supabase().rpc("add_ledger_entry", {
                     "p_partnership_id": partnership_id, "p_entry_date": values["entry_date"],
                     "p_kind": values["kind"], "p_party": values["party"],
-                    "p_description": values["description"], "p_amount": values["amount"],
-                    "p_receipt_url": values["receipt_url"],
+                    "p_description": values["description"],
+                    "p_receipt_url": values["receipt_url"], **amounts,
                 }).execute()
                 other = ctx["grower_name"] if ctx["me_role"] == "builder" else ctx["builder_name"]
                 flash(f"Entry added. It counts in the totals once {other} confirms it.", "success")
@@ -177,7 +219,7 @@ def new(partnership_id):
         for e in errors:
             flash(e, "error")
     return render_template("ledger/entry_form.html", values=values, editing=None,
-                           kinds=KINDS, parties=PARTIES, **ctx)
+                           kinds=KINDS, parties=PARTIES, currencies=CURRENCIES, **ctx)
 
 
 @ledger_bp.route("/<partnership_id>/<entry_id>/edit", methods=["GET", "POST"])
@@ -191,7 +233,10 @@ def edit(partnership_id, entry_id):
         flash("Only the person who added an entry can change it, and only before it's confirmed.", "error")
         return redirect(url_for("ledger.view", partnership_id=partnership_id))
     values = {k: entry.get(k) or "" for k in ("kind", "party", "entry_date", "description", "receipt_url")}
-    values["amount"] = entry["amount"]
+    if entry["converted"]:
+        values.update(amount=entry["original_amount"], currency=entry["original_currency"], fx_rate=entry["fx_rate"])
+    else:
+        values.update(amount=entry["amount"], currency=ctx["currency"], fx_rate="")
     if request.method == "POST":
         if request.form.get("delete"):
             try:
@@ -200,14 +245,14 @@ def edit(partnership_id, entry_id):
             except Exception as err:  # noqa: BLE001
                 flash(_rpc_error(err), "error")
             return redirect(url_for("ledger.view", partnership_id=partnership_id))
-        values, errors = _parse_form(request.form, ctx["me_role"])
+        values, amounts, errors = _parse_form(request.form, ctx["me_role"], ctx["currency"])
         if not errors:
             try:
                 get_supabase().rpc("edit_ledger_entry", {
                     "p_entry_id": entry_id, "p_entry_date": values["entry_date"],
                     "p_kind": values["kind"], "p_party": values["party"],
-                    "p_description": values["description"], "p_amount": values["amount"],
-                    "p_receipt_url": values["receipt_url"],
+                    "p_description": values["description"],
+                    "p_receipt_url": values["receipt_url"], **amounts,
                 }).execute()
                 flash("Entry updated and sent back for confirmation.", "success")
                 return redirect(url_for("ledger.view", partnership_id=partnership_id))
@@ -216,7 +261,7 @@ def edit(partnership_id, entry_id):
         for e in errors:
             flash(e, "error")
     return render_template("ledger/entry_form.html", values=values, editing=entry,
-                           kinds=KINDS, parties=PARTIES, **ctx)
+                           kinds=KINDS, parties=PARTIES, currencies=CURRENCIES, **ctx)
 
 
 @ledger_bp.route("/<partnership_id>/<entry_id>/confirm", methods=["POST"])
@@ -253,12 +298,15 @@ def export(partnership_id):
         abort(404)
     out = io.StringIO()
     w = csv.writer(out)
-    w.writerow(["Date", "Type", "Party", "Description", "Amount", "Currency", "Status",
+    w.writerow(["Date", "Type", "Party", "Description", "Amount", "Currency",
+                "Original amount", "Original currency", "Exchange rate", "Status",
                 "Added by", "Confirmed by", "Confirmed at", "Receipt", "Query note"])
     for e in sorted(ctx["entries"], key=lambda e: (e["entry_date"], e["created_at"])):
         w.writerow([
             e["entry_date"], e["kind"].title(), ctx["name_of_role"][e["party"]], e["description"],
-            e["amount"], ctx["currency"], STATUS_LABELS.get(e["status"], e["status"]),
+            e["amount"], ctx["currency"],
+            e.get("original_amount") or "", e.get("original_currency") or "", e.get("fx_rate") or "",
+            STATUS_LABELS.get(e["status"], e["status"]),
             ctx["name_of_role"].get(e["added_by_role"], "System") if e["added_by_role"] else "System",
             ctx["name_of_role"].get(e["confirmed_by_role"], "") if e["confirmed_by_role"] else "",
             (e.get("confirmed_at") or "")[:10], e.get("receipt_url") or "", e.get("query_note") or "",
@@ -266,3 +314,63 @@ def export(partnership_id):
     name = re.sub(r"[^A-Za-z0-9]+", "-", ctx["listing"]["title"]).strip("-") or "ledger"
     return Response("﻿" + out.getvalue(), mimetype="text/csv",
                     headers={"Content-Disposition": f'attachment; filename="CrescoLedger-{name}-{date.today().isoformat()}.csv"'})
+
+
+@ledger_bp.route("/<partnership_id>/currency", methods=["POST"])
+@login_required
+def set_currency(partnership_id):
+    """Change the ledger currency. Only allowed while the ledger has no entries."""
+    code = (request.form.get("currency") or "").upper()
+    if code not in CURRENCY_CODES:
+        flash("Choose a currency from the list.", "error")
+    else:
+        try:
+            get_supabase().rpc("set_ledger_currency", {"p_partnership_id": partnership_id, "p_currency": code}).execute()
+            flash(f"This ledger now uses {code}.", "success")
+        except Exception as err:  # noqa: BLE001
+            flash(_rpc_error(err), "error")
+    return redirect(url_for("ledger.view", partnership_id=partnership_id))
+
+
+# ---------- exchange-rate suggestions ----------
+# Rates come from the European Central Bank via the free Frankfurter service.
+# They're only a suggestion: the person adding the entry can change the rate,
+# and the other person confirms it along with the entry.
+
+_RATE_CACHE = {}          # (from, to, date) -> (rate, rate_date, fetched_at)
+RATE_SOURCES = ["https://api.frankfurter.app/{date}?from={src}&to={dst}",
+                "https://api.frankfurter.dev/v1/{date}?base={src}&symbols={dst}"]
+
+
+@ledger_bp.route("/rate")
+@login_required
+def rate_lookup():
+    src = (request.args.get("from") or "").upper()
+    dst = (request.args.get("to") or "").upper()
+    if src not in CURRENCY_CODES or dst not in CURRENCY_CODES:
+        return jsonify(error="Unknown currency"), 400
+    try:
+        when = date.fromisoformat(request.args.get("date") or "")
+    except ValueError:
+        when = date.today()
+    when = min(when, date.today())
+    if src == dst:
+        return jsonify(rate=1, date=when.isoformat())
+
+    key = (src, dst, when.isoformat())
+    cached = _RATE_CACHE.get(key)
+    if cached and time.time() - cached[2] < 6 * 3600:
+        return jsonify(rate=cached[0], date=cached[1], source="European Central Bank")
+
+    for url in RATE_SOURCES:
+        try:
+            r = requests.get(url.format(date=when.isoformat(), src=src, dst=dst), timeout=5)
+            if r.ok:
+                data = r.json()
+                value = (data.get("rates") or {}).get(dst)
+                if value:
+                    _RATE_CACHE[key] = (value, data.get("date", when.isoformat()), time.time())
+                    return jsonify(rate=value, date=data.get("date", when.isoformat()), source="European Central Bank")
+        except (requests.RequestException, ValueError):
+            continue
+    return jsonify(error="No rate available right now. Enter the rate from your bank statement."), 503

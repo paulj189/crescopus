@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ "Edit entry" if editing else "Add entry" }} — CrescoLedger — Crescopus{% endblock %}
 {% block content %}
-{% set symbols = {"GBP": "£", "USD": "$", "EUR": "€"} %}
 <p class="cu-plan-kicker">{{ listing.title }} · CrescoLedger</p>
 <h1>{{ "Edit entry" if editing else "Add an entry" }}</h1>
 {% if editing %}
@@ -28,7 +27,12 @@
     <div class="cu-field">
       <label for="amount">Amount</label>
       <span class="cu-led-money">
-        <span aria-hidden="true">{{ symbols.get(currency, currency) }}</span>
+        <label for="currency" class="cu-sr">Currency</label>
+        <select id="currency" name="currency" class="cu-led-currency">
+          {% for code, symbol, name in currencies %}
+            <option value="{{ code }}" {% if values.currency == code %}selected{% endif %}>{{ code }}</option>
+          {% endfor %}
+        </select>
         <input type="text" inputmode="decimal" id="amount" name="amount" value="{{ values.amount }}" required placeholder="0.00" autocomplete="off">
       </span>
     </div>
@@ -37,6 +41,16 @@
       <input type="date" id="entry_date" name="entry_date" value="{{ values.entry_date }}" required>
     </div>
   </div>
+
+  <div class="cu-led-fx" id="fx-box" {% if values.currency == currency %}hidden{% endif %}>
+    <div class="cu-field">
+      <label for="fx_rate">Exchange rate: 1 <span data-fx-from>{{ values.currency }}</span> = ? {{ currency }}</label>
+      <input type="text" inputmode="decimal" id="fx_rate" name="fx_rate" value="{{ values.fx_rate }}" autocomplete="off" placeholder="e.g. 0.7710">
+      <p class="cu-small cu-muted" id="fx-note" aria-live="polite">Use the rate on your bank statement if you have it.</p>
+    </div>
+    <p class="cu-led-fx-result" id="fx-result" aria-live="polite"></p>
+  </div>
+  <p class="cu-small cu-muted">This ledger is in {{ currency }}. Amounts in another currency are converted and both figures are kept.</p>
 
   <div class="cu-field">
     <label for="description">Description</label>
@@ -65,6 +79,61 @@
     <a class="cu-btn cu-btn-secondary" href="{{ url_for('ledger.view', partnership_id=partnership.id) }}">Cancel</a>
   </div>
 </form>
+
+<script>
+  // Show the exchange-rate box for other currencies, suggest the rate for the
+  // entry's date, and show the converted amount as you type.
+  (function () {
+    var LEDGER = "{{ currency }}";
+    var RATE_URL = "{{ url_for('ledger.rate_lookup') }}";
+    var cur = document.getElementById('currency'), amt = document.getElementById('amount');
+    var day = document.getElementById('entry_date'), rate = document.getElementById('fx_rate');
+    var box = document.getElementById('fx-box'), note = document.getElementById('fx-note');
+    var result = document.getElementById('fx-result'), fromLabel = box.querySelector('[data-fx-from]');
+    var userTyped = !!rate.value, lastKey = '';
+
+    function num(v) { var n = parseFloat(String(v).replace(/[^0-9.]/g, '')); return isFinite(n) ? n : NaN; }
+    function money(n) { return n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+    function showResult() {
+      var a = num(amt.value), r = num(rate.value);
+      result.textContent = (cur.value !== LEDGER && a > 0 && r > 0)
+        ? '= ' + money(Math.round(a * r * 100) / 100) + ' ' + LEDGER + ' in this ledger' : '';
+    }
+
+    function suggest() {
+      if (cur.value === LEDGER || userTyped) return;
+      var key = cur.value + day.value;
+      if (key === lastKey) return;
+      lastKey = key;
+      note.textContent = 'Looking up the rate…';
+      fetch(RATE_URL + '?from=' + cur.value + '&to=' + LEDGER + '&date=' + encodeURIComponent(day.value), { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.rate && !userTyped) {
+            rate.value = d.rate;
+            note.textContent = 'Suggested: European Central Bank rate for ' + d.date + '. Change it to match your bank statement if different.';
+            showResult();
+          } else if (!d.rate) { note.textContent = d.error || 'Enter the rate from your bank statement.'; }
+        })
+        .catch(function () { note.textContent = 'Couldn\'t look up a rate. Enter the rate from your bank statement.'; });
+    }
+
+    function update() {
+      var other = cur.value !== LEDGER;
+      box.hidden = !other;
+      fromLabel.textContent = cur.value;
+      rate.required = other;
+      if (other) suggest();
+      showResult();
+    }
+    cur.addEventListener('change', function () { userTyped = false; rate.value = ''; update(); });
+    day.addEventListener('change', function () { if (!userTyped) { lastKey = ''; suggest(); } });
+    rate.addEventListener('input', function () { userTyped = true; showResult(); });
+    amt.addEventListener('input', showResult);
+    update();
+  })();
+</script>
 
 {% if editing %}
 <form method="POST" class="cu-led-delete" onsubmit="return confirm('Delete this entry? This can\'t be undone.');">

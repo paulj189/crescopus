@@ -17,7 +17,7 @@ plans_bp = Blueprint("plans", __name__, url_prefix="/plans")
 
 ROLES = [("builder", "Builder"), ("grower", "Grower"), ("both", "Both")]
 STATUSES = [("not_started", "Not started"), ("in_progress", "In progress"), ("done", "Done")]
-CURRENCY_SYMBOLS = {"GBP": "£", "USD": "$", "EUR": "€"}
+from app.constants import CURRENCY_SYMBOLS
 
 
 # ---------- template helpers ----------
@@ -55,10 +55,20 @@ def local_time(value):
 
 @plans_bp.app_template_filter("money")
 def money(amount, currency="GBP"):
+    """1234.5, 'GBP' -> '£1,234.50'; currencies without a symbol -> '1,234.50 XYZ'."""
     symbol = CURRENCY_SYMBOLS.get((currency or "").upper(), "")
     text = f"{abs(float(amount or 0)):,.2f}"
     sign = "−" if float(amount or 0) < 0 else ""
     return f"{sign}{symbol}{text}" if symbol else f"{sign}{text} {currency}"
+
+
+@plans_bp.app_template_filter("rate")
+def rate(value):
+    """0.77100000 -> '0.771' (up to 6 decimal places, no trailing zeros)."""
+    try:
+        return f"{float(value):.6f}".rstrip("0").rstrip(".")
+    except (TypeError, ValueError):
+        return ""
 
 
 def _rpc_error(err):

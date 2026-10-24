@@ -54,6 +54,19 @@
   </div>
 </div>
 
+{% if active and not entries %}
+<form method="POST" action="{{ url_for('ledger.set_currency', partnership_id=partnership.id) }}" class="cu-led-currency-form">
+  <label for="ledger-currency">Ledger currency</label>
+  <select id="ledger-currency" name="currency">
+    {% for code, symbol, name in currencies %}
+      <option value="{{ code }}" {% if code == currency %}selected{% endif %}>{{ code }} · {{ name }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="cu-btn cu-btn-secondary cu-btn-sm">Save</button>
+  <p class="cu-small cu-muted">Agree this with your partner first. It can't be changed once the ledger has entries. Entries in other currencies are converted into it.</p>
+</form>
+{% endif %}
+
 <div class="cu-led-totals">
   <div class="cu-led-tile">
     <span class="cu-section-label cu-needs-ink">Revenue</span>
@@ -118,7 +131,9 @@
         · added by {{ name_of_role[e.added_by_role] if e.added_by_role else ("RevenueCat" if e.source == "revenuecat" else "the system") }}
       </span>
     </span>
-    <span class="cu-led-amt cu-led-amt-{{ e.kind }}">{{ "+" if e.kind == "revenue" else "−" }}{{ e.amount_f | money(currency) }}</span>
+    <span class="cu-led-amt cu-led-amt-{{ e.kind }}">{{ "+" if e.kind == "revenue" else "−" }}{{ e.amount_f | money(currency) }}
+      {% if e.converted %}<span class="cu-led-orig">{{ e.original_amount | money(e.original_currency) }} at {{ e.fx_rate | rate }}</span>{% endif %}
+    </span>
     <span class="cu-led-receipt">
       {% if e.receipt_is_link %}
         <a href="{{ e.receipt_url }}" target="_blank" rel="noopener noreferrer nofollow">

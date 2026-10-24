@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}CrescoLedger — {{ listing.title }} — Crescopus{% endblock %}
+{% block main_class %}app-main-wide{% endblock %}
+
+{% macro status_cell(e) -%}
+  {% if e.status == "confirmed" %}
+    <span class="cu-led-status cu-led-ok">
+      <svg class="cu-verified" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+      Confirmed{% if e.confirmed_by_role %} by {{ name_of_role[e.confirmed_by_role] }}{% endif %}
+    </span>
+  {% else %}
+    {% if e.status == "queried" %}
+      <span class="cu-led-status cu-led-queried">{{ "Queried" if e.mine else "You queried this" }}</span>
+      {% if e.query_note %}<span class="cu-led-note">“{{ e.query_note }}”</span>{% endif %}
+    {% elif not e.can_respond %}
+      <span class="cu-led-status cu-led-wait">Waiting for {{ name_of_role["grower" if me_role == "builder" else "builder"] }}</span>
+    {% endif %}
+
+    {% if active and e.can_respond %}
+      <div class="cu-led-actions">
+        <form method="POST" action="{{ url_for('ledger.confirm', partnership_id=partnership.id, entry_id=e.id) }}">
+          <button type="submit" class="cu-btn cu-btn-primary cu-btn-sm">Confirm</button>
+        </form>
+        {% if e.status == "pending" %}
+        <details class="cu-led-query">
+          <summary class="cu-btn cu-btn-secondary cu-btn-sm">Query</summary>
+          <form method="POST" action="{{ url_for('ledger.query', partnership_id=partnership.id, entry_id=e.id) }}" class="cu-led-query-form">
+            <label for="q-{{ e.id }}" class="cu-sr">What needs checking?</label>
+            <textarea id="q-{{ e.id }}" name="note" rows="2" maxlength="500" required placeholder="What needs checking? For example: can you add the receipt?"></textarea>
+            <button type="submit" class="cu-btn cu-btn-secondary cu-btn-sm">Send query</button>
+          </form>
+        </details>
+        {% endif %}
+      </div>
+    {% elif active and e.can_change %}
+      <a class="cu-link-btn" href="{{ url_for('ledger.edit', partnership_id=partnership.id, entry_id=e.id) }}">{{ "Edit to answer the query" if e.status == "queried" else "Edit or delete" }}</a>
+    {% endif %}
+  {% endif %}
+{%- endmacro %}
+
+{% block content %}
+<div class="cu-plan-head">
+  <div>
+    <p class="cu-plan-kicker">{{ listing.title }} · {{ builder_name }} &amp; {{ grower_name }}</p>
+    <h1>CrescoLedger</h1>
+    <p class="cu-muted cu-small">
+      {% if period %}{{ period[0] | short_date }} – {{ period[1] | short_date }} · {% endif %}{{ currency }} · totals count confirmed entries only
+    </p>
+  </div>
+  <div class="cu-plan-head-actions">
+    <a class="cu-btn cu-btn-secondary" href="{{ url_for('plans.view', partnership_id=partnership.id) }}">CrescoPlan</a>
+    {% if entries %}<a class="cu-btn cu-btn-secondary" href="{{ url_for('ledger.export', partnership_id=partnership.id) }}">Export CSV</a>{% endif %}
+    {% if active %}<a class="cu-btn cu-btn-primary cu-hide-mobile" href="{{ url_for('ledger.new', partnership_id=partnership.id) }}">+ Add entry</a>{% endif %}
+  </div>
+</div>
+
+<div class="cu-led-totals">
+  <div class="cu-led-tile">
+    <span class="cu-section-label cu-needs-ink">Revenue</span>
+    <span class="cu-led-figure">{{ totals.revenue | money(currency) }}</span>
+  </div>
+  <div class="cu-led-tile">
+    <span class="cu-section-label cu-offers-ink">Costs</span>
+    <span class="cu-led-figure">{{ totals.costs | money(currency) }}</span>
+  </div>
+  <div class="cu-led-tile cu-led-net">
+    <span class="cu-section-label">Net position</span>
+    <span class="cu-led-figure">{{ totals.net | money(currency) }}</span>
+    <span class="cu-small">Calculated from confirmed entries</span>
+  </div>
+  <div class="cu-led-tile cu-led-open">
+    <span class="cu-section-label">Not yet confirmed</span>
+    <span class="cu-led-figure">{{ totals.open_amount | money(currency) }}</span>
+    <span class="cu-small">
+      {% if totals.to_confirm %}{{ totals.to_confirm }} waiting for you
+      {% elif totals.open_count %}{{ totals.open_count }} entr{{ "y" if totals.open_count == 1 else "ies" }} in progress
+      {% else %}Nothing outstanding{% endif %}
+    </span>
+  </div>
+</div>
+
+{% if entries %}
+<details class="cu-led-split">
+  <summary>Who received and paid what (confirmed)</summary>
+  <div class="cu-led-split-grid">
+    {% for role in ("builder", "grower") %}
+    <div>
+      <strong>{{ name_of_role[role] }}</strong> <span class="cu-muted">({{ role | title }})</span><br>
+      Received {{ by_party[role].revenue | money(currency) }} · Paid {{ by_party[role].costs | money(currency) }}
+    </div>
+    {% endfor %}
+  </div>
+  <p class="cu-small cu-muted">Any split you've agreed is settled between you directly. Crescopus never holds or moves money.</p>
+</details>
+{% endif %}
+
+<nav class="cu-chips" aria-label="Show entries">
+  {% for value, label in filters %}
+    <a href="{{ url_for('ledger.view', partnership_id=partnership.id, show=value if value != 'all' else None) }}" {% if show == value %}aria-current="true"{% endif %}>
+      {{ label }}{% if value == "open" and totals.open_count %} ({{ totals.open_count }}){% endif %}
+    </a>
+  {% endfor %}
+</nav>
+
+{% if shown %}
+<div class="cu-led-list">
+  <div class="cu-led-row cu-led-head" aria-hidden="true">
+    <span>Date</span><span>Type</span><span>Description</span><span class="cu-led-amt">Amount</span><span>Receipt</span><span>Status</span>
+  </div>
+  {% for e in shown %}
+  <div class="cu-led-row {% if e.status != 'confirmed' %}cu-led-row-open{% endif %}">
+    <span class="cu-led-date">{{ e.entry_date | short_date }}</span>
+    <span><span class="cu-led-kind cu-led-kind-{{ e.kind }}">{{ "Revenue" if e.kind == "revenue" else "Cost" }}</span></span>
+    <span class="cu-led-desc">
+      {{ e.description }}
+      <span class="cu-small cu-muted">
+        {{ "Received" if e.kind == "revenue" else "Paid" }} by {{ name_of_role[e.party] }}
+        · added by {{ name_of_role[e.added_by_role] if e.added_by_role else ("RevenueCat" if e.source == "revenuecat" else "the system") }}
+      </span>
+    </span>
+    <span class="cu-led-amt cu-led-amt-{{ e.kind }}">{{ "+" if e.kind == "revenue" else "−" }}{{ e.amount_f | money(currency) }}</span>
+    <span class="cu-led-receipt">
+      {% if e.receipt_is_link %}
+        <a href="{{ e.receipt_url }}" target="_blank" rel="noopener noreferrer nofollow">
+          <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/></svg>
+          Receipt</a>
+      {% elif e.receipt_url %}<span class="cu-small" title="Receipt reference">Ref: {{ e.receipt_url }}</span>
+      {% else %}<span class="cu-muted cu-small">No receipt</span>{% endif %}
+    </span>
+    <span class="cu-led-status-cell">{{ status_cell(e) }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% elif entries %}
+  <p class="empty-cta">No entries match this filter.</p>
+{% else %}
+  <div class="cu-plan-empty">
+    <h2>No entries yet</h2>
+    <p>Record costs either of you pays and revenue the app earns. Each entry is confirmed by the other person before it counts, so you both trust the totals.</p>
+    {% if active %}<a class="cu-btn cu-btn-primary" href="{{ url_for('ledger.new', partnership_id=partnership.id) }}">Add the first entry</a>{% endif %}
+  </div>
+{% endif %}
+
+{% if active %}
+<div class="cu-plan-bar">
+  <a class="cu-btn cu-btn-primary" href="{{ url_for('ledger.new', partnership_id=partnership.id) }}">+ Add entry</a>
+</div>
+{% endif %}
+{% endblock %}
