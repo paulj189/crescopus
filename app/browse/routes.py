@@ -14,12 +14,8 @@ from app.utils import (
     current_profile, get_verifications, get_id_verified_ids, login_required,
     clean_list_html, clean_pitch_html, tags_from_form,
 )
-from app.constants import (
-    TAG_LABELS,
-    BUILDER_NEEDS_TAGS, BUILDER_OFFERS_TAGS,
-    GROWER_NEEDS_TAGS, GROWER_OFFERS_TAGS,
-    VERIFICATION_LABELS,
-)
+from app.constants import VERIFICATION_LABELS
+from app import tags
 
 browse_bp = Blueprint("browse", __name__, url_prefix="/browse")
 
@@ -48,7 +44,8 @@ def _clean_search(q):
 
 
 def _labels(slugs):
-    return [TAG_LABELS.get(s, s) for s in (slugs or [])]
+    names = tags.labels()
+    return [names.get(s, s) for s in (slugs or [])]
 
 
 def _wants_partial():
@@ -69,9 +66,9 @@ def index():
     verified_only = request.args.get("verified") == "1"
 
     if tab == "builders":
-        needs_options, offers_options = BUILDER_NEEDS_TAGS, BUILDER_OFFERS_TAGS
+        needs_options, offers_options = tags.builder_needs(), tags.builder_offers()
     else:
-        needs_options, offers_options = GROWER_NEEDS_TAGS, GROWER_OFFERS_TAGS
+        needs_options, offers_options = tags.grower_needs(), tags.grower_offers()
     need_slugs = {s for s, _ in needs_options}
     offer_slugs = {s for s, _ in offers_options}
     needs = [n for n in request.args.getlist("need") if n in need_slugs]
@@ -274,8 +271,8 @@ def edit_my_card():
             "hero_image_url": _clean_url(request.form.get("hero_image_url")),
             "needs_html": clean_list_html(request.form.get("needs_html")),
             "offers_html": clean_list_html(request.form.get("offers_html")),
-            "needs_tags": tags_from_form(request.form, "needs_tags", GROWER_NEEDS_TAGS),
-            "offers_tags": tags_from_form(request.form, "offers_tags", GROWER_OFFERS_TAGS),
+            "needs_tags": tags_from_form(request.form, "needs_tags", tags.all_slugs("support")),
+            "offers_tags": tags_from_form(request.form, "offers_tags", tags.all_slugs("growth")),
         }).eq("id", profile["id"]).execute()
         flash("Card saved.", "success")
         return redirect(url_for("browse.edit_my_card"))
@@ -284,7 +281,8 @@ def edit_my_card():
     return render_template(
         "browse/edit_card.html", kind="grower",
         person=profile, listing=None,
-        needs_options=GROWER_NEEDS_TAGS, offers_options=GROWER_OFFERS_TAGS,
+        needs_options=tags.grower_needs(keep=profile.get("needs_tags")),
+        offers_options=tags.grower_offers(keep=profile.get("offers_tags")),
         id_verified="id" in badges,
         tint=_tint(profile["id"]), view_url=url_for("browse.grower_detail", grower_id=profile["id"]),
     )
@@ -330,8 +328,8 @@ def edit_app_card(listing_id):
             "store_urls": store_urls,
             "needs_html": clean_list_html(request.form.get("needs_html")),
             "offers_html": clean_list_html(request.form.get("offers_html")),
-            "needs_tags": tags_from_form(request.form, "needs_tags", BUILDER_NEEDS_TAGS),
-            "offers_tags": tags_from_form(request.form, "offers_tags", BUILDER_OFFERS_TAGS),
+            "needs_tags": tags_from_form(request.form, "needs_tags", tags.all_slugs("growth")),
+            "offers_tags": tags_from_form(request.form, "offers_tags", tags.all_slugs("support")),
             "revenuecat_project_key": (request.form.get("revenuecat_project_key") or "").strip() or None,
         }).eq("id", listing_id).execute()
         flash("Card saved.", "success")
@@ -345,7 +343,8 @@ def edit_app_card(listing_id):
         "browse/edit_card.html", kind="app",
         person=profile, listing=listing, platforms=platforms,
         app_url=(listing.get("store_urls") or {}).get("website", ""),
-        needs_options=BUILDER_NEEDS_TAGS, offers_options=BUILDER_OFFERS_TAGS,
+        needs_options=tags.builder_needs(keep=listing.get("needs_tags")),
+        offers_options=tags.builder_offers(keep=listing.get("offers_tags")),
         id_verified="id" in badges,
         tint=_tint(listing_id), person_tint=_tint(profile["id"]),
         view_url=url_for("browse.app_detail", listing_id=listing_id),

@@ -34,7 +34,7 @@
       </a>
     {% endfor %}
     {% for pid, n in ledger_waiting.items() %}
-      <a class="cu-todo-item" href="{{ url_for('plans.view', partnership_id=pid) }}">
+      <a class="cu-todo-item" href="{{ url_for('ledger.view', partnership_id=pid, show='open') }}">
         <span class="cu-todo-kind cu-offers-ink">CrescoLedger</span>
         <span class="cu-todo-title">{{ titles.get(pid, "A partnership") }}</span>
         <span class="cu-todo-note">

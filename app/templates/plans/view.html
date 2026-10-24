@@ -77,7 +77,7 @@
       {% endif %}
     </section>
 
-    <section class="cu-panel cu-panel-dark">
+    <a class="cu-panel cu-panel-dark cu-panel-link" href="{{ url_for('ledger.view', partnership_id=partnership.id) }}">
       <h2 class="cu-section-label">CrescoLedger</h2>
       <p class="cu-ledger-net">Net {{ ledger.net | money(plan.ledger_currency) }}</p>
       <p class="cu-small">
@@ -85,8 +85,8 @@
         {% elif ledger.pending %}{{ ledger.pending }} entr{{ "y" if ledger.pending == 1 else "ies" }} awaiting confirmation.
         {% else %}All entries confirmed.{% endif %}
       </p>
-      <p class="cu-small cu-ledger-soon">The full ledger page arrives in the next update.</p>
-    </section>
+      <p class="cu-small cu-ledger-soon">Open the ledger →</p>
+    </a>
   </aside>
 </div>
 

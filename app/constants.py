@@ -33,7 +33,10 @@ COUNTRIES = [
 ]
 
 
-# ---------- Needs / Offers tags (used for card tags and browse filters) ----------
+# ---------- Needs / Offers tags: BACKUP COPY ----------
+# The live lists are in the tag_options table in Supabase (see app/tags.py and
+# sql/migration_tag_options.sql) — edit them there. These are only used if
+# that table can't be read.
 # Two vocabularies that mirror each other:
 #   GROWTH_TAGS  — growth help: what builders NEED and growers OFFER
 #   SUPPORT_TAGS — support/terms: what builders OFFER and growers NEED
