@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template
+"""Old builder pages: Builders now appear through their app cards on Browse."""
+from flask import Blueprint, redirect, url_for
 from app.extensions import get_supabase
 
 builders_bp = Blueprint("builders", __name__, url_prefix="/builders", template_folder="../templates/builders")
@@ -6,27 +7,13 @@ builders_bp = Blueprint("builders", __name__, url_prefix="/builders", template_f
 
 @builders_bp.route("/")
 def browse():
-    supabase = get_supabase()
-    res = (
-        supabase.table("profiles")
-        .select("*")
-        .eq("is_developer", True)
-        .order("created_at", desc=True)
-        .execute()
-    )
-    return render_template("builders/browse.html", builders=res.data)
+    return redirect(url_for("browse.index"))
 
 
 @builders_bp.route("/<builder_id>")
 def detail(builder_id):
-    supabase = get_supabase()
-    builder = supabase.table("profiles").select("*").eq("id", builder_id).single().execute().data
-    listings = (
-        supabase.table("listings")
-        .select("*")
-        .eq("developer_id", builder_id)
-        .order("created_at", desc=True)
-        .execute()
-        .data
-    )
-    return render_template("builders/detail.html", builder=builder, listings=listings)
+    apps = (get_supabase().table("listings").select("id").eq("developer_id", builder_id)
+            .order("created_at", desc=True).limit(1).execute().data)
+    if apps:
+        return redirect(url_for("browse.app_detail", listing_id=apps[0]["id"]))
+    return redirect(url_for("browse.index"))

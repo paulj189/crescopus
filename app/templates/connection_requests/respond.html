@@ -1,16 +1,29 @@
 {% extends "base.html" %}
 {% block title %}Connection request — Crescopus{% endblock %}
 {% block content %}
-<h1>Connection request</h1>
-<p>From <span class="text-grower">{{ sender.full_name }}</span> &middot; {{ listing.title }}</p>
-<p>{{ req.message }}</p>
+{% set from_grower = req.initiated_by == req.grower_id %}
+<p class="cu-plan-kicker">{{ listing.title }}</p>
+<h1>Request from {{ sender.full_name }}</h1>
+<p class="cu-muted">
+  {{ sender.full_name }} ({{ "Grower" if from_grower else "Builder" }}) would like to start a CrescoPlan with you for {{ listing.title }}.
+  <a class="cu-inline-link" href="{{ url_for('browse.grower_detail', grower_id=sender.id) if from_grower else url_for('browse.app_detail', listing_id=listing.id) }}">See their card</a>.
+</p>
 
-<form method="POST" action="{{ url_for('connection_requests.accept', request_id=req.id) }}" style="display:inline;">
-  <button type="submit">Accept &amp; connect</button>
+<blockquote class="cu-quote">{{ req.message }}</blockquote>
+
+<form method="POST" action="{{ url_for('connection_requests.accept', request_id=req.id) }}">
+  <p class="cu-small cu-muted">Accepting opens a shared CrescoPlan and private messages. Your email address is not shared.</p>
+  <button type="submit" class="cu-btn cu-btn-primary">Accept and start a CrescoPlan</button>
 </form>
 
-<form method="POST" action="{{ url_for('connection_requests.reject', request_id=req.id) }}" style="display:inline;margin-left:8px;">
-  <input type="text" name="reject_reason" placeholder="Reason (optional)" style="width:auto;display:inline-block;">
-  <button type="submit">Decline</button>
-</form>
+<details class="cu-decline">
+  <summary class="cu-link-btn">Decline</summary>
+  <form method="POST" action="{{ url_for('connection_requests.reject', request_id=req.id) }}">
+    <div>
+      <label for="reject_reason">Reason (optional, shown to {{ sender.full_name }})</label>
+      <input type="text" id="reject_reason" name="reject_reason" maxlength="300" placeholder="For example: not the right fit for us right now">
+    </div>
+    <button type="submit" class="cu-btn cu-btn-secondary">Decline request</button>
+  </form>
+</details>
 {% endblock %}

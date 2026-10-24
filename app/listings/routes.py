@@ -7,9 +7,8 @@ listings_bp = Blueprint("listings", __name__, url_prefix="/listings", template_f
 
 @listings_bp.route("/")
 def browse():
-    supabase = get_supabase()
-    res = supabase.table("listings").select("*").order("created_at", desc=True).execute()
-    return render_template("listings/browse.html", listings=res.data)
+    """Old app list: the card-based Browse page replaces it."""
+    return redirect(url_for("browse.index"))
 
 
 @listings_bp.route("/<listing_id>")
@@ -19,6 +18,9 @@ def detail(listing_id):
 
     profile = current_profile()
     is_owner = bool(profile and listing["developer_id"] == profile["id"])
+    if not is_owner:
+        # Everyone else sees the app's card.
+        return redirect(url_for("browse.app_detail", listing_id=listing_id))
 
     pending_requests = []
     if is_owner:
@@ -31,6 +33,14 @@ def detail(listing_id):
             .execute()
             .data
         )
+
+    names = {}
+    if pending_requests:
+        ids = list({r["grower_id"] for r in pending_requests} | {r["initiated_by"] for r in pending_requests})
+        names = {p["id"]: p["full_name"] for p in supabase.table("profiles").select("id,full_name").in_("id", ids).execute().data}
+    for r in pending_requests:
+        r["from_name"] = names.get(r["grower_id"], "A grower")
+        r["sent_by_me"] = r["initiated_by"] == profile["id"]
 
     return render_template(
         "listings/detail.html",
@@ -45,7 +55,7 @@ def detail(listing_id):
 def new():
     profile = current_profile()
     if not profile or not profile.get("is_developer"):
-        flash("Only developer profiles can list an app.", "error")
+        flash("Only Builder accounts can list an app.", "error")
         return redirect(url_for("dashboard.index"))
 
     if request.method == "POST":
@@ -73,19 +83,19 @@ def delete(listing_id):
     listing = supabase.table("listings").select("*").eq("id", listing_id).single().execute().data
 
     if not listing or not profile or listing["developer_id"] != profile["id"]:
-        flash("Only the listing's developer can delete it.", "error")
+        flash("Only the app's builder can delete it.", "error")
         return redirect(url_for("dashboard.index"))
 
     has_requests = supabase.table("connection_requests").select("id").eq("listing_id", listing_id).execute().data
     has_partnerships = supabase.table("partnerships").select("id").eq("listing_id", listing_id).execute().data
 
     if has_requests or has_partnerships:
-        flash("This listing has connection requests or CrescoPacts on record and can't be deleted, to keep that history intact. Editing it is still fine.", "error")
+        flash("This app has connection requests or partnerships on record, so it can't be deleted, to keep that history intact. You can still edit its card.", "error")
         return redirect(url_for("listings.detail", listing_id=listing_id))
 
     if request.method == "POST":
         supabase.table("listings").delete().eq("id", listing_id).execute()
-        flash("Listing deleted.", "success")
+        flash("App deleted.", "success")
         return redirect(url_for("dashboard.index"))
 
     return render_template("listings/delete.html", listing=listing)

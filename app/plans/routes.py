@@ -35,6 +35,24 @@ def short_date(value):
     return text if d.year == date.today().year else f"{text} {d.year}"
 
 
+@plans_bp.app_template_filter("local_time")
+def local_time(value):
+    """ISO timestamp -> '24 Oct 10:36' in UK time (falls back to UTC if time zone data is missing)."""
+    if not value:
+        return ""
+    from datetime import datetime
+    try:
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return str(value)
+    try:
+        from zoneinfo import ZoneInfo
+        dt = dt.astimezone(ZoneInfo("Europe/London"))
+    except Exception:  # noqa: BLE001 - e.g. Windows without the tzdata package
+        pass
+    return f"{short_date(dt.date().isoformat())} {dt.strftime('%H:%M')}"
+
+
 @plans_bp.app_template_filter("money")
 def money(amount, currency="GBP"):
     symbol = CURRENCY_SYMBOLS.get((currency or "").upper(), "")
@@ -59,7 +77,7 @@ def _load(partnership_id):
     profile = current_profile()
     supabase = get_supabase()
     rows = (supabase.table("partnerships")
-            .select("id,status,listing_id,developer_id,grower_id,started_at,listings(id,title)")
+            .select("id,status,listing_id,developer_id,grower_id,started_at,end_reason,disconnect_reason,listings(id,title)")
             .eq("id", partnership_id).execute().data)
     if not rows or not profile or profile["id"] not in (rows[0]["developer_id"], rows[0]["grower_id"]):
         return None
@@ -116,7 +134,7 @@ def plan_summaries(supabase, profile):
     partnerships = (supabase.table("partnerships")
                     .select("id,status,developer_id,grower_id,listings(title),cresco_plans(id,version,updated_at,plan_signoffs(profile_id,version))")
                     .or_(f"developer_id.eq.{profile['id']},grower_id.eq.{profile['id']}")
-                    .in_("status", ["trial", "formalised"]).execute().data)
+                    .execute().data)
     others = {p["developer_id"] if p["grower_id"] == profile["id"] else p["grower_id"] for p in partnerships}
     names = {p["id"]: p["full_name"] for p in (supabase.table("profiles").select("id,full_name")
              .in_("id", list(others)).execute().data if others else [])}
@@ -131,7 +149,9 @@ def plan_summaries(supabase, profile):
         other_id = p["developer_id"] if p["grower_id"] == profile["id"] else p["grower_id"]
         me_ok = signed.get(profile["id"]) == plan["version"]
         other_ok = signed.get(other_id) == plan["version"]
-        if me_ok and other_ok:
+        if p["status"] not in ("trial", "formalised"):
+            state = ("ended", "Ended")
+        elif me_ok and other_ok:
             state = ("agreed", "Agreed by both")
         elif other_ok:
             state = ("you", "Waiting for you")
@@ -144,8 +164,9 @@ def plan_summaries(supabase, profile):
             "with": names.get(other_id, "Partner"),
             "with_role": "Grower" if p["developer_id"] == profile["id"] else "Builder",
             "version": plan["version"], "updated_at": plan.get("updated_at"), "state": state,
+            "active": state[0] != "ended",
         })
-    order = {"you": 0, "draft": 1, "them": 2, "agreed": 3}
+    order = {"you": 0, "draft": 1, "them": 2, "agreed": 3, "ended": 4}
     items.sort(key=lambda i: (order[i["state"][0]], i["title"].lower()))
     return items
 

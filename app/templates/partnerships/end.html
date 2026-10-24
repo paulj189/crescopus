@@ -1,10 +1,22 @@
 {% extends "base.html" %}
-{% block title %}End CrescoPact — Crescopus{% endblock %}
+{% block title %}End partnership — Crescopus{% endblock %}
 {% block content %}
-<h1>End this CrescoPact</h1>
-<p>Either side can end a CrescoPact at any time. This is recorded, not hidden — the reason you give is visible to the other party and factors into your track record.</p>
+<p class="cu-plan-kicker">{{ listing.title }}</p>
+<h1>End this partnership</h1>
+<p>Either of you can end a partnership at any time. It's a normal part of finding the right fit, not a failure.</p>
+<ul class="cu-end-list">
+  <li>Messaging closes, and the plan and ledger can no longer be changed.</li>
+  <li>You both keep read-only access to the plan, its history and the ledger.</li>
+  <li>Your reason is shown to your partner.</li>
+</ul>
 <form method="POST">
-  <div><label for="end_reason">Why are you ending it?</label><textarea id="end_reason" name="end_reason" required></textarea></div>
-  <button type="submit">End CrescoPact</button>
+  <div>
+    <label for="end_reason">Why are you ending it?</label>
+    <textarea id="end_reason" name="end_reason" required maxlength="1000"></textarea>
+  </div>
+  <div class="cu-led-form-actions">
+    <button type="submit" class="cu-btn cu-btn-primary">End partnership</button>
+    <a class="cu-btn cu-btn-secondary" href="{{ url_for('partnerships.detail', partnership_id=partnership.id) }}">Cancel</a>
+  </div>
 </form>
 {% endblock %}

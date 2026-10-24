@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Send a connection request — Crescopus{% endblock %}
+{% block content %}
+<h1>Send a connection request</h1>
+<p>
+  {% if grower %}To {{ grower.full_name }}, about {{ listing.title }}{% else %}To the developer of {{ listing.title }}{% endif %}
+</p>
+<form method="POST">
+  <div>
+    <label for="message">Your message</label>
+    <textarea id="message" name="message" rows="6" required placeholder="A good intro usually covers: what drew you to this, anything relevant you've done before, and roughly how you'd approach it. You don't need all three — just enough for the other side to picture working with you."></textarea>
+  </div>
+  <div style="margin:16px 0;">
+    <label style="display:flex;align-items:flex-start;gap:8px;text-transform:none;font-family:var(--sans);font-size:13px;color:var(--muted);">
+      <input type="checkbox" name="consent_acknowledged" required style="width:auto;margin-top:3px;">
+      <span>I understand Crescopus doesn't broker, manage, or guarantee any relationship formed here, and is not a party to it.</span>
+    </label>
+  </div>
+  <button type="submit">Send</button>
+</form>
+{% endblock %}

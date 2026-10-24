@@ -23,7 +23,7 @@ def index():
 
     supabase = get_supabase()
     plans = plan_summaries(supabase, profile)
-    titles = {p["id"]: p["title"] for p in plans}
+    titles = {p["id"]: p["title"] for p in plans if p["active"]}
 
     # Your card(s)
     my_apps = []
@@ -44,7 +44,7 @@ def index():
         r["listing_title"] = listing_titles.get(r["listing_id"], "an app")
 
     plans_waiting = [p for p in plans if p["state"][0] == "you"]
-    ledger_waiting = get_ledger_waiting_on_me(supabase, profile, [p["id"] for p in plans])
+    ledger_waiting = get_ledger_waiting_on_me(supabase, profile, [p["id"] for p in plans if p["active"]])
     unread = get_unread_partnerships(supabase, profile)
     unread_items = [{"id": pid, "title": titles.get(pid, "A partnership"), "body": m.get("body", "")}
                     for pid, m in unread.items() if pid in titles]

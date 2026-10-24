@@ -111,7 +111,7 @@ def create_app():
             from app.plans.routes import plan_summaries
             supabase = get_supabase()
             plans = plan_summaries(supabase, profile)
-            plan_ids = {p["id"] for p in plans}
+            plan_ids = {p["id"] for p in plans if p["active"]}
             received = get_pending_received_requests(supabase, profile)
             unread = [pid for pid in get_unread_partnerships(supabase, profile) if pid in plan_ids]
             ledger = get_ledger_waiting_on_me(supabase, profile, list(plan_ids))

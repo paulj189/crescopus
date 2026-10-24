@@ -1,34 +1,45 @@
 {% extends "base.html" %}
-{% block title %}{{ listing.title }} — Crescopus{% endblock %}
+{% block title %}Connection requests — {{ listing.title }} — Crescopus{% endblock %}
+{% block main_class %}app-main-wide{% endblock %}
 {% block content %}
-<span class="tag">{{ listing.category }}</span>
-<h1>{{ listing.title }}</h1>
-<p>{{ listing.tagline }}</p>
-{% if listing.hero_image_url %}
-  <img src="{{ listing.hero_image_url }}" alt="{{ listing.title }} hero image" style="max-width:100%;border-radius:8px;margin:12px 0;">
-{% endif %}
-{% if listing.pitch_html %}
-  <div class="listing-pitch">{{ listing.pitch_html | safe }}</div>
-{% else %}
-  <p>{{ listing.description }}</p>
-{% endif %}
-<p><a href="{{ url_for('builders.detail', builder_id=listing.developer_id) }}">View builder profile →</a></p>
-
-{% if not is_owner %}
-  <a href="{{ url_for('connection_requests.new_from_listing', listing_id=listing.id) }}"><button>Connect</button></a>
-{% else %}
-  <a href="{{ url_for('listings.edit', listing_id=listing.id) }}"><button>Edit listing</button></a>
-{% endif %}
-
-{% if pending_requests %}
-  <h2>Connection requests</h2>
-  <div class="card-list">
-    {% for r in pending_requests %}
-      <div class="card">
-        <p>{{ r.message }}</p>
-        <a href="{{ url_for('connection_requests.respond', request_id=r.id) }}"><button>Review</button></a>
-      </div>
-    {% endfor %}
+<div class="cu-plan-head">
+  <div>
+    <p class="cu-plan-kicker">{{ listing.title }}</p>
+    <h1>Connection requests</h1>
+    <p class="cu-muted cu-small">Growers who'd like to start a CrescoPlan with this app.</p>
   </div>
+  <div class="cu-plan-head-actions">
+    <a class="cu-btn cu-btn-secondary" href="{{ url_for('browse.app_detail', listing_id=listing.id) }}">View card</a>
+    <a class="cu-btn cu-btn-primary" href="{{ url_for('browse.edit_app_card', listing_id=listing.id) }}">Edit card</a>
+  </div>
+</div>
+
+{% set incoming = pending_requests | rejectattr("sent_by_me") | list %}
+{% set outgoing = pending_requests | selectattr("sent_by_me") | list %}
+
+{% if incoming %}
+<div class="cu-todo">
+  {% for r in incoming %}
+    <a class="cu-todo-item" href="{{ url_for('connection_requests.respond', request_id=r.id) }}">
+      <span class="cu-todo-kind cu-offers-ink">From {{ r.from_name }}</span>
+      <span class="cu-todo-note">“{{ r.message | truncate(220) }}”</span>
+      <span class="cu-small cu-needs-ink">Review and reply →</span>
+    </a>
+  {% endfor %}
+</div>
+{% else %}
+  <p class="empty-cta">No requests waiting. Growers find your app on Browse; a clear card with Needs and Offers helps.</p>
+{% endif %}
+
+{% if outgoing %}
+<h2 class="cu-plan-h" style="margin-top:32px;">Requests you've sent for this app</h2>
+<div class="cu-todo">
+  {% for r in outgoing %}
+    <div class="cu-todo-item cu-todo-static">
+      <span class="cu-todo-title">To {{ r.from_name }}</span>
+      <span class="cu-todo-note">Waiting for their reply</span>
+    </div>
+  {% endfor %}
+</div>
 {% endif %}
 {% endblock %}

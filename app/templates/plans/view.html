@@ -21,6 +21,10 @@
   </div>
 </div>
 
+{% if not active %}
+  <p class="cu-conflict">This partnership has ended{% if partnership.end_reason or partnership.disconnect_reason %}: “{{ partnership.end_reason or partnership.disconnect_reason }}”{% endif %}. The plan and its history are kept here, read-only.</p>
+{% endif %}
+
 <div class="cu-plan-layout">
   <div class="cu-plan-main">
     {% if is_empty %}
