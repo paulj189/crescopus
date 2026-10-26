@@ -65,8 +65,13 @@
         {% elif action.kind == "open" %}
           <a class="cu-btn cu-btn-primary" href="{{ url_for('plans.view', partnership_id=action.partnership_id) }}">Open your CrescoPlan</a>
         {% elif action.kind == "owner" %}
+          {% if listing.withdrawn_at %}<p class="cu-conflict">Withdrawn: this card isn't shown on Crescopus. Restore it from your dashboard.</p>{% endif %}
           <a class="cu-btn cu-btn-primary" href="{{ url_for('browse.edit_app_card', listing_id=listing.id) }}">Edit card</a>
           <a class="cu-btn cu-btn-secondary" href="{{ url_for('listings.detail', listing_id=listing.id) }}">Connection requests</a>
+        {% elif action.kind == "withdrawn" %}
+          <p class="cu-muted cu-small">This app has been withdrawn from Crescopus and isn't taking new connections.</p>
+        {% elif action.kind == "self_withdrawn" %}
+          <p class="cu-muted cu-small">Your card is withdrawn. Restore it from your dashboard to start new CrescoPlans.</p>
         {% elif action.kind == "login" %}
           <a class="cu-btn cu-btn-primary" href="{{ url_for('auth.login') }}">Log in to start a CrescoPlan</a>
         {% else %}

@@ -45,7 +45,10 @@
         {% elif action.kind == "need_listing" %}
           <a class="cu-btn cu-btn-primary" href="{{ url_for('listings.new') }}">List your app first</a>
         {% elif action.kind == "owner" %}
+          {% if grower.grower_withdrawn_at %}<p class="cu-conflict">Withdrawn: your card isn't shown on Crescopus. Restore it from your dashboard.</p>{% endif %}
           <a class="cu-btn cu-btn-primary" href="{{ url_for('browse.edit_my_card') }}">Edit card</a>
+        {% elif action.kind == "withdrawn" %}
+          <p class="cu-muted cu-small">This grower has withdrawn their card from Crescopus and isn't taking new connections.</p>
         {% elif action.kind == "login" %}
           <a class="cu-btn cu-btn-primary" href="{{ url_for('auth.login') }}">Log in to start a CrescoPlan</a>
         {% else %}

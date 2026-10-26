@@ -94,14 +94,21 @@
     {% if my_apps %}
     <div class="cu-grid">
       {% for a in my_apps %}
-      <div class="cu-card cu-card-plain">
-        <span class="cu-card-name">{{ a.title }}</span>
-        {% if a.tagline %}<p class="cu-card-pitch">{{ a.tagline }}</p>{% endif %}
+      <div class="cu-card cu-card-plain {% if a.withdrawn_at %}cu-card-withdrawn{% endif %}">
+        <span class="cu-card-name">{{ a.title }}{% if a.withdrawn_at %} <span class="cu-wd-badge">Withdrawn</span>{% endif %}</span>
+        {% if a.withdrawn_at %}<p class="cu-card-pitch cu-muted">Not shown on Crescopus. Existing plans and ledgers are unaffected.</p>
+        {% elif a.tagline %}<p class="cu-card-pitch">{{ a.tagline }}</p>{% endif %}
         <div class="cu-card-actions">
-          <a class="cu-btn cu-btn-primary" href="{{ url_for('browse.edit_app_card', listing_id=a.id) }}">Edit card</a>
+          {% if a.withdrawn_at %}
+          <form method="POST" action="{{ url_for('browse.restore_app_card', listing_id=a.id) }}" class="cu-wd-restore">
+            <button type="submit" class="cu-btn cu-btn-primary">Restore card</button>
+          </form>
+          {% endif %}
+          <a class="cu-btn {{ 'cu-btn-secondary' if a.withdrawn_at else 'cu-btn-primary' }}" href="{{ url_for('browse.edit_app_card', listing_id=a.id) }}">Edit card</a>
           <a class="cu-btn cu-btn-secondary" href="{{ url_for('browse.app_detail', listing_id=a.id) }}">View</a>
           <a class="cu-btn cu-btn-secondary" href="{{ url_for('listings.detail', listing_id=a.id) }}">Requests</a>
         </div>
+        {% if not a.withdrawn_at %}<a class="cu-link-btn cu-small" href="{{ url_for('browse.withdraw_app_card', listing_id=a.id) }}">Withdraw or delete</a>{% endif %}
       </div>
       {% endfor %}
     </div>
@@ -110,13 +117,20 @@
     {% endif %}
   {% else %}
     <h2 class="cu-plan-h">Your card</h2>
-    <div class="cu-card cu-card-plain cu-card-single">
-      <span class="cu-card-name">{{ profile.full_name }}</span>
-      {% if profile.bio %}<p class="cu-card-pitch">{{ profile.bio }}</p>{% else %}<p class="cu-card-pitch cu-muted">Add a short summary so builders know what you do.</p>{% endif %}
+    <div class="cu-card cu-card-plain cu-card-single {% if profile.grower_withdrawn_at %}cu-card-withdrawn{% endif %}">
+      <span class="cu-card-name">{{ profile.full_name }}{% if profile.grower_withdrawn_at %} <span class="cu-wd-badge">Withdrawn</span>{% endif %}</span>
+      {% if profile.grower_withdrawn_at %}<p class="cu-card-pitch cu-muted">Not shown on Crescopus. Existing plans and ledgers are unaffected.</p>
+      {% elif profile.bio %}<p class="cu-card-pitch">{{ profile.bio }}</p>{% else %}<p class="cu-card-pitch cu-muted">Add a short summary so builders know what you do.</p>{% endif %}
       <div class="cu-card-actions">
-        <a class="cu-btn cu-btn-primary" href="{{ url_for('browse.edit_my_card') }}">Edit card</a>
+        {% if profile.grower_withdrawn_at %}
+        <form method="POST" action="{{ url_for('browse.restore_my_card') }}" class="cu-wd-restore">
+          <button type="submit" class="cu-btn cu-btn-primary">Restore card</button>
+        </form>
+        {% endif %}
+        <a class="cu-btn {{ 'cu-btn-secondary' if profile.grower_withdrawn_at else 'cu-btn-primary' }}" href="{{ url_for('browse.edit_my_card') }}">Edit card</a>
         <a class="cu-btn cu-btn-secondary" href="{{ url_for('browse.grower_detail', grower_id=profile.id) }}">View</a>
       </div>
+      {% if not profile.grower_withdrawn_at %}<a class="cu-link-btn cu-small" href="{{ url_for('browse.withdraw_my_card') }}">Withdraw card</a>{% endif %}
     </div>
   {% endif %}
 </section>

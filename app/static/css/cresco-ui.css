@@ -636,7 +636,9 @@ form.cu-led-rate-form{display:flex;flex-direction:column;gap:12px;margin-top:10p
 
 fieldset.cu-led-choice{border:1px solid var(--cu-card-line);border-radius:var(--cu-radius-sm);margin:0;padding:10px 14px 12px;display:flex;flex-direction:column;gap:8px;background:var(--panel);}
 fieldset.cu-led-choice[hidden]{display:none;}
-.cu-led-choice legend{font-weight:600;font-size:16px;padding:0 4px;}
+/* Legend as a heading inside the box, not sitting on its border */
+.cu-led-choice legend{float:left;width:100%;padding:0;margin:0 0 2px;font-weight:600;font-size:16px;}
+.cu-led-choice legend + *{clear:both;}
 .cu-led-choice label{display:flex;gap:8px;align-items:flex-start;margin:0;font-family:var(--sans);font-size:15px;font-weight:400;letter-spacing:normal;text-transform:none;color:var(--ink);cursor:pointer;line-height:1.4;}
 .cu-field[hidden]{display:none;}
 .cu-led-rates{align-items:start;}
@@ -664,3 +666,15 @@ form.cu-led-party-switch{display:flex;flex-wrap:wrap;align-items:center;justify-
   .cu-led-contrib-row [data-label]::before{content:attr(data-label);display:block;font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--cu-muted);margin-bottom:2px;}
   fieldset.cu-led-kindpick .cu-led-kindopt span{font-size:11px;}
 }
+
+/* ---------- Withdraw a card ---------- */
+.cu-wd-what{background:var(--cu-card);border:1px solid var(--cu-card-line);border-radius:var(--cu-radius);padding:14px 18px;margin:0 0 20px;max-width:560px;}
+.cu-wd-what p{margin:0 0 6px;}
+.cu-wd-what ul{margin:0;padding-left:20px;line-height:1.6;}
+.cu-led-choice > p{margin:0;}
+form.cu-wd-delete{margin-top:36px;max-width:560px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
+.cu-wd-delete p{margin:0;}
+.cu-wd-badge{display:inline-block;vertical-align:middle;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;padding:3px 7px;border-radius:6px;background:var(--cu-offers-bg);color:var(--cu-offers-tag);}
+.cu-card-withdrawn{border-style:dashed;}
+form.cu-wd-restore{margin:0;max-width:none;display:flex;flex:1 1 auto;}
+form.cu-wd-restore .cu-btn{width:100%;}

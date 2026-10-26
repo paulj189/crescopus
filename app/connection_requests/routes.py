@@ -18,6 +18,12 @@ def new_from_listing(listing_id):
 
     supabase = get_supabase()
     listing = supabase.table("listings").select("*").eq("id", listing_id).single().execute().data
+    if listing.get("withdrawn_at"):
+        flash("This app has been withdrawn from Crescopus, so it isn't taking new connections.", "error")
+        return redirect(url_for("browse.index"))
+    if profile.get("grower_withdrawn_at"):
+        flash("Your card is withdrawn. Restore it from your dashboard to send connection requests.", "error")
+        return redirect(url_for("dashboard.index"))
 
     if request.method == "POST":
         if not request.form.get("consent_acknowledged"):
@@ -50,6 +56,12 @@ def new_from_grower(grower_id, listing_id):
         return redirect(url_for("growers.detail", grower_id=grower_id))
 
     grower = supabase.table("profiles").select("*").eq("id", grower_id).single().execute().data
+    if listing.get("withdrawn_at"):
+        flash("That app card is withdrawn. Restore it from your dashboard to send connection requests about it.", "error")
+        return redirect(url_for("dashboard.index"))
+    if grower.get("grower_withdrawn_at"):
+        flash("This grower has withdrawn their card from Crescopus, so they aren't taking new connections.", "error")
+        return redirect(url_for("browse.index", tab="growers"))
 
     if request.method == "POST":
         if not request.form.get("consent_acknowledged"):

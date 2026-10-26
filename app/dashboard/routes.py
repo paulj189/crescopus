@@ -28,7 +28,7 @@ def index():
     # Your card(s)
     my_apps = []
     if profile.get("is_developer"):
-        my_apps = (supabase.table("listings").select("id,title,tagline,hero_image_url")
+        my_apps = (supabase.table("listings").select("id,title,tagline,hero_image_url,withdrawn_at")
                    .eq("developer_id", profile["id"]).order("created_at", desc=True).execute().data)
 
     # Needs your attention

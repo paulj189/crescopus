@@ -80,7 +80,8 @@ def index():
     cards = []
     if not (verified_only and not verified_ids):
         if tab == "builders":
-            query = supabase.table("listings").select("*, profiles(id, full_name, hero_image_url)")
+            query = (supabase.table("listings").select("*, profiles(id, full_name, hero_image_url)")
+                     .is_("withdrawn_at", "null"))
             if verified_ids is not None:
                 query = query.in_("developer_id", verified_ids)
             if needs:
@@ -106,7 +107,8 @@ def index():
                     "url": url_for("browse.app_detail", listing_id=r["id"]),
                 })
         else:
-            query = supabase.table("profiles").select("*").eq("is_grower", True)
+            query = (supabase.table("profiles").select("*").eq("is_grower", True)
+                     .is_("grower_withdrawn_at", "null"))
             if verified_ids is not None:
                 query = query.in_("id", verified_ids)
             if needs:
@@ -166,6 +168,14 @@ def app_detail(listing_id):
     if viewer:
         if viewer["id"] == listing["developer_id"]:
             action = {"kind": "owner"}
+        elif listing.get("withdrawn_at"):
+            existing = (
+                supabase.table("partnerships").select("id")
+                .eq("listing_id", listing_id).eq("grower_id", viewer["id"]).execute().data
+            )
+            action = {"kind": "open", "partnership_id": existing[0]["id"]} if existing else {"kind": "withdrawn"}
+        elif viewer.get("is_grower") and viewer.get("grower_withdrawn_at"):
+            action = {"kind": "self_withdrawn"}
         elif viewer.get("is_grower"):
             existing = (
                 supabase.table("partnerships").select("id,status")
@@ -185,6 +195,8 @@ def app_detail(listing_id):
                 action = {"kind": "connect"}
         else:
             action = {"kind": "none"}
+    elif listing.get("withdrawn_at"):
+        action = {"kind": "withdrawn"}
 
     return _render_detail(
         "browse/_app_popup.html",
@@ -212,14 +224,19 @@ def grower_detail(grower_id):
     if viewer:
         if viewer["id"] == grower_id:
             action = {"kind": "owner"}
+        elif grower.get("grower_withdrawn_at"):
+            action = {"kind": "withdrawn"}
         elif viewer.get("is_developer"):
             my_listings = (
                 supabase.table("listings").select("id,title")
-                .eq("developer_id", viewer["id"]).order("created_at", desc=True).execute().data
+                .eq("developer_id", viewer["id"]).is_("withdrawn_at", "null")
+                .order("created_at", desc=True).execute().data
             )
             action = {"kind": "connect"} if my_listings else {"kind": "need_listing"}
         else:
             action = {"kind": "none"}
+    elif grower.get("grower_withdrawn_at"):
+        action = {"kind": "withdrawn"}
 
     return _render_detail(
         "browse/_grower_popup.html",
@@ -349,3 +366,136 @@ def edit_app_card(listing_id):
         tint=_tint(listing_id), person_tint=_tint(profile["id"]),
         view_url=url_for("browse.app_detail", listing_id=listing_id),
     )
+
+
+# ---------- Withdraw / restore / delete a card (owner only) ----------
+# A card with no history can be deleted outright. Any other card is withdrawn:
+# hidden from browsing, its pending requests declined, and the partnerships
+# the person ticks are ended. Plans and ledgers stay with both people.
+
+def _rpc_error(err):
+    msg = getattr(err, "message", None) or str(err)
+    if err.args and isinstance(err.args[0], dict):
+        msg = err.args[0].get("message", msg)
+    return msg
+
+
+def _card_situation(supabase, profile, listing=None):
+    """Active partnerships (with the other person's name), pending requests and
+    whether the card has any history at all."""
+    if listing:
+        parts = (supabase.table("partnerships").select("id,status,grower_id,developer_id,listing_id")
+                 .eq("listing_id", listing["id"]).execute().data)
+        reqs = supabase.table("connection_requests").select("id,status").eq("listing_id", listing["id"]).execute().data
+    else:
+        parts = (supabase.table("partnerships").select("id,status,grower_id,developer_id,listing_id")
+                 .eq("grower_id", profile["id"]).execute().data)
+        reqs = supabase.table("connection_requests").select("id,status").eq("grower_id", profile["id"]).execute().data
+    active = [p for p in parts if p["status"] in ("trial", "formalised")]
+    others = {p["developer_id"] if p["grower_id"] == profile["id"] else p["grower_id"] for p in active}
+    names = {r["id"]: r["full_name"] for r in (supabase.table("profiles").select("id,full_name")
+             .in_("id", list(others)).execute().data if others else [])}
+    titles = {}
+    if active and not listing:
+        titles = {r["id"]: r["title"] for r in (supabase.table("listings").select("id,title")
+                  .in_("id", list({p["listing_id"] for p in active})).execute().data)}
+    for p in active:
+        other = p["developer_id"] if p["grower_id"] == profile["id"] else p["grower_id"]
+        p["with"] = names.get(other) or "your partner"
+        p["title"] = listing["title"] if listing else titles.get(p["listing_id"], "an app")
+    return {"active": active,
+            "pending": sum(1 for r in reqs if r["status"] == "pending"),
+            "has_history": bool(parts or reqs)}
+
+
+def _do_withdraw(supabase, situation, listing_id, back_url):
+    """Handle the withdraw form. Returns a redirect on success, else None."""
+    active_ids = {p["id"] for p in situation["active"]}
+    end_ids = [i for i in request.form.getlist("end_ids") if i in active_ids]
+    reason = (request.form.get("reason") or "").strip()[:1000]
+    if end_ids and not reason:
+        flash("Please give a short reason. The partners whose partnerships end will see it.", "error")
+        return None
+    try:
+        result = supabase.rpc("withdraw_card", {"p_listing_id": listing_id, "p_end_ids": end_ids,
+                                                "p_reason": reason or None}).execute().data or {}
+    except Exception as err:  # noqa: BLE001
+        flash(_rpc_error(err), "error")
+        return None
+    bits = ["Your card has been withdrawn and no longer appears on Crescopus."]
+    if result.get("ended"):
+        n = result["ended"]
+        bits.append(f"{n} partnership{'' if n == 1 else 's'} ended; plans and ledgers stay available, read-only.")
+    if result.get("declined"):
+        n = result["declined"]
+        bits.append(f"{n} pending request{'' if n == 1 else 's'} declined.")
+    flash(" ".join(bits) + " You can restore the card from your dashboard.", "success")
+    return redirect(back_url)
+
+
+@browse_bp.route("/app/<listing_id>/withdraw", methods=["GET", "POST"])
+@login_required
+def withdraw_app_card(listing_id):
+    profile = current_profile()
+    supabase = get_supabase()
+    rows = supabase.table("listings").select("*").eq("id", listing_id).execute().data
+    if not rows or not profile or rows[0]["developer_id"] != profile["id"]:
+        flash("Only the app's builder can withdraw or delete its card.", "error")
+        return redirect(url_for("dashboard.index"))
+    listing = rows[0]
+    situation = _card_situation(supabase, profile, listing)
+
+    if request.method == "POST":
+        if request.form.get("action") == "delete":
+            try:
+                supabase.rpc("delete_listing", {"p_listing_id": listing_id}).execute()
+                flash(f"{listing['title']} has been deleted.", "success")
+                return redirect(url_for("dashboard.index"))
+            except Exception as err:  # noqa: BLE001
+                flash(_rpc_error(err), "error")
+        else:
+            done = _do_withdraw(supabase, situation, listing_id, url_for("dashboard.index"))
+            if done:
+                return done
+
+    return render_template("browse/withdraw.html", kind="app", listing=listing,
+                           card_name=listing["title"], **situation)
+
+
+@browse_bp.route("/card/withdraw", methods=["GET", "POST"])
+@login_required
+def withdraw_my_card():
+    profile = current_profile()
+    if not profile or not profile.get("is_grower"):
+        flash("Builders withdraw each app card from the card's own page.", "error")
+        return redirect(url_for("dashboard.index"))
+    supabase = get_supabase()
+    situation = _card_situation(supabase, profile)
+    if request.method == "POST":
+        done = _do_withdraw(supabase, situation, None, url_for("dashboard.index"))
+        if done:
+            return done
+    return render_template("browse/withdraw.html", kind="grower", listing=None,
+                           card_name=profile.get("full_name") or "your card", **situation)
+
+
+@browse_bp.route("/app/<listing_id>/restore", methods=["POST"])
+@login_required
+def restore_app_card(listing_id):
+    try:
+        get_supabase().rpc("restore_card", {"p_listing_id": listing_id}).execute()
+        flash("Card restored. It's back on Crescopus.", "success")
+    except Exception as err:  # noqa: BLE001
+        flash(_rpc_error(err), "error")
+    return redirect(url_for("dashboard.index"))
+
+
+@browse_bp.route("/card/restore", methods=["POST"])
+@login_required
+def restore_my_card():
+    try:
+        get_supabase().rpc("restore_card", {"p_listing_id": None}).execute()
+        flash("Card restored. It's back on Crescopus.", "success")
+    except Exception as err:  # noqa: BLE001
+        flash(_rpc_error(err), "error")
+    return redirect(url_for("dashboard.index"))

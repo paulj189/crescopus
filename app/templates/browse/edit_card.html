@@ -168,7 +168,7 @@
         </div>
         <p class="cu-small">
           <a href="{{ url_for('listings.detail', listing_id=listing.id) }}">Connection requests for this app</a> ·
-          <a href="{{ url_for('listings.delete', listing_id=listing.id) }}">Delete this listing</a>
+          <a href="{{ url_for('browse.withdraw_app_card', listing_id=listing.id) }}">Withdraw or delete this card</a>
         </p>
       </details>
       {% endif %}

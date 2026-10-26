@@ -78,27 +78,8 @@ def new():
 @listings_bp.route("/<listing_id>/delete", methods=["GET", "POST"])
 @login_required
 def delete(listing_id):
-    profile = current_profile()
-    supabase = get_supabase()
-    listing = supabase.table("listings").select("*").eq("id", listing_id).single().execute().data
-
-    if not listing or not profile or listing["developer_id"] != profile["id"]:
-        flash("Only the app's builder can delete it.", "error")
-        return redirect(url_for("dashboard.index"))
-
-    has_requests = supabase.table("connection_requests").select("id").eq("listing_id", listing_id).execute().data
-    has_partnerships = supabase.table("partnerships").select("id").eq("listing_id", listing_id).execute().data
-
-    if has_requests or has_partnerships:
-        flash("This app has connection requests or partnerships on record, so it can't be deleted, to keep that history intact. You can still edit its card.", "error")
-        return redirect(url_for("listings.detail", listing_id=listing_id))
-
-    if request.method == "POST":
-        supabase.table("listings").delete().eq("id", listing_id).execute()
-        flash("App deleted.", "success")
-        return redirect(url_for("dashboard.index"))
-
-    return render_template("listings/delete.html", listing=listing)
+    """Old delete page: deleting and withdrawing now share one page."""
+    return redirect(url_for("browse.withdraw_app_card", listing_id=listing_id))
 
 
 @listings_bp.route("/<listing_id>/edit")
