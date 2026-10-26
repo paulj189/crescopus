@@ -2,8 +2,21 @@
 {% block title %}CrescoLedger — {{ listing.title }} — Crescopus{% endblock %}
 {% block main_class %}app-main-wide{% endblock %}
 
+{% macro entry_links(e) -%}
+  <span class="cu-led-links cu-small">
+    <a href="{{ url_for('ledger.entry_history', partnership_id=partnership.id, entry_id=e.id) }}">History</a>
+    {% if not e.locked %}· <a href="{{ url_for('ledger.dispute_new', partnership_id=partnership.id, entry=e.id) }}">Dispute</a>{% endif %}
+  </span>
+{%- endmacro %}
+
 {% macro status_cell(e) -%}
-  {% if e.status == "confirmed" %}
+  {% if e.voided %}
+    <span class="cu-led-status cu-muted">Void</span>
+    <span class="cu-led-note">Voided by agreement; not in the totals.</span>
+  {% elif e.dispute_id %}
+    <a class="cu-led-status cu-dp-flag" href="{{ url_for('ledger.dispute_view', partnership_id=partnership.id, dispute_id=e.dispute_id) }}">In dispute</a>
+    <span class="cu-led-note">Locked until it's settled.{% if e.status == "confirmed" %} Still counted.{% endif %}</span>
+  {% elif e.status == "confirmed" %}
     <span class="cu-led-status cu-led-ok">
       <svg class="cu-verified" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
       Confirmed{% if e.confirmed_by_role %} by {{ name_of_role[e.confirmed_by_role] }}{% endif %}
@@ -87,7 +100,7 @@
 </div>
 
 {% if totals.to_answer %}
-<p class="cu-conflict">{{ totals.to_answer }} thing{{ "" if totals.to_answer == 1 else "s" }} waiting for your answer below: a rate, a settlement or a change to Recoverable.</p>
+<p class="cu-conflict">{{ totals.to_answer }} thing{{ "" if totals.to_answer == 1 else "s" }} waiting for your answer below: a dispute, a rate, a settlement or a change to Recoverable.</p>
 {% endif %}
 
 {% if active and not entries %}
@@ -133,7 +146,7 @@
   </div>
 </div>
 
-<p class="cu-led-jump cu-small"><a href="#contributions">Contributions</a> · <a href="#rates">Hourly rates</a> · <a href="#recovery">Recovery settlements</a></p>
+<p class="cu-led-jump cu-small"><a href="#contributions">Contributions</a> · <a href="#rates">Hourly rates</a> · <a href="#recovery">Recovery settlements</a> · <a href="#disputes">Disputes{% if disputes | selectattr("status", "equalto", "open") | list %} ({{ disputes | selectattr("status", "equalto", "open") | list | length }} open){% endif %}</a></p>
 
 <nav class="cu-chips" aria-label="Show entries">
   {% for value, label in filters %}
@@ -149,7 +162,7 @@
     <span>Date</span><span>Type</span><span>Description</span><span class="cu-led-amt">Amount</span><span>Receipt</span><span>Status</span>
   </div>
   {% for e in shown %}
-  <div class="cu-led-row {% if e.status != 'confirmed' %}cu-led-row-open{% endif %}" id="e-{{ e.id }}">
+  <div class="cu-led-row {% if e.voided %}cu-led-row-void{% elif e.dispute_id %}cu-led-row-dispute{% elif e.status != 'confirmed' %}cu-led-row-open{% endif %}" id="e-{{ e.id }}">
     <span class="cu-led-date">{{ e.entry_date | short_date }}</span>
     <span><span class="cu-led-kind cu-led-kind-{{ e.kind }}">{{ e.kind | title }}</span></span>
     <span class="cu-led-desc">
@@ -177,7 +190,7 @@
       {% elif e.receipt_url %}<span class="cu-small" title="Receipt reference">Ref: {{ e.receipt_url }}</span>
       {% else %}<span class="cu-muted cu-small">No receipt</span>{% endif %}
     </span>
-    <span class="cu-led-status-cell">{{ status_cell(e) }}</span>
+    <span class="cu-led-status-cell">{{ status_cell(e) }}{{ entry_links(e) }}</span>
   </div>
   {% endfor %}
 </div>
@@ -330,6 +343,26 @@
   </div>
   {% else %}
     <p class="cu-small cu-muted">When one of you repays the other's recoverable costs or time, record it here so you both agree what's still outstanding.</p>
+  {% endif %}
+</section>
+
+<section class="cu-led-section" id="disputes">
+  <div class="cu-led-section-head">
+    <h2 class="cu-plan-h">Disputes</h2>
+    {% if entries %}<a class="cu-btn cu-btn-secondary cu-btn-sm" href="{{ url_for('ledger.dispute_new', partnership_id=partnership.id) }}">Raise a dispute</a>{% endif %}
+  </div>
+  {% if disputes %}
+  <div class="cu-led-settlements">
+    {% for d in disputes %}
+    <a class="cu-led-settlement cu-dp-row {% if d.needs_me %}cu-led-row-open{% endif %}" href="{{ url_for('ledger.dispute_view', partnership_id=partnership.id, dispute_id=d.id) }}">
+      <span><strong>{{ d.reason | truncate(80) }}</strong>
+        <span class="cu-led-orig">{{ d.created_at | local_time }} · {{ d.entry_ids | length }} entr{{ "y" if d.entry_ids | length == 1 else "ies" }}</span></span>
+      <span class="cu-dp-status cu-dp-status-{{ d.status }}">{% if d.needs_me %}Waiting for you{% else %}{{ {"open": "Open", "resolved": "Resolved", "unresolved": "Closed without agreement", "withdrawn": "Withdrawn"}[d.status] }}{% endif %}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+    <p class="cu-small cu-muted">If you disagree about entries, a dispute lets you each set out your side and agree a fix. For a quick question, use “Query” on the entry instead.</p>
   {% endif %}
 </section>
 

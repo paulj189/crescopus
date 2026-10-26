@@ -198,7 +198,7 @@ def get_ledger_waiting_on_me(supabase, profile, partnership_ids):
     """Ledger items that need this person: entries the other side added that they
     haven't confirmed yet, their own entries the other side has queried, and
     rates, recovery settlements or Goodwill-to-Recoverable changes the other
-    side has asked them to agree.
+    side has asked them to agree, and open disputes waiting for them.
     Returns {partnership_id: {"confirm": n, "queried": n, "answer": n}}."""
     if not partnership_ids:
         return {}
@@ -210,7 +210,7 @@ def get_ledger_waiting_on_me(supabase, profile, partnership_ids):
 
     rows = (supabase.table("ledger_entries").select("partnership_id,status,added_by,class_change_to,class_change_by")
             .in_("partnership_id", partnership_ids)
-            .or_("status.in.(pending,queried),class_change_to.not.is.null").execute().data)
+            .or_("status.in.(pending,queried),class_change_to.not.is.null").is_("voided_at", "null").execute().data)
     for r in rows:
         mine = r["added_by"] == me
         if r["status"] == "queried" and mine:
@@ -219,6 +219,17 @@ def get_ledger_waiting_on_me(supabase, profile, partnership_ids):
             bump(r["partnership_id"], "confirm")
         if r.get("class_change_to") and r.get("class_change_by") != me:
             bump(r["partnership_id"], "answer")
+    disputes = (supabase.table("ledger_disputes").select("id,partnership_id,raised_by")
+                .in_("partnership_id", partnership_ids).eq("status", "open").execute().data)
+    if disputes:
+        ids = [d["id"] for d in disputes]
+        spoke = {m["dispute_id"] for m in (supabase.table("ledger_dispute_messages").select("dispute_id")
+                 .in_("dispute_id", ids).eq("author", me).execute().data)}
+        waiting = {p["dispute_id"] for p in (supabase.table("ledger_dispute_proposals").select("dispute_id,proposed_by")
+                   .in_("dispute_id", ids).eq("status", "proposed").execute().data) if p["proposed_by"] != me}
+        for d in disputes:
+            if d["id"] in waiting or d["id"] not in spoke:
+                bump(d["partnership_id"], "answer")
     for table in ("plan_rates", "recovery_settlements"):
         for r in (supabase.table(table).select("partnership_id,proposed_by")
                   .in_("partnership_id", partnership_ids).eq("status", "proposed").execute().data):

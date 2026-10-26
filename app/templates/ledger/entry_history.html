@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Entry history — CrescoLedger — Crescopus{% endblock %}
+{% block content %}
+<p class="cu-plan-kicker">{{ listing.title }} · CrescoLedger · Entry history</p>
+<h1>{{ entry.description }}</h1>
+<p class="cu-muted">
+  {{ entry.kind | title }} · {{ entry.entry_date | short_date }} · {{ name_of_role[entry.party] }}
+  {% if entry.kind == "time" %}· {{ entry.hours_f | hours }}{% endif %}
+  · {{ entry.amount_f | money(currency) }}{% if entry.cost_class %} · {{ entry.cost_class | title }}{% endif %}
+  {% if entry.voided %} · <span class="cu-wd-badge">Void</span>{% endif %}
+</p>
+
+<ol class="cu-hist">
+  {% for ev in events %}
+    <li>
+      <span class="cu-hist-when cu-small cu-muted">{{ ev.created_at | local_time }}</span>
+      <span><strong>{{ ev.label }}</strong>{% if ev.role %} by {{ name_of_role[ev.role] }}{% elif ev.event == "added" and entry.source == "revenuecat" %} by RevenueCat{% endif %}
+        {% set d = ev.detail | event_detail(currency) %}{% if d %}<span class="cu-muted"> · {{ d }}</span>{% endif %}</span>
+    </li>
+  {% else %}
+    <li>No history recorded for this entry yet.</li>
+  {% endfor %}
+</ol>
+
+{% if entry_disputes %}
+<h2 class="cu-plan-h">Disputes</h2>
+<ul>
+  {% for d in entry_disputes %}
+    <li><a href="{{ url_for('ledger.dispute_view', partnership_id=partnership.id, dispute_id=d.id) }}">{{ d.reason | truncate(70) }}</a>
+      · {{ dispute_status[d.status] }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<p><a class="cu-btn cu-btn-secondary" href="{{ url_for('ledger.view', partnership_id=partnership.id) }}#e-{{ entry.id }}">Back to the ledger</a></p>
+{% endblock %}

@@ -128,8 +128,9 @@ def _load(partnership_id):
 
 
 def _ledger_summary(partnership_id):
-    rows = (get_supabase().table("ledger_entries").select("kind,amount,status")
+    rows = (get_supabase().table("ledger_entries").select("kind,amount,status,voided_at")
             .eq("partnership_id", partnership_id).execute().data)
+    rows = [r for r in rows if not r.get("voided_at")]
     confirmed = [r for r in rows if r["status"] == "confirmed"]
     revenue = sum(float(r["amount"]) for r in confirmed if r["kind"] == "revenue")
     costs = sum(float(r["amount"]) for r in confirmed if r["kind"] == "cost")

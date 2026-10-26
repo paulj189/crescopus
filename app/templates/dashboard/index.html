@@ -42,7 +42,7 @@
           {%- if n.confirm and n.queried %} · {% endif -%}
           {%- if n.queried %}{{ n.queried }} of yours queried{% endif -%}
           {%- if (n.confirm or n.queried) and n.answer %} · {% endif -%}
-          {%- if n.answer %}{{ n.answer }} to agree or decline{% endif -%}
+          {%- if n.answer %}{{ n.answer }} waiting for your answer{% endif -%}
         </span>
       </a>
     {% endfor %}

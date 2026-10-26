@@ -48,7 +48,7 @@ CLASS_HELP = {"recoverable": "Can be recovered later, if you both agree how.",
 PARTIES = [("builder", "Builder"), ("grower", "Grower")]
 STATUS_LABELS = {"pending": "Awaiting confirmation", "confirmed": "Confirmed", "queried": "Queried"}
 FILTERS = [("all", "All"), ("revenue", "Revenue"), ("cost", "Costs"), ("time", "Time"),
-           ("goodwill", "Goodwill"), ("open", "Not confirmed")]
+           ("goodwill", "Goodwill"), ("open", "Not confirmed"), ("disputed", "In dispute")]
 RATE_STATUS = {"proposed": "Waiting", "agreed": "Agreed", "declined": "Declined", "withdrawn": "Withdrawn"}
 CURRENCY_CODES = {code for code, _, _ in CURRENCIES}
 
@@ -95,9 +95,31 @@ def _load(partnership_id):
                    .eq("partnership_id", partnership_id)
                    .order("settled_on", desc=True).order("created_at", desc=True).execute().data)
 
+    disputes = (supabase.table("ledger_disputes").select("*").eq("partnership_id", partnership_id)
+                .order("created_at", desc=True).execute().data)
+    d_ids = [d["id"] for d in disputes]
+    d_entries = (supabase.table("ledger_dispute_entries").select("*").in_("dispute_id", d_ids).execute().data
+                 if d_ids else [])
+    d_open_props = (supabase.table("ledger_dispute_proposals").select("dispute_id,proposed_by")
+                    .in_("dispute_id", d_ids).eq("status", "proposed").execute().data if d_ids else [])
+    d_authors = (supabase.table("ledger_dispute_messages").select("dispute_id,author")
+                 .in_("dispute_id", d_ids).execute().data if d_ids else [])
+
     me_role = "builder" if profile["id"] == p["developer_id"] else "grower"
     role_of = {p["developer_id"]: "builder", p["grower_id"]: "grower"}
     name_of_role = {"builder": people.get(p["developer_id"], "Builder"), "grower": people.get(p["grower_id"], "Grower")}
+
+    open_ids = {d["id"] for d in disputes if d["status"] == "open"}
+    open_dispute_of = {x["entry_id"]: x["dispute_id"] for x in d_entries if x["dispute_id"] in open_ids}
+    entries_of = {}
+    for x in d_entries:
+        entries_of.setdefault(x["dispute_id"], []).append(x["entry_id"])
+    for d in disputes:
+        d["entry_ids"] = entries_of.get(d["id"], [])
+        d["mine"] = d.get("raised_by") == profile["id"]
+        spoke = {m["author"] for m in d_authors if m["dispute_id"] == d["id"]}
+        their_prop = any(x["dispute_id"] == d["id"] and x["proposed_by"] != profile["id"] for x in d_open_props)
+        d["needs_me"] = d["status"] == "open" and (their_prop or profile["id"] not in spoke)
 
     for e in entries:
         e["amount_f"] = float(e["amount"])
@@ -106,20 +128,25 @@ def _load(partnership_id):
         e["confirmed_by_role"] = role_of.get(e.get("confirmed_by"))
         e["receipt_is_link"] = bool(re.match(r"^https?://", e.get("receipt_url") or ""))
         e["converted"] = bool(e.get("original_currency"))
-        e["can_respond"] = (not e["mine"]) and e["status"] in ("pending", "queried") and e.get("added_by")
-        e["can_change"] = e["mine"] and e["status"] != "confirmed"
+        e["voided"] = bool(e.get("voided_at"))
+        e["dispute_id"] = open_dispute_of.get(e["id"])
+        e["locked"] = e["voided"] or bool(e["dispute_id"])
+        e["can_respond"] = ((not e["mine"]) and e["status"] in ("pending", "queried") and e.get("added_by")
+                            and not e["locked"])
+        e["can_change"] = e["mine"] and e["status"] != "confirmed" and not e["locked"]
         e["hours_f"] = float(e["hours"]) if e.get("hours") is not None else None
         e["rate_pending"] = e["kind"] == "time" and e.get("hourly_rate") is None
-        e["my_cost"] = e["kind"] in ("cost", "time") and e["party"] == me_role
+        e["my_cost"] = e["kind"] in ("cost", "time") and e["party"] == me_role and not e["locked"]
         e["class_asked_by_me"] = bool(e.get("class_change_to")) and e.get("class_change_by") == profile["id"]
-        e["class_to_answer"] = bool(e.get("class_change_to")) and e.get("class_change_by") != profile["id"]
+        e["class_to_answer"] = (bool(e.get("class_change_to")) and e.get("class_change_by") != profile["id"]
+                                and not e["locked"])
 
-    confirmed = [e for e in entries if e["status"] == "confirmed"]
+    confirmed = [e for e in entries if e["status"] == "confirmed" and not e["voided"]]
     revenue = sum(e["amount_f"] for e in confirmed if e["kind"] == "revenue")
     costs = sum(e["amount_f"] for e in confirmed if e["kind"] == "cost")
     time_value = sum(e["amount_f"] for e in confirmed if e["kind"] == "time")
     time_hours = sum(e["hours_f"] for e in confirmed if e["kind"] == "time")
-    open_entries = [e for e in entries if e["status"] != "confirmed"]
+    open_entries = [e for e in entries if e["status"] != "confirmed" and not e["voided"]]
 
     for s in settlements:
         s["amount_f"] = float(s["amount"])
@@ -142,8 +169,9 @@ def _load(partnership_id):
             "gw_cash": _sum(role, "cost", "goodwill"), "gw_time": _sum(role, "time", "goodwill"),
             "hours": sum(e["hours_f"] for e in mine if e["kind"] == "time"),
             "recovered": sum(s["amount_f"] for s in settlements if s["party"] == role and s["status"] == "agreed"),
-            "rate_pending_hours": sum(e["hours_f"] for e in entries if e["party"] == role and e["rate_pending"]),
-            "rate_pending_count": sum(1 for e in entries if e["party"] == role and e["rate_pending"]),
+            "rate_pending_hours": sum(e["hours_f"] for e in entries
+                                      if e["party"] == role and e["rate_pending"] and not e["voided"]),
+            "rate_pending_count": sum(1 for e in entries if e["party"] == role and e["rate_pending"] and not e["voided"]),
         }
         row["recoverable"] = row["rec_cash"] + row["rec_time"]
         row["goodwill"] = row["gw_cash"] + row["gw_time"]
@@ -166,7 +194,8 @@ def _load(partnership_id):
 
     to_answer = (sum(1 for e in entries if e["class_to_answer"])
                  + sum(1 for r in rates if r["status"] == "proposed" and r["proposed_by"] != profile["id"])
-                 + sum(1 for s in settlements if s["can_respond"]))
+                 + sum(1 for s in settlements if s["can_respond"])
+                 + sum(1 for d in disputes if d["needs_me"]))
 
     dates = sorted(e["entry_date"] for e in entries)
     return {
@@ -176,13 +205,15 @@ def _load(partnership_id):
         "builder_name": name_of_role["builder"], "grower_name": name_of_role["grower"],
         "name_of_role": name_of_role, "me_role": me_role,
         "other_role": "grower" if me_role == "builder" else "builder",
-        "entries": entries, "rates": rate_info, "settlements": settlements,
+        "entries": entries, "rates": rate_info, "settlements": settlements, "disputes": disputes,
+        "entry_by_id": {e["id"]: e for e in entries},
         "totals": {"revenue": revenue, "costs": costs, "net": revenue - costs,
                    "time_value": time_value, "time_hours": time_hours,
                    "open_amount": sum(e["amount_f"] for e in open_entries),
                    "open_count": len(open_entries),
                    "to_confirm": sum(1 for e in entries if e["can_respond"] and e["status"] == "pending"),
-                   "to_answer": to_answer},
+                   "to_answer": to_answer,
+                   "in_dispute": sum(1 for e in entries if e["dispute_id"])},
         "by_party": by_party,
         "period": (dates[0], dates[-1]) if dates else None,
         "active": p["status"] in ("trial", "formalised"),
@@ -307,7 +338,9 @@ def view(partnership_id):
     elif show == "goodwill":
         entries = [e for e in entries if e.get("cost_class") == "goodwill"]
     elif show == "open":
-        entries = [e for e in entries if e["status"] != "confirmed"]
+        entries = [e for e in entries if e["status"] != "confirmed" and not e["voided"]]
+    elif show == "disputed":
+        entries = [e for e in entries if e["dispute_id"]]
     return render_template("ledger/view.html", shown=entries, show=show, filters=FILTERS,
                            status_labels=STATUS_LABELS, currencies=CURRENCIES, rate_status=RATE_STATUS,
                            today=date.today().isoformat(), **ctx)
@@ -437,7 +470,8 @@ def export(partnership_id):
             ("Rate pending" if e["rate_pending"] else e.get("hourly_rate") or ""),
             e["amount"], ctx["currency"],
             e.get("original_amount") or "", e.get("original_currency") or "", e.get("fx_rate") or "",
-            STATUS_LABELS.get(e["status"], e["status"]),
+            ("Void" if e["voided"] else STATUS_LABELS.get(e["status"], e["status"]))
+            + (" (in dispute)" if e["dispute_id"] else ""),
             ctx["name_of_role"].get(e["added_by_role"], "System") if e["added_by_role"] else "System",
             ctx["name_of_role"].get(e["confirmed_by_role"], "") if e["confirmed_by_role"] else "",
             (e.get("confirmed_at") or "")[:10], e.get("receipt_url") or "", e.get("query_note") or "",
@@ -547,7 +581,7 @@ def new_recovery(partnership_id):
     if party not in dict(PARTIES):
         party = ctx["me_role"]
     eligible = [e for e in ctx["entries"] if e["status"] == "confirmed" and e["party"] == party
-                and e["kind"] in ("cost", "time") and e.get("cost_class") == "recoverable"]
+                and e["kind"] in ("cost", "time") and e.get("cost_class") == "recoverable" and not e["locked"]]
     values = {"party": party, "amount": "", "settled_on": date.today().isoformat(), "note": "", "entry_ids": []}
 
     if request.method == "POST":
@@ -637,3 +671,7 @@ def rate_lookup():
         except (requests.RequestException, ValueError):
             continue
     return jsonify(error="No rate available right now. Enter the rate from your bank statement."), 503
+
+
+# Disputes and entry history live in their own module but share this blueprint.
+from app.ledger import disputes as _disputes  # noqa: E402,F401
