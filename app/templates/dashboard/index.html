@@ -34,13 +34,15 @@
       </a>
     {% endfor %}
     {% for pid, n in ledger_waiting.items() %}
-      <a class="cu-todo-item" href="{{ url_for('ledger.view', partnership_id=pid, show='open') }}">
+      <a class="cu-todo-item" href="{{ url_for('ledger.view', partnership_id=pid, show='open' if (n.confirm or n.queried) else None) }}">
         <span class="cu-todo-kind cu-offers-ink">CrescoLedger</span>
         <span class="cu-todo-title">{{ titles.get(pid, "A partnership") }}</span>
         <span class="cu-todo-note">
           {%- if n.confirm %}{{ n.confirm }} entr{{ "y" if n.confirm == 1 else "ies" }} to confirm{% endif -%}
           {%- if n.confirm and n.queried %} · {% endif -%}
           {%- if n.queried %}{{ n.queried }} of yours queried{% endif -%}
+          {%- if (n.confirm or n.queried) and n.answer %} · {% endif -%}
+          {%- if n.answer %}{{ n.answer }} to agree or decline{% endif -%}
         </span>
       </a>
     {% endfor %}

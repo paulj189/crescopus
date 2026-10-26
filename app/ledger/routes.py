@@ -9,6 +9,15 @@ so the rules hold even outside this website:
   - confirmed entries are locked; mistakes are fixed with a correcting entry
 Totals only count confirmed entries.
 
+Time: each person logs their own hours. They're valued at the hourly rate
+agreed for that date (proposed by the person, agreed by the other). With no
+agreed rate they're saved at zero and shown as "rate pending".
+
+Goodwill / Recoverable: every cost and time entry has a class. Goodwill counts
+towards a person's contribution but never towards what's outstanding. Nothing
+is recovered automatically: either party proposes a recovery settlement and
+the other agrees it.
+
 Currencies: each ledger has one currency, which can only be changed while the
 ledger is empty. An entry can be made in another currency; it then keeps the
 original amount and currency and the exchange rate, and its amount is the
@@ -32,11 +41,26 @@ from app.constants import CURRENCIES, CURRENCY_SYMBOLS
 
 ledger_bp = Blueprint("ledger", __name__, url_prefix="/ledger")
 
-KINDS = [("revenue", "Revenue"), ("cost", "Cost")]
+KINDS = [("revenue", "Revenue"), ("cost", "Cost"), ("time", "Time")]
+CLASSES = [("recoverable", "Recoverable"), ("goodwill", "Goodwill")]
+CLASS_HELP = {"recoverable": "Can be recovered later, if you both agree how.",
+              "goodwill": "Not to be recovered, but counted as your contribution."}
 PARTIES = [("builder", "Builder"), ("grower", "Grower")]
 STATUS_LABELS = {"pending": "Awaiting confirmation", "confirmed": "Confirmed", "queried": "Queried"}
-FILTERS = [("all", "All"), ("revenue", "Revenue"), ("cost", "Costs"), ("open", "Not confirmed")]
+FILTERS = [("all", "All"), ("revenue", "Revenue"), ("cost", "Costs"), ("time", "Time"),
+           ("goodwill", "Goodwill"), ("open", "Not confirmed")]
+RATE_STATUS = {"proposed": "Waiting", "agreed": "Agreed", "declined": "Declined", "withdrawn": "Withdrawn"}
 CURRENCY_CODES = {code for code, _, _ in CURRENCIES}
+
+
+@ledger_bp.app_template_filter("hours")
+def hours_filter(value):
+    """7.5 -> '7.5 h', 10.00 -> '10 h'."""
+    try:
+        n = float(value or 0)
+    except (TypeError, ValueError):
+        return ""
+    return f"{n:,.2f}".rstrip("0").rstrip(".") + " h"
 
 
 def _rpc_error(err):
@@ -65,6 +89,12 @@ def _load(partnership_id):
                .eq("partnership_id", partnership_id)
                .order("entry_date", desc=True).order("created_at", desc=True).execute().data)
 
+    rates = (supabase.table("plan_rates").select("*").eq("partnership_id", partnership_id)
+             .order("created_at", desc=True).execute().data)
+    settlements = (supabase.table("recovery_settlements").select("*,recovery_settlement_entries(entry_id)")
+                   .eq("partnership_id", partnership_id)
+                   .order("settled_on", desc=True).order("created_at", desc=True).execute().data)
+
     me_role = "builder" if profile["id"] == p["developer_id"] else "grower"
     role_of = {p["developer_id"]: "builder", p["grower_id"]: "grower"}
     name_of_role = {"builder": people.get(p["developer_id"], "Builder"), "grower": people.get(p["grower_id"], "Grower")}
@@ -78,17 +108,66 @@ def _load(partnership_id):
         e["converted"] = bool(e.get("original_currency"))
         e["can_respond"] = (not e["mine"]) and e["status"] in ("pending", "queried") and e.get("added_by")
         e["can_change"] = e["mine"] and e["status"] != "confirmed"
+        e["hours_f"] = float(e["hours"]) if e.get("hours") is not None else None
+        e["rate_pending"] = e["kind"] == "time" and e.get("hourly_rate") is None
+        e["my_cost"] = e["kind"] in ("cost", "time") and e["party"] == me_role
+        e["class_asked_by_me"] = bool(e.get("class_change_to")) and e.get("class_change_by") == profile["id"]
+        e["class_to_answer"] = bool(e.get("class_change_to")) and e.get("class_change_by") != profile["id"]
 
     confirmed = [e for e in entries if e["status"] == "confirmed"]
     revenue = sum(e["amount_f"] for e in confirmed if e["kind"] == "revenue")
     costs = sum(e["amount_f"] for e in confirmed if e["kind"] == "cost")
+    time_value = sum(e["amount_f"] for e in confirmed if e["kind"] == "time")
+    time_hours = sum(e["hours_f"] for e in confirmed if e["kind"] == "time")
     open_entries = [e for e in entries if e["status"] != "confirmed"]
-    by_party = {
-        role: {
-            "revenue": sum(e["amount_f"] for e in confirmed if e["party"] == role and e["kind"] == "revenue"),
-            "costs": sum(e["amount_f"] for e in confirmed if e["party"] == role and e["kind"] == "cost"),
-        } for role in ("builder", "grower")
-    }
+
+    for s in settlements:
+        s["amount_f"] = float(s["amount"])
+        s["entry_ids"] = [x["entry_id"] for x in (s.get("recovery_settlement_entries") or [])]
+        s["mine"] = s["proposed_by"] == profile["id"]
+        s["can_respond"] = s["status"] == "proposed" and not s["mine"]
+        s["can_withdraw"] = s["status"] == "proposed" and s["mine"]
+
+    def _sum(role, kind, cls):
+        return sum(e["amount_f"] for e in confirmed
+                   if e["party"] == role and e["kind"] == kind and e.get("cost_class") == cls)
+
+    by_party = {}
+    for role in ("builder", "grower"):
+        mine = [e for e in confirmed if e["party"] == role]
+        row = {
+            "revenue": sum(e["amount_f"] for e in mine if e["kind"] == "revenue"),
+            "costs": sum(e["amount_f"] for e in mine if e["kind"] == "cost"),
+            "rec_cash": _sum(role, "cost", "recoverable"), "rec_time": _sum(role, "time", "recoverable"),
+            "gw_cash": _sum(role, "cost", "goodwill"), "gw_time": _sum(role, "time", "goodwill"),
+            "hours": sum(e["hours_f"] for e in mine if e["kind"] == "time"),
+            "recovered": sum(s["amount_f"] for s in settlements if s["party"] == role and s["status"] == "agreed"),
+            "rate_pending_hours": sum(e["hours_f"] for e in entries if e["party"] == role and e["rate_pending"]),
+            "rate_pending_count": sum(1 for e in entries if e["party"] == role and e["rate_pending"]),
+        }
+        row["recoverable"] = row["rec_cash"] + row["rec_time"]
+        row["goodwill"] = row["gw_cash"] + row["gw_time"]
+        row["contribution"] = row["recoverable"] + row["goodwill"]
+        row["outstanding"] = row["recoverable"] - row["recovered"]
+        by_party[role] = row
+
+    today = date.today().isoformat()
+    rate_info = {}
+    for role in ("builder", "grower"):
+        mine = [r for r in rates if r["party"] == role]
+        agreed = sorted((r for r in mine if r["status"] == "agreed"),
+                        key=lambda r: (r["effective_from"] or "", r["responded_at"] or ""), reverse=True)
+        current = next((r for r in agreed if (r["effective_from"] or "") <= today), None)
+        open_rate = next((r for r in mine if r["status"] == "proposed"), None)
+        if open_rate:
+            open_rate["mine"] = open_rate["proposed_by"] == profile["id"]
+        rate_info[role] = {"current": current, "open": open_rate,
+                           "history": [r for r in mine if r is not open_rate]}
+
+    to_answer = (sum(1 for e in entries if e["class_to_answer"])
+                 + sum(1 for r in rates if r["status"] == "proposed" and r["proposed_by"] != profile["id"])
+                 + sum(1 for s in settlements if s["can_respond"]))
+
     dates = sorted(e["entry_date"] for e in entries)
     return {
         "profile": profile, "partnership": p, "plan": plan,
@@ -96,11 +175,14 @@ def _load(partnership_id):
         "listing": p.get("listings") or {"title": "Your app"},
         "builder_name": name_of_role["builder"], "grower_name": name_of_role["grower"],
         "name_of_role": name_of_role, "me_role": me_role,
-        "entries": entries,
+        "other_role": "grower" if me_role == "builder" else "builder",
+        "entries": entries, "rates": rate_info, "settlements": settlements,
         "totals": {"revenue": revenue, "costs": costs, "net": revenue - costs,
+                   "time_value": time_value, "time_hours": time_hours,
                    "open_amount": sum(e["amount_f"] for e in open_entries),
                    "open_count": len(open_entries),
-                   "to_confirm": sum(1 for e in entries if e["can_respond"] and e["status"] == "pending")},
+                   "to_confirm": sum(1 for e in entries if e["can_respond"] and e["status"] == "pending"),
+                   "to_answer": to_answer},
         "by_party": by_party,
         "period": (dates[0], dates[-1]) if dates else None,
         "active": p["status"] in ("trial", "formalised"),
@@ -121,8 +203,8 @@ def _parse_form(form, me_role, ledger_currency):
     errors = []
     kind = form.get("kind")
     if kind not in dict(KINDS):
-        errors.append("Choose whether this is revenue or a cost.")
-    party = form.get("party") or me_role
+        errors.append("Choose revenue, a cost or time.")
+    party = me_role if kind == "time" else (form.get("party") or me_role)
     if party not in dict(PARTIES):
         errors.append("Choose who received the revenue or paid the cost.")
     try:
@@ -133,39 +215,78 @@ def _parse_form(form, me_role, ledger_currency):
     description = (form.get("description") or "").strip()
     if not description:
         errors.append("Add a short description.")
+    cost_class = form.get("cost_class") or "recoverable"
+    if kind in ("cost", "time") and cost_class not in dict(CLASSES):
+        errors.append("Choose Recoverable or Goodwill.")
+        cost_class = "recoverable"
 
     currency = (form.get("currency") or ledger_currency).upper()
-    if currency not in CURRENCY_CODES and currency != ledger_currency:
-        errors.append("Choose a currency from the list.")
-        currency = ledger_currency
-    amount = _money(form.get("amount"))
-    if amount is None or amount <= 0 or amount > Decimal("10000000"):
-        errors.append("Enter an amount above zero, like 120 or 1,240.50.")
-        amount = None
-    else:
-        amount = amount.quantize(Decimal("0.01"))
+    amount = hours = fx_rate = None
+    rpc = {"p_amount": None, "p_original_amount": None, "p_original_currency": None, "p_fx_rate": None,
+           "p_cost_class": cost_class if kind in ("cost", "time") else None, "p_hours": None}
 
-    fx_rate = None
-    rpc = {"p_amount": str(amount) if amount is not None else None,
-           "p_original_amount": None, "p_original_currency": None, "p_fx_rate": None}
-    if currency != ledger_currency:
-        fx_rate = _money(form.get("fx_rate"))
-        if fx_rate is None or fx_rate <= 0 or fx_rate > Decimal("100000"):
-            errors.append(f"Enter the exchange rate: how many {ledger_currency} one {currency} is worth.")
-            fx_rate = None
-        elif amount is not None:
-            rpc = {"p_amount": None, "p_original_amount": str(amount),
-                   "p_original_currency": currency, "p_fx_rate": str(fx_rate)}
+    if kind == "time":
+        currency = ledger_currency
+        hours = _money(form.get("hours"))
+        if hours is None or hours <= 0 or hours > Decimal("10000"):
+            errors.append("Enter the hours, like 3 or 7.5.")
+            hours = None
+        else:
+            hours = hours.quantize(Decimal("0.01"))
+            rpc["p_hours"] = str(hours)
+    else:
+        if currency not in CURRENCY_CODES and currency != ledger_currency:
+            errors.append("Choose a currency from the list.")
+            currency = ledger_currency
+        amount = _money(form.get("amount"))
+        if amount is None or amount <= 0 or amount > Decimal("10000000"):
+            errors.append("Enter an amount above zero, like 120 or 1,240.50.")
+            amount = None
+        else:
+            amount = amount.quantize(Decimal("0.01"))
+            rpc["p_amount"] = str(amount)
+        if currency != ledger_currency:
+            fx_rate = _money(form.get("fx_rate"))
+            if fx_rate is None or fx_rate <= 0 or fx_rate > Decimal("100000"):
+                errors.append(f"Enter the exchange rate: how many {ledger_currency} one {currency} is worth.")
+                fx_rate = None
+            elif amount is not None:
+                rpc.update(p_amount=None, p_original_amount=str(amount),
+                           p_original_currency=currency, p_fx_rate=str(fx_rate))
 
     receipt = (form.get("receipt_url") or "").strip()[:500]
     values = {"kind": kind, "party": party,
               "entry_date": entry_date.isoformat() if entry_date else (form.get("entry_date") or ""),
               "description": description[:300],
               "amount": str(amount) if amount is not None else (form.get("amount") or ""),
+              "hours": str(hours) if hours is not None else (form.get("hours") or ""),
+              "cost_class": cost_class,
               "currency": currency,
               "fx_rate": str(fx_rate) if fx_rate is not None else (form.get("fx_rate") or ""),
               "receipt_url": receipt}
     return values, rpc, errors
+
+
+def _form_context(ctx):
+    return dict(kinds=KINDS, parties=PARTIES, classes=CLASSES, class_help=CLASS_HELP,
+                currencies=CURRENCIES, my_rate=ctx["rates"][ctx["me_role"]]["current"], **ctx)
+
+
+def _back(partnership_id, anchor=None):
+    url = url_for("ledger.view", partnership_id=partnership_id)
+    return redirect(url + (f"#{anchor}" if anchor else ""))
+
+
+def _call(fn, params, ok_message):
+    """Run a database function; flash its result. Returns the data or None."""
+    try:
+        data = get_supabase().rpc(fn, params).execute().data
+        if ok_message:
+            flash(ok_message, "success")
+        return data if data is not None else True
+    except Exception as err:  # noqa: BLE001
+        flash(_rpc_error(err), "error")
+        return None
 
 
 # ---------- pages ----------
@@ -181,12 +302,15 @@ def view(partnership_id):
     if show not in dict(FILTERS):
         show = "all"
     entries = ctx["entries"]
-    if show in ("revenue", "cost"):
+    if show in ("revenue", "cost", "time"):
         entries = [e for e in entries if e["kind"] == show]
+    elif show == "goodwill":
+        entries = [e for e in entries if e.get("cost_class") == "goodwill"]
     elif show == "open":
         entries = [e for e in entries if e["status"] != "confirmed"]
     return render_template("ledger/view.html", shown=entries, show=show, filters=FILTERS,
-                           status_labels=STATUS_LABELS, currencies=CURRENCIES, **ctx)
+                           status_labels=STATUS_LABELS, currencies=CURRENCIES, rate_status=RATE_STATUS,
+                           today=date.today().isoformat(), **ctx)
 
 
 @ledger_bp.route("/<partnership_id>/new", methods=["GET", "POST"])
@@ -198,8 +322,10 @@ def new(partnership_id):
     if not ctx["active"]:
         flash("This partnership has ended, so new entries can't be added.", "error")
         return redirect(url_for("ledger.view", partnership_id=partnership_id))
-    values = {"kind": request.args.get("kind", "cost"), "party": ctx["me_role"],
-              "entry_date": date.today().isoformat(), "description": "", "amount": "",
+    kind = request.args.get("kind", "cost")
+    values = {"kind": kind if kind in dict(KINDS) else "cost", "party": ctx["me_role"],
+              "entry_date": date.today().isoformat(), "description": "", "amount": "", "hours": "",
+              "cost_class": request.args.get("class") if request.args.get("class") in dict(CLASSES) else "recoverable",
               "currency": ctx["currency"], "fx_rate": "", "receipt_url": ""}
     if request.method == "POST":
         values, amounts, errors = _parse_form(request.form, ctx["me_role"], ctx["currency"])
@@ -211,15 +337,17 @@ def new(partnership_id):
                     "p_description": values["description"],
                     "p_receipt_url": values["receipt_url"], **amounts,
                 }).execute()
-                other = ctx["grower_name"] if ctx["me_role"] == "builder" else ctx["builder_name"]
-                flash(f"Entry added. It counts in the totals once {other} confirms it.", "success")
+                other = ctx["name_of_role"][ctx["other_role"]]
+                note = ""
+                if values["kind"] == "time" and not ctx["rates"][ctx["me_role"]]["current"]:
+                    note = " It's at zero for now, until you agree an hourly rate."
+                flash(f"Entry added. It counts in the totals once {other} confirms it.{note}", "success")
                 return redirect(url_for("ledger.view", partnership_id=partnership_id))
             except Exception as err:  # noqa: BLE001
                 errors = [f"The entry couldn't be saved: {_rpc_error(err)}"]
         for e in errors:
             flash(e, "error")
-    return render_template("ledger/entry_form.html", values=values, editing=None,
-                           kinds=KINDS, parties=PARTIES, currencies=CURRENCIES, **ctx)
+    return render_template("ledger/entry_form.html", values=values, editing=None, **_form_context(ctx))
 
 
 @ledger_bp.route("/<partnership_id>/<entry_id>/edit", methods=["GET", "POST"])
@@ -233,6 +361,8 @@ def edit(partnership_id, entry_id):
         flash("Only the person who added an entry can change it, and only before it's confirmed.", "error")
         return redirect(url_for("ledger.view", partnership_id=partnership_id))
     values = {k: entry.get(k) or "" for k in ("kind", "party", "entry_date", "description", "receipt_url")}
+    values.update(cost_class=entry.get("cost_class") or "recoverable",
+                  hours=entry.get("hours") or "")
     if entry["converted"]:
         values.update(amount=entry["original_amount"], currency=entry["original_currency"], fx_rate=entry["fx_rate"])
     else:
@@ -260,8 +390,7 @@ def edit(partnership_id, entry_id):
                 errors = [f"The entry couldn't be saved: {_rpc_error(err)}"]
         for e in errors:
             flash(e, "error")
-    return render_template("ledger/entry_form.html", values=values, editing=entry,
-                           kinds=KINDS, parties=PARTIES, currencies=CURRENCIES, **ctx)
+    return render_template("ledger/entry_form.html", values=values, editing=entry, **_form_context(ctx))
 
 
 @ledger_bp.route("/<partnership_id>/<entry_id>/confirm", methods=["POST"])
@@ -298,12 +427,14 @@ def export(partnership_id):
         abort(404)
     out = io.StringIO()
     w = csv.writer(out)
-    w.writerow(["Date", "Type", "Party", "Description", "Amount", "Currency",
+    w.writerow(["Date", "Type", "Party", "Description", "Class", "Hours", "Hourly rate", "Amount", "Currency",
                 "Original amount", "Original currency", "Exchange rate", "Status",
                 "Added by", "Confirmed by", "Confirmed at", "Receipt", "Query note"])
     for e in sorted(ctx["entries"], key=lambda e: (e["entry_date"], e["created_at"])):
         w.writerow([
             e["entry_date"], e["kind"].title(), ctx["name_of_role"][e["party"]], e["description"],
+            (e.get("cost_class") or "").title(), e.get("hours") or "",
+            ("Rate pending" if e["rate_pending"] else e.get("hourly_rate") or ""),
             e["amount"], ctx["currency"],
             e.get("original_amount") or "", e.get("original_currency") or "", e.get("fx_rate") or "",
             STATUS_LABELS.get(e["status"], e["status"]),
@@ -330,6 +461,138 @@ def set_currency(partnership_id):
         except Exception as err:  # noqa: BLE001
             flash(_rpc_error(err), "error")
     return redirect(url_for("ledger.view", partnership_id=partnership_id))
+
+
+# ---------- Goodwill / Recoverable ----------
+
+@ledger_bp.route("/<partnership_id>/<entry_id>/class", methods=["POST"])
+@login_required
+def set_class(partnership_id, entry_id):
+    cls = request.form.get("cost_class")
+    if cls not in dict(CLASSES):
+        flash("Choose Recoverable or Goodwill.", "error")
+        return _back(partnership_id)
+    result = _call("set_cost_class", {"p_entry_id": entry_id, "p_class": cls}, None)
+    if result == "requested":
+        flash("Asked your partner to agree this is Recoverable. It stays Goodwill until they do.", "success")
+    elif result:
+        flash("Marked as Goodwill." if cls == "goodwill" else "Updated.", "success")
+    return _back(partnership_id, f"e-{entry_id}")
+
+
+@ledger_bp.route("/<partnership_id>/<entry_id>/class/respond", methods=["POST"])
+@login_required
+def respond_class(partnership_id, entry_id):
+    agree = request.form.get("answer") == "agree"
+    _call("respond_class_change", {"p_entry_id": entry_id, "p_agree": agree},
+          "Agreed: it's now Recoverable." if agree else "Declined: it stays Goodwill.")
+    return _back(partnership_id, f"e-{entry_id}")
+
+
+# ---------- hourly rates ----------
+
+@ledger_bp.route("/<partnership_id>/rates", methods=["POST"])
+@login_required
+def propose_rate(partnership_id):
+    ctx = _load(partnership_id)
+    if not ctx:
+        abort(404)
+    value = _money(request.form.get("hourly_rate"))
+    choice = request.form.get("apply")
+    if value is None or value <= 0 or value > Decimal("100000"):
+        flash("Enter an hourly rate above zero, like 40 or 62.50.", "error")
+    elif choice not in ("pending", "today"):
+        flash("Choose whether the rate applies to your time logged at zero.", "error")
+    else:
+        other = ctx["name_of_role"][ctx["other_role"]]
+        _call("propose_rate", {"p_partnership_id": partnership_id,
+                               "p_hourly_rate": str(value.quantize(Decimal("0.01"))),
+                               "p_apply_to_pending": choice == "pending",
+                               "p_note": (request.form.get("note") or "").strip()[:300]},
+              f"Rate proposed. It applies once {other} agrees it.")
+    return _back(partnership_id, "rates")
+
+
+@ledger_bp.route("/<partnership_id>/rates/<rate_id>/respond", methods=["POST"])
+@login_required
+def respond_rate(partnership_id, rate_id):
+    agree = request.form.get("answer") == "agree"
+    priced = _call("respond_rate", {"p_rate_id": rate_id, "p_agree": agree}, None)
+    if priced is not None:
+        if not agree:
+            flash("Rate declined. They can propose another.", "success")
+        elif isinstance(priced, int) and priced:
+            flash(f"Rate agreed. {priced} time entr{'y' if priced == 1 else 'ies'} logged at zero now use it.", "success")
+        else:
+            flash("Rate agreed. It applies to time from today.", "success")
+    return _back(partnership_id, "rates")
+
+
+@ledger_bp.route("/<partnership_id>/rates/<rate_id>/withdraw", methods=["POST"])
+@login_required
+def withdraw_rate(partnership_id, rate_id):
+    _call("withdraw_rate", {"p_rate_id": rate_id}, "Rate withdrawn.")
+    return _back(partnership_id, "rates")
+
+
+# ---------- recovery settlements ----------
+
+@ledger_bp.route("/<partnership_id>/recovery/new", methods=["GET", "POST"])
+@login_required
+def new_recovery(partnership_id):
+    ctx = _load(partnership_id)
+    if not ctx:
+        abort(404)
+    party = request.values.get("party") or ctx["me_role"]
+    if party not in dict(PARTIES):
+        party = ctx["me_role"]
+    eligible = [e for e in ctx["entries"] if e["status"] == "confirmed" and e["party"] == party
+                and e["kind"] in ("cost", "time") and e.get("cost_class") == "recoverable"]
+    values = {"party": party, "amount": "", "settled_on": date.today().isoformat(), "note": "", "entry_ids": []}
+
+    if request.method == "POST":
+        errors = []
+        amount = _money(request.form.get("amount"))
+        if amount is None or amount <= 0:
+            errors.append("Enter the amount recovered.")
+        try:
+            settled_on = date.fromisoformat(request.form.get("settled_on") or "")
+        except ValueError:
+            settled_on = None
+            errors.append("Add the date it was settled.")
+        ids = [i for i in request.form.getlist("entry_ids") if i in {e["id"] for e in eligible}]
+        values.update(amount=request.form.get("amount") or "", note=(request.form.get("note") or "").strip()[:500],
+                      settled_on=request.form.get("settled_on") or "", entry_ids=ids)
+        if not errors:
+            other = ctx["name_of_role"][ctx["other_role"]]
+            ok = _call("propose_recovery", {
+                "p_partnership_id": partnership_id, "p_party": party,
+                "p_amount": str(amount.quantize(Decimal("0.01"))), "p_settled_on": settled_on.isoformat(),
+                "p_note": values["note"], "p_entry_ids": ids,
+            }, f"Settlement recorded. It reduces what's outstanding once {other} agrees it.")
+            if ok:
+                return _back(partnership_id, "recovery")
+        for e in errors:
+            flash(e, "error")
+
+    return render_template("ledger/recovery_form.html", values=values, eligible=eligible,
+                           outstanding=ctx["by_party"][party]["outstanding"], parties=PARTIES, **ctx)
+
+
+@ledger_bp.route("/<partnership_id>/recovery/<settlement_id>/respond", methods=["POST"])
+@login_required
+def respond_recovery(partnership_id, settlement_id):
+    agree = request.form.get("answer") == "agree"
+    _call("respond_recovery", {"p_settlement_id": settlement_id, "p_agree": agree},
+          "Settlement agreed." if agree else "Settlement declined.")
+    return _back(partnership_id, "recovery")
+
+
+@ledger_bp.route("/<partnership_id>/recovery/<settlement_id>/withdraw", methods=["POST"])
+@login_required
+def withdraw_recovery(partnership_id, settlement_id):
+    _call("withdraw_recovery", {"p_settlement_id": settlement_id}, "Settlement withdrawn.")
+    return _back(partnership_id, "recovery")
 
 
 # ---------- exchange-rate suggestions ----------

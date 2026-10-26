@@ -195,17 +195,33 @@ def get_id_verified_ids(supabase):
 
 
 def get_ledger_waiting_on_me(supabase, profile, partnership_ids):
-    """Ledger entries that need this person: ones the other side added that they
-    haven't confirmed yet, and their own entries the other side has queried.
-    Returns {partnership_id: {"confirm": n, "queried": n}}."""
+    """Ledger items that need this person: entries the other side added that they
+    haven't confirmed yet, their own entries the other side has queried, and
+    rates, recovery settlements or Goodwill-to-Recoverable changes the other
+    side has asked them to agree.
+    Returns {partnership_id: {"confirm": n, "queried": n, "answer": n}}."""
     if not partnership_ids:
         return {}
-    rows = (supabase.table("ledger_entries").select("partnership_id,status,added_by")
-            .in_("partnership_id", partnership_ids).in_("status", ["pending", "queried"]).execute().data)
+    me = profile["id"]
     out = {}
+
+    def bump(pid, key):
+        out.setdefault(pid, {"confirm": 0, "queried": 0, "answer": 0})[key] += 1
+
+    rows = (supabase.table("ledger_entries").select("partnership_id,status,added_by,class_change_to,class_change_by")
+            .in_("partnership_id", partnership_ids)
+            .or_("status.in.(pending,queried),class_change_to.not.is.null").execute().data)
     for r in rows:
-        mine = r["added_by"] == profile["id"]
-        key = "queried" if (r["status"] == "queried" and mine) else ("confirm" if (r["status"] == "pending" and not mine) else None)
-        if key:
-            out.setdefault(r["partnership_id"], {"confirm": 0, "queried": 0})[key] += 1
+        mine = r["added_by"] == me
+        if r["status"] == "queried" and mine:
+            bump(r["partnership_id"], "queried")
+        elif r["status"] == "pending" and not mine:
+            bump(r["partnership_id"], "confirm")
+        if r.get("class_change_to") and r.get("class_change_by") != me:
+            bump(r["partnership_id"], "answer")
+    for table in ("plan_rates", "recovery_settlements"):
+        for r in (supabase.table(table).select("partnership_id,proposed_by")
+                  .in_("partnership_id", partnership_ids).eq("status", "proposed").execute().data):
+            if r["proposed_by"] != me:
+                bump(r["partnership_id"], "answer")
     return out

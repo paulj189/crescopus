@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Record a recovery — CrescoLedger — Crescopus{% endblock %}
+{% block content %}
+<p class="cu-plan-kicker">{{ listing.title }} · CrescoLedger</p>
+<h1>Record a recovery</h1>
+<p class="cu-muted">Record money that has been repaid towards someone's recoverable costs or time. It reduces what's outstanding once {{ name_of_role[other_role] }} agrees it. Crescopus doesn't move any money.</p>
+
+<form method="GET" class="cu-led-party-switch">
+  <label for="party">Whose costs were recovered?</label>
+  <select id="party" name="party" onchange="this.form.submit()">
+    {% for value, label in parties %}
+      <option value="{{ value }}" {% if values.party == value %}selected{% endif %}>{{ name_of_role[value] }} ({{ label }})</option>
+    {% endfor %}
+  </select>
+  <noscript><button type="submit" class="cu-btn cu-btn-secondary cu-btn-sm">Show</button></noscript>
+</form>
+
+<p class="cu-led-outstanding">Outstanding for {{ name_of_role[values.party] }}: <strong>{{ outstanding | money(currency) }}</strong></p>
+
+{% if outstanding <= 0 %}
+  <p class="empty-cta">{{ name_of_role[values.party] }} has nothing confirmed and recoverable outstanding.</p>
+  <a class="cu-btn cu-btn-secondary" href="{{ url_for('ledger.view', partnership_id=partnership.id) }}#recovery">Back to the ledger</a>
+{% else %}
+<form method="POST" class="cu-led-form" novalidate>
+  <input type="hidden" name="party" value="{{ values.party }}">
+
+  {% if eligible %}
+  <fieldset class="cu-led-choice cu-led-cover">
+    <legend>Which entries does it cover? (optional)</legend>
+    {% for e in eligible %}
+      <label><input type="checkbox" name="entry_ids" value="{{ e.id }}" data-amount="{{ e.amount_f }}" {% if e.id in values.entry_ids %}checked{% endif %}>
+        {{ e.entry_date | short_date }} · {{ e.description }} ·
+        <strong>{{ e.amount_f | money(currency) }}</strong>{% if e.kind == "time" %} <span class="cu-muted">({{ e.hours_f | hours }})</span>{% endif %}</label>
+    {% endfor %}
+  </fieldset>
+  {% endif %}
+
+  <div class="cu-field-row">
+    <div class="cu-field">
+      <label for="amount">Amount recovered ({{ currency }})</label>
+      <input type="text" inputmode="decimal" id="amount" name="amount" value="{{ values.amount }}" required placeholder="0.00" autocomplete="off">
+      <p class="cu-small cu-muted">Up to {{ outstanding | money(currency) }}.</p>
+    </div>
+    <div class="cu-field">
+      <label for="settled_on">Date settled</label>
+      <input type="date" id="settled_on" name="settled_on" value="{{ values.settled_on }}" required>
+    </div>
+  </div>
+
+  <div class="cu-field">
+    <label for="note">Note (optional)</label>
+    <input type="text" id="note" name="note" value="{{ values.note }}" maxlength="500" placeholder="e.g. bank transfer on 3 Nov, first instalment">
+  </div>
+
+  <div class="cu-led-form-actions">
+    <button type="submit" class="cu-btn cu-btn-primary">Send for agreement</button>
+    <a class="cu-btn cu-btn-secondary" href="{{ url_for('ledger.view', partnership_id=partnership.id) }}#recovery">Cancel</a>
+  </div>
+</form>
+
+<script>
+  // Ticking entries fills in their total, until you type an amount yourself.
+  (function () {
+    var amount = document.getElementById('amount'), typed = !!amount.value;
+    var boxes = document.querySelectorAll('input[name="entry_ids"]');
+    amount.addEventListener('input', function () { typed = amount.value !== ''; });
+    boxes.forEach(function (b) {
+      b.addEventListener('change', function () {
+        if (typed) return;
+        var total = 0;
+        boxes.forEach(function (x) { if (x.checked) total += parseFloat(x.dataset.amount) || 0; });
+        amount.value = total ? total.toFixed(2) : '';
+      });
+    });
+  })();
+</script>
+{% endif %}
+{% endblock %}

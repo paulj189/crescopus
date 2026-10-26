@@ -23,6 +23,25 @@
     {% endfor %}
   </fieldset>
 
+  <div class="cu-led-time" id="time-box" {% if values.kind != "time" %}hidden{% endif %}>
+    <div class="cu-field-row">
+      <div class="cu-field">
+        <label for="hours">Hours</label>
+        <input type="text" inputmode="decimal" id="hours" name="hours" value="{{ values.hours }}" placeholder="e.g. 3 or 7.5" autocomplete="off">
+      </div>
+      <div class="cu-field">
+        <label for="time_date">Date</label>
+        <input type="date" id="time_date" value="{{ values.entry_date }}" data-mirror="entry_date">
+      </div>
+    </div>
+    <p class="cu-small cu-muted" id="time-note">
+      {% if my_rate %}Valued at your agreed rate of {{ my_rate.hourly_rate | money(currency) }}/hour for dates from {{ my_rate.effective_from | short_date }}.
+      {% else %}You haven't agreed an hourly rate yet, so this is saved at zero ("rate pending"). You can propose a rate on the ledger page.{% endif %}
+      Time is always logged as your own.
+    </p>
+  </div>
+
+  <div class="cu-led-money-box" id="money-box" {% if values.kind == "time" %}hidden{% endif %}>
   <div class="cu-field-row">
     <div class="cu-field">
       <label for="amount">Amount</label>
@@ -51,6 +70,15 @@
     <p class="cu-led-fx-result" id="fx-result" aria-live="polite"></p>
   </div>
   <p class="cu-small cu-muted">This ledger is in {{ currency }}. Amounts in another currency are converted and both figures are kept.</p>
+  </div>
+
+  <fieldset class="cu-led-choice" id="class-box" {% if values.kind == "revenue" %}hidden{% endif %}>
+    <legend>Recoverable or Goodwill?</legend>
+    {% for value, label in classes %}
+      <label><input type="radio" name="cost_class" value="{{ value }}" {% if values.cost_class == value %}checked{% endif %}>
+        <span><strong>{{ label }}</strong> <span class="cu-muted">· {{ class_help[value] }}</span></span></label>
+    {% endfor %}
+  </fieldset>
 
   <div class="cu-field">
     <label for="description">Description</label>
@@ -58,7 +86,7 @@
            placeholder="What it was and why it belongs here">
   </div>
 
-  <div class="cu-field">
+  <div class="cu-field" id="party-box" {% if values.kind == "time" %}hidden{% endif %}>
     <label for="party">Who received or paid it?</label>
     <select id="party" name="party">
       {% for value, label in parties %}
@@ -79,6 +107,29 @@
     <a class="cu-btn cu-btn-secondary" href="{{ url_for('ledger.view', partnership_id=partnership.id) }}">Cancel</a>
   </div>
 </form>
+
+<script>
+  // Show the fields for the chosen type: hours for time, amount for costs and
+  // revenue, and the Recoverable / Goodwill choice for costs and time.
+  (function () {
+    var kinds = document.querySelectorAll('input[name="kind"]');
+    var timeBox = document.getElementById('time-box'), moneyBox = document.getElementById('money-box');
+    var classBox = document.getElementById('class-box'), partyBox = document.getElementById('party-box');
+    var entryDate = document.getElementById('entry_date'), timeDate = document.getElementById('time_date');
+    var hours = document.getElementById('hours'), amount = document.getElementById('amount');
+    function kind() { var k = document.querySelector('input[name="kind"]:checked'); return k ? k.value : 'cost'; }
+    function update() {
+      var k = kind();
+      timeBox.hidden = k !== 'time'; moneyBox.hidden = k === 'time';
+      classBox.hidden = k === 'revenue'; partyBox.hidden = k === 'time';
+      hours.required = k === 'time'; amount.required = k !== 'time';
+      if (k === 'time') timeDate.value = entryDate.value;
+    }
+    timeDate.addEventListener('change', function () { entryDate.value = timeDate.value; entryDate.dispatchEvent(new Event('change')); });
+    kinds.forEach(function (r) { r.addEventListener('change', update); });
+    update();
+  })();
+</script>
 
 <script>
   // Show the exchange-rate box for other currencies, suggest the rate for the

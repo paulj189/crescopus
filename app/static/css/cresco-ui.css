@@ -518,7 +518,7 @@ form.cu-led-query-form{display:flex;flex-direction:column;gap:8px;margin-top:8px
 
 /* Add / edit entry */
 form.cu-led-form{max-width:560px;}
-fieldset.cu-led-kindpick{border:0;margin:0;padding:4px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;background:var(--panel-2);border-radius:var(--cu-radius);}
+fieldset.cu-led-kindpick{border:0;margin:0;padding:4px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--panel-2);border-radius:var(--cu-radius);}
 .cu-led-kindopt,label.cu-led-kindopt{margin:0;cursor:pointer;}
 .cu-led-kindopt input{position:absolute;opacity:0;width:1px;height:1px;}
 .cu-led-kindopt span{display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:var(--cu-radius-sm);font-family:var(--mono);font-size:12px;letter-spacing:0.05em;text-transform:uppercase;color:var(--ink);}
@@ -552,7 +552,7 @@ form.cu-led-delete{margin-top:24px;}
 }
 @media (max-width:480px){
   .cu-led-totals{grid-template-columns:repeat(2,minmax(0,1fr));}
-  .cu-led-net,.cu-led-open{grid-column:span 2;}
+  .cu-led-net,.cu-led-open,.cu-led-time-tile{grid-column:span 2;}
   .cu-led-figure{font-size:22px;}
 }
 a.cu-panel-link{color:#FFFFFF;transition:transform 0.15s ease,box-shadow 0.15s ease;}
@@ -601,3 +601,66 @@ form.cu-led-currency-form{display:flex;flex-direction:row;flex-wrap:wrap;align-i
 .cu-led-currency-form label{margin:0;}
 .cu-led-currency-form select{width:auto;min-width:220px;padding:8px 12px;}
 .cu-led-currency-form p{flex-basis:100%;margin:0;}
+
+/* ---------- CrescoLedger: time, Goodwill / Recoverable, rates, recovery ---------- */
+.cu-led-kind-time{background:#E3ECEF;color:#24525E;}
+.cu-led-per{font-family:var(--sans,inherit);font-size:14px;font-weight:500;color:var(--cu-muted);margin-left:2px;}
+.cu-led-class-line{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:4px;}
+.cu-led-class{font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:2px 7px;border-radius:6px;border:1px solid transparent;}
+.cu-led-class-recoverable{background:var(--cu-needs-box);color:var(--cu-needs-tag);border-color:#CFE0CB;}
+.cu-led-class-goodwill{background:#F1EEF6;color:#4E3F72;border-color:#DDD6EA;}
+form.cu-led-inline{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0;max-width:none;}
+.cu-led-jump{margin:-4px 0 16px;}
+.cu-led-jump a{color:var(--cu-needs-ink);text-decoration:underline;text-underline-offset:2px;}
+
+.cu-led-section{margin-top:36px;display:flex;flex-direction:column;gap:12px;scroll-margin-top:80px;}
+.cu-led-section > p{margin:0;}
+.cu-led-section-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;}
+
+.cu-led-contrib{display:flex;flex-direction:column;border:1px solid var(--cu-card-line);border-radius:var(--cu-radius);overflow:hidden;background:var(--cu-card);}
+.cu-led-contrib-row{display:grid;grid-template-columns:minmax(140px,1.2fr) repeat(5,minmax(0,1fr));gap:12px;align-items:start;padding:12px 16px;border-top:1px solid #E2E7DA;font-size:15px;}
+.cu-led-contrib-row:first-child{border-top:0;}
+.cu-led-contrib-head{background:var(--ink);color:#FFFFFF;font-family:var(--mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;padding:10px 16px;}
+.cu-led-contrib-who{display:flex;flex-direction:column;}
+
+.cu-led-rates{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;}
+.cu-led-rate-card{display:flex;flex-direction:column;gap:6px;padding:16px 18px;background:var(--cu-card);border:1px solid var(--cu-card-line);border-radius:var(--cu-radius);}
+.cu-led-rate-card .cu-section-label{margin:0;}
+.cu-led-rate-open{display:flex;flex-direction:column;gap:6px;margin-top:6px;padding:12px 14px;background:var(--cu-offers-box);border-radius:var(--cu-radius-sm);}
+.cu-led-rate-propose summary,.cu-led-rate-history summary{cursor:pointer;width:max-content;}
+.cu-led-rate-propose summary{list-style:none;}
+.cu-led-rate-propose summary::-webkit-details-marker{display:none;}
+form.cu-led-rate-form{display:flex;flex-direction:column;gap:12px;margin-top:10px;max-width:none;}
+.cu-led-rate-form p{margin:0;}
+.cu-led-rate-history ul{margin:6px 0 0;padding-left:18px;}
+
+fieldset.cu-led-choice{border:1px solid var(--cu-card-line);border-radius:var(--cu-radius-sm);margin:0;padding:10px 14px 12px;display:flex;flex-direction:column;gap:8px;background:var(--panel);}
+fieldset.cu-led-choice[hidden]{display:none;}
+.cu-led-choice legend{font-weight:600;font-size:16px;padding:0 4px;}
+.cu-led-choice label{display:flex;gap:8px;align-items:flex-start;margin:0;font-family:var(--sans);font-size:15px;font-weight:400;letter-spacing:normal;text-transform:none;color:var(--ink);cursor:pointer;line-height:1.4;}
+.cu-field[hidden]{display:none;}
+.cu-led-rates{align-items:start;}
+.cu-led-choice input{width:auto;min-height:0;margin-top:3px;flex-shrink:0;}
+.cu-led-time[hidden],.cu-led-money-box[hidden]{display:none;}
+.cu-led-time,.cu-led-money-box{display:flex;flex-direction:column;gap:12px;}
+.cu-led-time p{margin:0;}
+
+.cu-led-settlements{display:flex;flex-direction:column;border:1px solid var(--cu-card-line);border-radius:var(--cu-radius);overflow:hidden;background:var(--cu-card);}
+.cu-led-settlement{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 16px;padding:12px 16px;border-top:1px solid #E2E7DA;font-size:15px;}
+.cu-led-settlement:first-child{border-top:0;}
+
+form.cu-led-party-switch{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;text-align:left;gap:8px 12px;max-width:none;margin:0 0 8px;}
+.cu-led-party-switch label{margin:0;}
+.cu-led-party-switch select{width:auto;}
+.cu-led-outstanding{font-size:17px;margin:0 0 18px;}
+.cu-led-cover label{font-size:15px;}
+
+@media (max-width:859px){
+  .cu-led-contrib{border:0;background:none;gap:10px;overflow:visible;}
+  .cu-led-contrib-head{display:none;}
+  .cu-led-contrib-row{grid-template-columns:1fr 1fr;border:1px solid var(--cu-card-line);border-radius:var(--cu-radius);background:var(--cu-card);padding:14px;}
+  .cu-led-contrib-row:first-child{border-top:1px solid var(--cu-card-line);}
+  .cu-led-contrib-who{grid-column:1 / -1;}
+  .cu-led-contrib-row [data-label]::before{content:attr(data-label);display:block;font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--cu-muted);margin-bottom:2px;}
+  fieldset.cu-led-kindpick .cu-led-kindopt span{font-size:11px;}
+}
