@@ -91,6 +91,10 @@ def create_app():
 
     @app.route("/")
     def index():
+        # Logged-in people go straight to their own Home; the landing page is for visitors.
+        if session.get("user_id"):
+            from flask import redirect, url_for
+            return redirect(url_for("dashboard.index"))
         return render_template("index.html")
 
     @app.context_processor
@@ -106,6 +110,7 @@ def create_app():
 
         profile = current_profile()
         attention_count = 0
+        nav_counts = {"home": 0, "crescos": 0, "messages": 0}
         is_popup = request.args.get("partial") == "1" or request.headers.get("X-Requested-With") == "fetch"
         if profile and not is_popup:
             from app.plans.routes import plan_summaries
@@ -115,8 +120,29 @@ def create_app():
             received = get_pending_received_requests(supabase, profile)
             unread = [pid for pid in get_unread_partnerships(supabase, profile) if pid in plan_ids]
             ledger = get_ledger_waiting_on_me(supabase, profile, list(plan_ids))
-            attention_count = (len(received) + len(unread) + len(ledger)
-                               + sum(1 for p in plans if p["state"][0] == "you"))
-        return dict(nav_profile=profile, attention_count=attention_count)
+            plans_waiting = sum(1 for p in plans if p["state"][0] == "you")
+            attention_count = len(received) + len(unread) + len(ledger) + plans_waiting
+            # Badges on the main menu: requests on Home, plan/ledger items on My Crescos, unread on Messages.
+            nav_counts = {"home": len(received), "crescos": plans_waiting + len(ledger), "messages": len(unread)}
+
+        # Which main menu item the current page belongs to.
+        endpoint = request.endpoint or ""
+        blueprint = endpoint.split(".")[0] if "." in endpoint else ""
+        if endpoint == "partnerships.inbox":
+            nav_section = "messages"
+        elif blueprint in ("plans", "ledger", "partnerships", "reporting"):
+            nav_section = "crescos"
+        elif blueprint == "browse" and not endpoint.startswith(("browse.edit", "browse.withdraw")):
+            nav_section = "find"
+        elif blueprint == "settings":
+            nav_section = "account"
+        elif blueprint in ("dashboard", "listings", "connection_requests") or endpoint.startswith(("browse.edit", "browse.withdraw")):
+            nav_section = "home"
+        else:
+            nav_section = ""
+        top_level = endpoint in ("index", "dashboard.index", "browse.index", "plans.index",
+                                 "partnerships.inbox", "settings.index", "auth.login", "auth.signup")
+        return dict(nav_profile=profile, attention_count=attention_count, nav_counts=nav_counts,
+                    nav_section=nav_section, nav_top_level=top_level)
 
     return app

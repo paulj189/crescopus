@@ -11,11 +11,8 @@
       {% else %}This partnership has ended{% if partnership.end_reason %}: “{{ partnership.end_reason }}”{% elif partnership.disconnect_reason %}: “{{ partnership.disconnect_reason }}”{% endif %}. Messaging is closed.{% endif %}
     </p>
   </div>
-  <div class="cu-plan-head-actions">
-    <a class="cu-btn cu-btn-secondary" href="{{ url_for('plans.view', partnership_id=partnership.id) }}">CrescoPlan</a>
-    <a class="cu-btn cu-btn-secondary" href="{{ url_for('ledger.view', partnership_id=partnership.id) }}">CrescoLedger</a>
-  </div>
 </div>
+{% set cresco_tab = "messages" %}{% include "partnerships/_cresco_tabs.html" %}
 
 <div class="cu-chat">
   <div class="cu-chat-log">

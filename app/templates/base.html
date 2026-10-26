@@ -76,8 +76,8 @@
   <path d="M515 2875 L521 2888 L535 2888 L524 2896 L529 2910 L515 2901 L501 2910 L506 2896 L495 2888 L509 2888 Z" fill="#B98A2E" opacity="0.46"/>
 </svg>
 
-<nav class="app-nav">
-  <a href="{{ url_for('index') }}" class="brand-lockup">
+<header class="app-nav">
+  <a href="{{ url_for('dashboard.index') if nav_profile else url_for('index') }}" class="brand-lockup">
     <svg class="brand-icon" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Crescopus">
       <defs>
         <radialGradient id="navBadgeFill" cx="42%" cy="38%" r="75%">
@@ -109,34 +109,28 @@
     </svg>
     <span class="brand-mark">Crescopus</span>
   </a>
-  <button type="button" class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('nav-open');this.classList.toggle('is-active');" aria-label="Toggle menu">
-    <span></span><span></span><span></span>
-  </button>
-  <div class="nav-links">
-    <a href="{{ url_for('index') }}" class="nav-home" aria-label="Home">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 11L12 4L21 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M5 10V19C5 19.5523 5.44772 20 6 20H9V15C9 14.4477 9.44772 14 10 14H14C14.5523 14 15 14.4477 15 15V20H18C18.5523 20 19 19.5523 19 19V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </a>
-    {% if nav_profile %}
-      <a href="{{ url_for('browse.index') }}" class="nav-cta nav-cta-apps">Builders &amp; apps</a>
-      <a href="{{ url_for('browse.index', tab='growers') }}" class="nav-cta nav-cta-growers">Growers</a>
-      <a href="{{ url_for('plans.index') }}">My plans</a>
-      <a href="{{ url_for('dashboard.index') }}">Dashboard{% if attention_count %} <span class="nav-badge">{{ attention_count }}</span>{% endif %}</a>
-      <a href="{{ url_for('settings.index') }}">Settings</a>
-      <a href="{{ url_for('auth.logout') }}">Log out</a>
-    {% else %}
-      <a href="{{ url_for('browse.index') }}" class="nav-cta nav-cta-apps">Builders &amp; apps</a>
-      <a href="{{ url_for('browse.index', tab='growers') }}" class="nav-cta nav-cta-growers">Growers</a>
-      <a href="{{ url_for('auth.login') }}" class="nav-cta">Log in</a>
-      <a href="{{ url_for('auth.signup') }}" class="nav-cta">Sign up</a>
-    {% endif %}
-  </div>
-</nav>
+  {% if nav_profile %}
+  {% set is_builder = nav_profile.is_developer %}
+  <nav class="cx-tabs cx-tabs-{{ 'builder' if is_builder else 'grower' }}" aria-label="Main">
+    <a href="{{ url_for('dashboard.index') }}" class="cx-tab"{% if nav_section == "home" %} aria-current="page"{% endif %}><span class="cx-tab-glyph"><svg class="cx-tab-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg>{% if nav_counts.home %}<span class="nav-badge">{{ nav_counts.home }}</span>{% endif %}</span><span class="cx-tab-label">Home</span></a>
+    <a href="{{ url_for('browse.index', tab='growers') if is_builder else url_for('browse.index') }}" class="cx-tab"{% if nav_section == "find" %} aria-current="page"{% endif %}><span class="cx-tab-glyph"><svg class="cx-tab-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span><span class="cx-tab-label">{{ 'Find Growers' if is_builder else 'Find Apps' }}</span></a>
+    <a href="{{ url_for('plans.index') }}" class="cx-tab"{% if nav_section == "crescos" %} aria-current="page"{% endif %}><span class="cx-tab-glyph"><svg class="cx-tab-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>{% if nav_counts.crescos %}<span class="nav-badge">{{ nav_counts.crescos }}</span>{% endif %}</span><span class="cx-tab-label">My Crescos</span></a>
+    <a href="{{ url_for('partnerships.inbox') }}" class="cx-tab"{% if nav_section == "messages" %} aria-current="page"{% endif %}><span class="cx-tab-glyph"><svg class="cx-tab-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>{% if nav_counts.messages %}<span class="nav-badge">{{ nav_counts.messages }}</span>{% endif %}</span><span class="cx-tab-label">Messages</span></a>
+    <a href="{{ url_for('settings.index') }}" class="cx-tab"{% if nav_section == "account" %} aria-current="page"{% endif %}><span class="cx-tab-glyph"><svg class="cx-tab-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span><span class="cx-tab-label">Account</span></a>
+  </nav>
+  <span class="cx-role cx-role-{{ 'builder' if is_builder else 'grower' }}">{{ 'Builder' if is_builder else 'Grower' }}</span>
+  {% else %}
+  <nav class="cx-tabs cx-tabs-visitor" aria-label="Main">
+    <a href="{{ url_for('browse.index') }}" class="cx-tab"{% if nav_section == "find" %} aria-current="page"{% endif %}><span class="cx-tab-glyph"><svg class="cx-tab-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span><span class="cx-tab-label">Find</span></a>
+    <a href="#" class="cx-tab" onclick="crescoModal.open('modal-how');return false;"><span class="cx-tab-glyph"><svg class="cx-tab-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></svg></span><span class="cx-tab-label">How it works</span></a>
+    <a href="{{ url_for('auth.login') }}" class="cx-tab"{% if request.endpoint == "auth.login" %} aria-current="page"{% endif %}><span class="cx-tab-glyph"><svg class="cx-tab-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h5v16h-5M10 8l4 4-4 4M14 12H4"/></svg></span><span class="cx-tab-label">Log in</span></a>
+  </nav>
+  <a href="{{ url_for('auth.signup') }}" class="cx-signup">Sign up free</a>
+  {% endif %}
+</header>
 
 <main class="app-main {% block main_class %}{% endblock %}">
-  {% if request.endpoint != 'index' %}
+  {% if not nav_top_level %}
     <a href="#" onclick="history.back();return false;" class="back-link">&larr; Back</a>
   {% endif %}
   {% with messages = get_flashed_messages(with_categories=true) %}

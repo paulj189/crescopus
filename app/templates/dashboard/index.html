@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Dashboard — Crescopus{% endblock %}
+{% block title %}Home — Crescopus{% endblock %}
 {% block main_class %}app-main-wide{% endblock %}
 {% block content %}
 <div class="cu-plan-head">
@@ -10,7 +10,7 @@
     </svg>
   </div>
   <div class="cu-plan-head-actions">
-    <a class="cu-btn cu-btn-secondary" href="{{ url_for('browse.index', tab='growers' if profile.is_developer else None) }}">Find {{ "growers" if profile.is_developer else "apps" }}</a>
+    <a class="cu-btn cu-btn-secondary" href="{{ url_for('browse.index', tab='growers' if profile.is_developer else None) }}">Find {{ "Growers" if profile.is_developer else "apps" }}</a>
   </div>
 </div>
 
@@ -62,8 +62,8 @@
 {# ---------- Plans ---------- #}
 <section class="cu-dash-section">
   <div class="cu-panel-row">
-    <h2 class="cu-plan-h">Your plans</h2>
-    {% if plans %}<a class="cu-link-btn" href="{{ url_for('plans.index') }}">All plans</a>{% endif %}
+    <h2 class="cu-plan-h">My Crescos</h2>
+    {% if plans %}<a class="cu-link-btn" href="{{ url_for('plans.index') }}">All Crescos</a>{% endif %}
   </div>
   {% if plans %}
   <div class="cu-grid">
@@ -79,8 +79,8 @@
     {% endfor %}
   </div>
   {% else %}
-    <p class="empty-cta">No plans yet. A CrescoPlan starts when a connection request is accepted.
-      <a href="{{ url_for('browse.index', tab='growers' if profile.is_developer else None) }}">Find {{ "a grower" if profile.is_developer else "an app" }}</a> to get going.</p>
+    <p class="empty-cta">No Crescos yet. A Cresco (your shared plan and ledger) starts when a connection request is accepted.
+      <a href="{{ url_for('browse.index', tab='growers' if profile.is_developer else None) }}">Find {{ "a Grower" if profile.is_developer else "an app" }}</a> to get going.</p>
   {% endif %}
 </section>
 

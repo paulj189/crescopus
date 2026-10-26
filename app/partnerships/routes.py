@@ -9,7 +9,7 @@ active now.
 from datetime import datetime, timezone
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.extensions import get_supabase
-from app.utils import login_required, current_profile, mark_partnership_read
+from app.utils import login_required, current_profile, mark_partnership_read, get_unread_partnerships
 
 partnerships_bp = Blueprint(
     "partnerships", __name__, url_prefix="/partnerships", template_folder="../templates/partnerships"
@@ -26,6 +26,38 @@ def _get(partnership_id):
     rows = (get_supabase().table("partnerships").select("*, listings(id,title)")
             .eq("id", partnership_id).execute().data)
     return rows[0] if rows else None
+
+
+@partnerships_bp.route("/")
+@login_required
+def inbox():
+    """Messages: one conversation per Cresco, newest first, unread ones marked."""
+    from app.plans.routes import plan_summaries  # imported here to avoid a circular import
+
+    profile = current_profile()
+    if not profile:
+        return redirect(url_for("auth.logout"))
+    supabase = get_supabase()
+    crescos = plan_summaries(supabase, profile)
+    ids = [c["id"] for c in crescos]
+    latest = {}
+    if ids:
+        for m in (supabase.table("messages").select("partnership_id,sender_id,body,created_at")
+                  .in_("partnership_id", ids).order("created_at", desc=True).execute().data):
+            latest.setdefault(m["partnership_id"], m)
+    unread = get_unread_partnerships(supabase, profile)
+    for c in crescos:
+        c["last"] = latest.get(c["id"])
+        c["unread"] = c["id"] in unread
+    # Unread first, then most recent conversation, then the rest; ended ones last.
+    crescos.sort(key=lambda c: (not c["active"], not c["unread"], c["last"] is None,
+                                _invert(c["last"]["created_at"]) if c["last"] else ""))
+    return render_template("partnerships/inbox.html", crescos=crescos, profile=profile)
+
+
+def _invert(stamp):
+    """Sort key that puts later timestamps first."""
+    return "".join(chr(255 - ord(ch)) for ch in stamp)
 
 
 @partnerships_bp.route("/<partnership_id>")

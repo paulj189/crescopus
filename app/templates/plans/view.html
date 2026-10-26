@@ -16,10 +16,10 @@
   </div>
   <div class="cu-plan-head-actions">
     <a class="cu-btn cu-btn-secondary" href="{{ url_for('plans.history', partnership_id=partnership.id) }}">History</a>
-    <a class="cu-btn cu-btn-secondary" href="{{ url_for('partnerships.detail', partnership_id=partnership.id) }}">Messages</a>
     {% if active %}<a class="cu-btn cu-btn-primary cu-hide-mobile" href="{{ url_for('plans.edit', partnership_id=partnership.id) }}">Edit plan</a>{% endif %}
   </div>
 </div>
+{% set cresco_tab = "plan" %}{% include "partnerships/_cresco_tabs.html" %}
 
 {% if not active %}
   <p class="cu-conflict">This partnership has ended{% if partnership.end_reason or partnership.disconnect_reason %}: “{{ partnership.end_reason or partnership.disconnect_reason }}”{% endif %}. The plan and its history are kept here, read-only.</p>

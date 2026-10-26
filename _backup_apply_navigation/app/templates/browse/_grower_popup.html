@@ -1,0 +1,60 @@
+{% from "browse/_macros.html" import avatar, verified_icon, needs_offers, close_button %}
+<article class="cu-profile" aria-labelledby="cu-profile-name">
+  <header class="cu-profile-top">
+    <span class="cu-role cu-role-grower">Grower</span>
+    {{ close_button() }}
+  </header>
+
+  <div class="cu-profile-cols">
+    <div class="cu-profile-main">
+      <div class="cu-person">
+        {{ avatar(grower.hero_image_url, initials, tint, "cu-avatar-lg") }}
+        <div class="cu-person-text">
+          <h2 id="cu-profile-name" class="cu-person-name">{{ grower.full_name }}</h2>
+          {% if badges %}
+          <div class="cu-badges">
+            {% for b in badges %}
+              <span class="cu-badge {% if loop.first and id_verified %}cu-badge-strong{% endif %}">{% if loop.first and id_verified %}{{ verified_icon(14) }} {% endif %}{{ b }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <section>
+        <h3 class="cu-section-label">About</h3>
+        {% if grower.pitch_html %}<div class="cu-rich">{{ grower.pitch_html | clean_pitch | safe }}</div>
+        {% elif grower.bio %}<p>{{ grower.bio }}</p>
+        {% else %}<p class="cu-muted">This grower hasn't added a profile yet.</p>{% endif %}
+      </section>
+    </div>
+
+    <div class="cu-profile-side">
+      {{ needs_offers(grower.needs_html, grower.offers_html, grower.needs_tags | tag_labels, grower.offers_tags | tag_labels) }}
+
+      <div class="cu-actions">
+        {% if action.kind == "connect" %}
+          {% if my_listings | length == 1 %}
+            <a class="cu-btn cu-btn-primary" href="{{ url_for('connection_requests.new_from_grower', grower_id=grower.id, listing_id=my_listings[0].id) }}">Start a CrescoPlan</a>
+          {% else %}
+            <p class="cu-small cu-muted">Start a CrescoPlan for one of your apps:</p>
+            {% for l in my_listings %}
+              <a class="cu-btn cu-btn-secondary" href="{{ url_for('connection_requests.new_from_grower', grower_id=grower.id, listing_id=l.id) }}">{{ l.title }}</a>
+            {% endfor %}
+          {% endif %}
+        {% elif action.kind == "need_listing" %}
+          <a class="cu-btn cu-btn-primary" href="{{ url_for('listings.new') }}">List your app first</a>
+        {% elif action.kind == "owner" %}
+          {% if grower.grower_withdrawn_at %}<p class="cu-conflict">Withdrawn: your card isn't shown on Crescopus. Restore it from your dashboard.</p>{% endif %}
+          <a class="cu-btn cu-btn-primary" href="{{ url_for('browse.edit_my_card') }}">Edit card</a>
+        {% elif action.kind == "withdrawn" %}
+          <p class="cu-muted cu-small">This grower has withdrawn their card from Crescopus and isn't taking new connections.</p>
+        {% elif action.kind == "login" %}
+          <a class="cu-btn cu-btn-primary" href="{{ url_for('auth.login') }}">Log in to start a CrescoPlan</a>
+        {% else %}
+          <p class="cu-muted cu-small">Builders can start a CrescoPlan with this grower.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</article>

@@ -729,3 +729,47 @@ label.cu-wd-consent{display:flex;gap:8px;align-items:flex-start;margin:0;font-fa
 }
 .cu-dp-msg a{color:var(--cu-needs-ink);text-decoration:underline;text-underline-offset:2px;word-break:break-all;}
 form.cu-dp-reply > .cu-btn,form.cu-dp-close > .cu-btn,form.cu-dp-ai-form > .cu-btn{align-self:flex-start;}
+
+/* ---------- Main menu: one set of tabs per role ----------
+   Desktop: a row in the top bar. Mobile: a fixed bar along the bottom, no burger. */
+.app-nav{gap:20px;}
+.cx-tabs{display:flex;align-items:center;gap:2px;margin-left:auto;font-family:var(--mono);font-size:12px;letter-spacing:0.03em;text-transform:uppercase;}
+.cx-tab{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;color:var(--muted);border-bottom:2px solid transparent;transition:color 0.15s ease;}
+.cx-tab:hover{color:var(--ink);}
+.cx-tab[aria-current="page"]{color:var(--ink);font-weight:600;border-bottom-color:var(--sage);}
+.cx-tabs-builder .cx-tab[aria-current="page"]{color:#176B3B;border-bottom-color:#176B3B;}
+.cx-tabs-grower .cx-tab[aria-current="page"]{color:var(--brass-ink);border-bottom-color:var(--brass);}
+.cx-tab-glyph{position:relative;display:flex;align-items:center;order:2;}
+.cx-tab-icon{display:none;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.cx-tab .nav-badge{margin-left:0;}
+.cx-role{font-family:var(--mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;padding:4px 8px;border-radius:var(--radius);white-space:nowrap;}
+.cx-role-builder{background:#E1F0E6;color:#176B3B;}
+.cx-role-grower{background:#F5ECD6;color:var(--brass-ink);}
+.cx-signup{font-family:var(--mono);font-size:12px;letter-spacing:0.03em;text-transform:uppercase;font-weight:600;padding:10px 14px;border-radius:var(--radius);background:var(--brass);color:var(--ink);white-space:nowrap;}
+.cx-signup:hover{background:var(--brass-ink);color:#FFFFFF;}
+
+/* Plan | Ledger | Messages inside a Cresco */
+.cx-cresco-tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line);margin:0 0 24px;}
+.cx-cresco-tabs a{display:flex;align-items:center;min-height:44px;padding:0 18px;margin-bottom:-1px;font-family:var(--mono);font-size:13px;letter-spacing:0.03em;text-transform:uppercase;color:var(--muted);border-bottom:3px solid transparent;}
+.cx-cresco-tabs a:hover{color:var(--ink);}
+.cx-cresco-tabs a[aria-current="page"]{color:var(--ink);font-weight:600;border-bottom-color:var(--sage);}
+
+.cx-inbox-unread .cu-todo-title{font-weight:700;}
+.cx-logout{margin-top:40px;padding-top:24px;border-top:1px solid var(--line);}
+
+@media (max-width:860px){
+  /* backdrop-filter would trap the fixed tab bar inside the header, so use a solid header here */
+  .app-nav{padding:10px 16px;backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--bg);}
+  .cx-tabs{position:fixed;left:0;right:0;bottom:0;z-index:60;margin:0;gap:0;
+    padding:4px 4px calc(6px + env(safe-area-inset-bottom));
+    background:#FFFFFF;border-top:1px solid var(--line);box-shadow:0 -2px 12px rgba(23,35,26,0.06);
+    font-family:var(--sans);font-size:11px;letter-spacing:0;text-transform:none;}
+  .cx-tab{flex:1 1 0;min-width:0;flex-direction:column;justify-content:center;gap:3px;min-height:54px;padding:6px 2px;
+    border-bottom:none;text-align:center;line-height:1.2;}
+  .cx-tab[aria-current="page"]{border-bottom:none;}
+  .cx-tab-glyph{order:0;}
+  .cx-tab-icon{display:block;}
+  .cx-tab .nav-badge{position:absolute;top:-5px;right:-10px;}
+  .cx-role,.cx-signup{margin-left:auto;}
+  body{padding-bottom:calc(72px + env(safe-area-inset-bottom));}
+}

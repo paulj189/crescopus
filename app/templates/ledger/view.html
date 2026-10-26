@@ -93,11 +93,11 @@
     </p>
   </div>
   <div class="cu-plan-head-actions">
-    <a class="cu-btn cu-btn-secondary" href="{{ url_for('plans.view', partnership_id=partnership.id) }}">CrescoPlan</a>
     {% if entries %}<a class="cu-btn cu-btn-secondary" href="{{ url_for('ledger.export', partnership_id=partnership.id) }}">Export CSV</a>{% endif %}
     {% if active %}<a class="cu-btn cu-btn-primary cu-hide-mobile" href="{{ url_for('ledger.new', partnership_id=partnership.id) }}">+ Add entry</a>{% endif %}
   </div>
 </div>
+{% set cresco_tab = "ledger" %}{% include "partnerships/_cresco_tabs.html" %}
 
 {% if totals.to_answer %}
 <p class="cu-conflict">{{ totals.to_answer }} thing{{ "" if totals.to_answer == 1 else "s" }} waiting for your answer below: a dispute, a rate, a settlement or a change to Recoverable.</p>

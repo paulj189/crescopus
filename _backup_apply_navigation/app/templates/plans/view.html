@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% from "plans/_sections.html" import plan_sections %}
+{% block title %}CrescoPlan — {{ listing.title }} — Crescopus{% endblock %}
+{% block main_class %}app-main-wide{% endblock %}
+{% block content %}
+{% set active = partnership.status in ("trial", "formalised") %}
+{% set both_agreed = builder_agreed and grower_agreed %}
+
+<div class="cu-plan-head">
+  <div>
+    <p class="cu-plan-kicker">{{ listing.title }} · {{ builder.full_name }} &amp; {{ grower.full_name }}</p>
+    <h1>CrescoPlan</h1>
+    <p class="cu-muted cu-small">
+      Version {{ plan.version }}{% if plan.version > 1 and updated_by_name %} · last edited by {{ updated_by_name }}, {{ plan.updated_at | short_date }}{% endif %}
+    </p>
+  </div>
+  <div class="cu-plan-head-actions">
+    <a class="cu-btn cu-btn-secondary" href="{{ url_for('plans.history', partnership_id=partnership.id) }}">History</a>
+    <a class="cu-btn cu-btn-secondary" href="{{ url_for('partnerships.detail', partnership_id=partnership.id) }}">Messages</a>
+    {% if active %}<a class="cu-btn cu-btn-primary cu-hide-mobile" href="{{ url_for('plans.edit', partnership_id=partnership.id) }}">Edit plan</a>{% endif %}
+  </div>
+</div>
+
+{% if not active %}
+  <p class="cu-conflict">This partnership has ended{% if partnership.end_reason or partnership.disconnect_reason %}: “{{ partnership.end_reason or partnership.disconnect_reason }}”{% endif %}. The plan and its history are kept here, read-only.</p>
+{% endif %}
+
+<div class="cu-plan-layout">
+  <div class="cu-plan-main">
+    {% if is_empty %}
+      <div class="cu-plan-empty">
+        <h2>Let's write your plan</h2>
+        <p>Start with what each of you needs and offers, then list the first few actions and how you'll measure success. Either of you can edit it, and every change is kept in the history.</p>
+        {% if active %}<a class="cu-btn cu-btn-primary" href="{{ url_for('plans.edit', partnership_id=partnership.id) }}">Start the plan</a>{% endif %}
+      </div>
+    {% else %}
+      {{ plan_sections(plan.agreed_needs_html, plan.agreed_offers_html, plan.plan_actions, plan.plan_measures,
+                       roles, status_labels, statuses=statuses, partnership_id=partnership.id, editable=active) }}
+    {% endif %}
+  </div>
+
+  <aside class="cu-plan-side">
+    <section class="cu-panel" id="agree">
+      <div class="cu-panel-row">
+        <h2 class="cu-section-label">Agreement</h2>
+        {% if both_agreed %}
+          <span class="cu-pill cu-pill-agreed">Agreed by both</span>
+        {% elif not active %}
+          <span class="cu-pill">Closed</span>
+        {% else %}
+          <span class="cu-pill cu-pill-draft">Draft</span>
+        {% endif %}
+      </div>
+      <ul class="cu-signoffs">
+        {% for who, ok, role in [(builder, builder_agreed, "Builder"), (grower, grower_agreed, "Grower")] %}
+        <li>
+          {% if ok %}
+            <svg class="cu-verified" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+          {% else %}
+            <svg class="cu-pending-dot" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/></svg>
+          {% endif %}
+          <span><strong>{{ who.full_name }}</strong> <span class="cu-muted">({{ role }})</span><br>
+          <span class="cu-small {% if ok %}cu-needs-ink{% else %}cu-muted{% endif %}">{{ "Agreed to version " ~ plan.version if ok else "Not yet agreed to version " ~ plan.version }}</span></span>
+        </li>
+        {% endfor %}
+      </ul>
+
+      {% if active and not i_agreed and not is_empty %}
+        <form method="POST" action="{{ url_for('plans.agree', partnership_id=partnership.id) }}" class="cu-agree-form">
+          <input type="hidden" name="version" value="{{ plan.version }}">
+          <label class="cu-check cu-check-top">
+            <input type="checkbox" name="confirm" value="1" required>
+            <span>I've read version {{ plan.version }} and agree to it as our working plan. It's a shared plan, not a legal contract, and Crescopus isn't a party to it.</span>
+          </label>
+          <button type="submit" class="cu-btn cu-btn-primary">Agree to version {{ plan.version }}</button>
+        </form>
+      {% elif i_agreed and not both_agreed %}
+        <p class="cu-small cu-muted">You've agreed. Waiting for {{ grower.full_name if me_role == "builder" else builder.full_name }}.</p>
+      {% elif both_agreed %}
+        <p class="cu-small cu-muted">Any edit creates a new version, and you'll both agree again.</p>
+      {% endif %}
+    </section>
+
+    <a class="cu-panel cu-panel-dark cu-panel-link" href="{{ url_for('ledger.view', partnership_id=partnership.id) }}">
+      <h2 class="cu-section-label">CrescoLedger</h2>
+      <p class="cu-ledger-net">Net {{ ledger.net | money(plan.ledger_currency) }}</p>
+      <p class="cu-small">
+        {% if ledger.count == 0 %}No entries yet.
+        {% elif ledger.pending %}{{ ledger.pending }} entr{{ "y" if ledger.pending == 1 else "ies" }} awaiting confirmation.
+        {% else %}All entries confirmed.{% endif %}
+      </p>
+      <p class="cu-small cu-ledger-soon">Open the ledger →</p>
+    </a>
+  </aside>
+</div>
+
+{% if active %}
+<div class="cu-plan-bar">
+  <a class="cu-btn cu-btn-secondary" href="{{ url_for('plans.edit', partnership_id=partnership.id) }}">Edit plan</a>
+  {% if not i_agreed and not is_empty %}<a class="cu-btn cu-btn-primary" href="#agree">Agree to v{{ plan.version }}</a>{% endif %}
+</div>
+{% endif %}
+
+<script>
+  // Change an action's status as soon as it's picked, without leaving the page.
+  document.querySelectorAll('select[data-autosubmit]').forEach(function (sel) {
+    sel.addEventListener('change', function () {
+      sel.className = 'cu-status cu-status-' + sel.value;
+      fetch(sel.form.action, {
+        method: 'POST', body: new FormData(sel.form),
+        headers: { 'X-Requested-With': 'fetch' }, credentials: 'same-origin'
+      }).then(function (r) { if (!r.ok) sel.form.submit(); })
+        .catch(function () { sel.form.submit(); });
+    });
+  });
+</script>
+{% endblock %}

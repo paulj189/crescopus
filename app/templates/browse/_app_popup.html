@@ -73,7 +73,8 @@
         {% elif action.kind == "self_withdrawn" %}
           <p class="cu-muted cu-small">Your card is withdrawn. Restore it from your dashboard to start new CrescoPlans.</p>
         {% elif action.kind == "login" %}
-          <a class="cu-btn cu-btn-primary" href="{{ url_for('auth.login') }}">Log in to start a CrescoPlan</a>
+          <a class="cu-btn cu-btn-primary" href="{{ url_for('auth.signup') }}">Sign up to connect</a>
+          <a class="cu-link-btn cu-small" href="{{ url_for('auth.login') }}">Already a member? Log in</a>
         {% else %}
           <p class="cu-muted cu-small">Growers can start a CrescoPlan with this app.</p>
         {% endif %}

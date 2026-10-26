@@ -1,0 +1,7 @@
+{# Plan | Ledger | Messages tabs shown at the top of every page inside a Cresco.
+   Usage: {% set cresco_tab = "plan" %}{% include "partnerships/_cresco_tabs.html" %} #}
+<nav class="cx-cresco-tabs" aria-label="This Cresco">
+  <a href="{{ url_for('plans.view', partnership_id=partnership.id) }}" {% if cresco_tab == "plan" %}aria-current="page"{% endif %}>Plan</a>
+  <a href="{{ url_for('ledger.view', partnership_id=partnership.id) }}" {% if cresco_tab == "ledger" %}aria-current="page"{% endif %}>Ledger</a>
+  <a href="{{ url_for('partnerships.detail', partnership_id=partnership.id) }}" {% if cresco_tab == "messages" %}aria-current="page"{% endif %}>Messages</a>
+</nav>

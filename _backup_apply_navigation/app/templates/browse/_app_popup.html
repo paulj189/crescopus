@@ -1,0 +1,83 @@
+{% from "browse/_macros.html" import avatar, verified_icon, needs_offers, close_button %}
+<article class="cu-profile" aria-labelledby="cu-profile-name">
+  <header class="cu-profile-top">
+    <span class="cu-role cu-role-builder">Builder</span>
+    {{ close_button() }}
+  </header>
+
+  <div class="cu-profile-cols">
+    <div class="cu-profile-main">
+      <div class="cu-person">
+        {{ avatar(builder.hero_image_url, builder_initials, builder_tint, "cu-avatar-lg") }}
+        <div class="cu-person-text">
+          <h2 id="cu-profile-name" class="cu-person-name">{{ builder.full_name }}</h2>
+          {% if badges %}
+          <div class="cu-badges">
+            {% for b in badges %}
+              <span class="cu-badge {% if loop.first and id_verified %}cu-badge-strong{% endif %}">{% if loop.first and id_verified %}{{ verified_icon(14) }} {% endif %}{{ b }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if builder.pitch_html or builder.bio %}
+      <section>
+        <h3 class="cu-section-label">About</h3>
+        {% if builder.pitch_html %}<div class="cu-rich">{{ builder.pitch_html | clean_pitch | safe }}</div>
+        {% else %}<p>{{ builder.bio }}</p>{% endif %}
+      </section>
+      {% endif %}
+
+      <section class="cu-app">
+        <h3 class="cu-section-label cu-offers-ink">My app</h3>
+        <div class="cu-app-body">
+          {% if listing.hero_image_url %}
+            <img class="cu-app-image" src="{{ listing.hero_image_url }}" alt="{{ listing.title }}">
+          {% endif %}
+          <div class="cu-app-text">
+            <div class="cu-app-name">{{ listing.title }}</div>
+            {% if listing.tagline %}<p class="cu-app-tagline">{{ listing.tagline }}</p>{% endif %}
+            {% if listing.category or listing.platform %}
+              <p class="cu-muted cu-small">{{ [listing.category, listing.platform] | select | join(" · ") }}</p>
+            {% endif %}
+          </div>
+        </div>
+        {% if listing.pitch_html %}<div class="cu-rich">{{ listing.pitch_html | clean_pitch | safe }}</div>
+        {% elif listing.description %}<p>{{ listing.description }}</p>{% endif %}
+        {% for label, link in (listing.store_urls or {}).items() if link and link.startswith("http") %}
+          <a class="cu-link-row" href="{{ link }}" target="_blank" rel="noopener noreferrer">
+            <span>{{ label | title }}</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
+          </a>
+        {% endfor %}
+      </section>
+    </div>
+
+    <div class="cu-profile-side">
+      {{ needs_offers(listing.needs_html, listing.offers_html, listing.needs_tags | tag_labels, listing.offers_tags | tag_labels) }}
+
+      <div class="cu-actions">
+        {% if action.kind == "connect" %}
+          <a class="cu-btn cu-btn-primary" href="{{ url_for('connection_requests.new_from_listing', listing_id=listing.id) }}">Start a CrescoPlan</a>
+        {% elif action.kind == "pending" %}
+          <span class="cu-btn cu-btn-disabled" aria-disabled="true">Request sent</span>
+        {% elif action.kind == "open" %}
+          <a class="cu-btn cu-btn-primary" href="{{ url_for('plans.view', partnership_id=action.partnership_id) }}">Open your CrescoPlan</a>
+        {% elif action.kind == "owner" %}
+          {% if listing.withdrawn_at %}<p class="cu-conflict">Withdrawn: this card isn't shown on Crescopus. Restore it from your dashboard.</p>{% endif %}
+          <a class="cu-btn cu-btn-primary" href="{{ url_for('browse.edit_app_card', listing_id=listing.id) }}">Edit card</a>
+          <a class="cu-btn cu-btn-secondary" href="{{ url_for('listings.detail', listing_id=listing.id) }}">Connection requests</a>
+        {% elif action.kind == "withdrawn" %}
+          <p class="cu-muted cu-small">This app has been withdrawn from Crescopus and isn't taking new connections.</p>
+        {% elif action.kind == "self_withdrawn" %}
+          <p class="cu-muted cu-small">Your card is withdrawn. Restore it from your dashboard to start new CrescoPlans.</p>
+        {% elif action.kind == "login" %}
+          <a class="cu-btn cu-btn-primary" href="{{ url_for('auth.login') }}">Log in to start a CrescoPlan</a>
+        {% else %}
+          <p class="cu-muted cu-small">Growers can start a CrescoPlan with this app.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</article>

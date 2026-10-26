@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Settings — Crescopus{% endblock %}
+{% block title %}Account — Crescopus{% endblock %}
 {% block content %}
-<h1>Account settings</h1>
+<h1>Account</h1>
 <p>
   {% if profile.is_developer %}
     <span class="tag tag-builder">Builder account</span>
@@ -43,4 +43,8 @@
   </div>
   <button type="submit">Save</button>
 </form>
+
+<section class="cx-logout">
+  <a class="cu-btn cu-btn-secondary" href="{{ url_for('auth.logout') }}">Log out</a>
+</section>
 {% endblock %}

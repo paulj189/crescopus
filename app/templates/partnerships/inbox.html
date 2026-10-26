@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Messages — Crescopus{% endblock %}
+{% block main_class %}app-main-wide{% endblock %}
+{% block content %}
+<div class="cu-plan-head">
+  <div>
+    <h1>Messages</h1>
+    <p class="cu-muted cu-small">One private conversation for each of your Crescos.</p>
+  </div>
+</div>
+
+{% if crescos %}
+<div class="cu-todo">
+  {% for c in crescos %}
+  <a class="cu-todo-item cx-inbox-item {% if c.unread %}cx-inbox-unread{% endif %}" href="{{ url_for('partnerships.detail', partnership_id=c.id) }}#latest">
+    <span class="cu-panel-row">
+      <span class="cu-todo-title">{{ c.title }} · {{ c.with }}</span>
+      {% if c.unread %}<span class="cu-pill cu-pill-you">New</span>{% elif not c.active %}<span class="cu-pill">Ended</span>{% endif %}
+    </span>
+    {% if c.last %}
+      <span class="cu-todo-note">{{ "You: " if c.last.sender_id == profile.id else "" }}{{ c.last.body | truncate(110) }}</span>
+      <span class="cu-small cu-muted">{{ c.last.created_at | local_time }}</span>
+    {% else %}
+      <span class="cu-todo-note cu-muted">No messages yet. Say hello.</span>
+    {% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+  <p class="empty-cta">No conversations yet. Messages open when a connection request is accepted.
+    <a href="{{ url_for('browse.index', tab='growers' if profile.is_developer else None) }}">Find {{ "a Grower" if profile.is_developer else "an app" }}</a> to get going.</p>
+{% endif %}
+{% endblock %}
