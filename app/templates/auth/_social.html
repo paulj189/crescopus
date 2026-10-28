@@ -4,8 +4,9 @@
   {% for key, label in [("google", "Google"), ("linkedin", "LinkedIn"), ("github", "GitHub")] %}
   {% set logo = social_logo(key) %}
   <a class="cx-social-btn" href="{{ url_for('auth.social_start', provider=key) }}">
-    {% if logo %}<img class="cx-social-logo" src="{{ logo }}" alt="" width="20" height="20">{% endif %}
-    <span>Continue with {{ label }}</span>
+    <span class="cx-social-logo">{% if logo %}<img src="{{ logo }}" alt="" width="24" height="24">{% endif %}</span>
+    <span class="cx-social-label">Continue with {{ label }}</span>
+    <svg class="cx-social-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
   </a>
   {% endfor %}
 </div>

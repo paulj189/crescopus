@@ -791,10 +791,18 @@ form.cu-dp-reply > .cu-btn,form.cu-dp-close > .cu-btn,form.cu-dp-ai-form > .cu-b
 
 /* Social sign-in */
 .cx-social{display:flex;flex-direction:column;gap:10px;max-width:520px;margin-top:20px;}
-.cx-social-btn{display:flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);font-family:var(--sans);font-size:16px;font-weight:600;color:var(--ink);transition:border-color 0.15s ease,background 0.15s ease;}
-.cx-social-btn:hover{border-color:var(--ink);background:#FFFFFF;}
-.cx-social-btn{gap:12px;}
-.cx-social-logo{width:20px;height:20px;object-fit:contain;flex-shrink:0;}
+/* Logo in a fixed column on the left so all three line up; label after it; arrow on the right. */
+.cx-social-btn{display:grid;grid-template-columns:28px 1fr 18px;align-items:center;gap:16px;min-height:52px;padding:0 18px;
+  background:#FFFFFF;border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 2px rgba(23,35,26,0.06);
+  font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--ink);
+  transition:border-color 0.15s ease,background 0.15s ease,box-shadow 0.15s ease;}
+.cx-social-btn:hover{border-color:var(--sage);background:#F4F8F1;box-shadow:0 2px 8px rgba(23,35,26,0.10);}
+.cx-social-btn:focus-visible{outline:2px solid var(--sage);outline-offset:2px;}
+.cx-social-logo{display:flex;align-items:center;justify-content:center;width:28px;height:28px;}
+.cx-social-logo img{width:24px;height:24px;object-fit:contain;display:block;}
+.cx-social-label{text-align:left;}
+.cx-social-arrow{width:18px;height:18px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform 0.15s ease,stroke 0.15s ease;}
+.cx-social-btn:hover .cx-social-arrow{transform:translateX(3px);stroke:var(--sage);}
 .cx-social-or{display:flex;align-items:center;gap:12px;max-width:520px;margin:22px 0 0;font-family:var(--mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);}
 .cx-social-or::before,.cx-social-or::after{content:"";flex:1;border-top:1px solid var(--line);}
 form.cx-auth-form{margin-top:14px;}
