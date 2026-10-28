@@ -1,0 +1,7 @@
+{# "Continue with Google / LinkedIn / GitHub" buttons, shared by Log in and Sign up. #}
+<div class="cx-social">
+  <a class="cx-social-btn" href="{{ url_for('auth.social_start', provider='google') }}">Continue with Google</a>
+  <a class="cx-social-btn" href="{{ url_for('auth.social_start', provider='linkedin') }}">Continue with LinkedIn</a>
+  <a class="cx-social-btn" href="{{ url_for('auth.social_start', provider='github') }}">Continue with GitHub</a>
+</div>
+<p class="cx-social-or"><span>{{ or_text }}</span></p>

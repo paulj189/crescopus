@@ -1,7 +1,12 @@
-{# "Continue with Google / LinkedIn / GitHub" buttons, shared by Log in and Sign up. #}
+{# "Continue with Google / LinkedIn / GitHub" buttons, shared by Log in and Sign up.
+   Logos are the providers' official artwork, saved in static/img/social/. #}
 <div class="cx-social">
-  <a class="cx-social-btn" href="{{ url_for('auth.social_start', provider='google') }}">Continue with Google</a>
-  <a class="cx-social-btn" href="{{ url_for('auth.social_start', provider='linkedin') }}">Continue with LinkedIn</a>
-  <a class="cx-social-btn" href="{{ url_for('auth.social_start', provider='github') }}">Continue with GitHub</a>
+  {% for key, label in [("google", "Google"), ("linkedin", "LinkedIn"), ("github", "GitHub")] %}
+  {% set logo = social_logo(key) %}
+  <a class="cx-social-btn" href="{{ url_for('auth.social_start', provider=key) }}">
+    {% if logo %}<img class="cx-social-logo" src="{{ logo }}" alt="" width="20" height="20">{% endif %}
+    <span>Continue with {{ label }}</span>
+  </a>
+  {% endfor %}
 </div>
 <p class="cx-social-or"><span>{{ or_text }}</span></p>

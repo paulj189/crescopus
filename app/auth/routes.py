@@ -102,6 +102,21 @@ PHOTO_TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
 PHOTO_MAX_BYTES = 2 * 1024 * 1024
 
 
+@auth_bp.app_context_processor
+def _social_logos():
+    """Each provider's official logo, if it's been saved in static/img/social/
+    as google, linkedin or github (.svg or .png). Missing ones are simply left off."""
+    from flask import current_app
+
+    def social_logo(provider):
+        folder = os.path.join(current_app.static_folder, "img", "social")
+        for ext in ("svg", "png"):
+            if os.path.isfile(os.path.join(folder, f"{provider}.{ext}")):
+                return url_for("static", filename=f"img/social/{provider}.{ext}")
+        return None
+    return {"social_logo": social_logo}
+
+
 def _fresh_client():
     """A client with no signed-in user, used only for the sign-in handshake."""
     return create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_PUBLISHABLE_KEY"])
