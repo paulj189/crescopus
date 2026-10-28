@@ -42,6 +42,12 @@ def _parse_time(value):
         return None
 
 
+@ledger_bp.app_template_filter("ai_summary")
+def ai_summary_filter(text):
+    """Shows every AI summary conversationally, including older ones stored as JSON."""
+    return ai_summary.tidy(text)
+
+
 @ledger_bp.app_template_filter("event_detail")
 def event_detail(detail, currency="GBP"):
     """{'amount_from': 240, 'amount_to': 160} -> 'amount 240.00 → 160.00' (plain words for history)."""
@@ -288,13 +294,13 @@ def dispute_summary(partnership_id, dispute_id):
     elif not request.form.get("consent"):
         flash("Tick the box to confirm you understand the summary is advisory only.", "error")
     elif not ctx["ai"]["can_use"]:
-        flash("You've used your free AI summaries. They'll be part of Crescopus Premium.", "error")
+        flash("You've used your free CrescoGuide summaries. They'll be part of Crescopus Premium.", "error")
     elif not ctx["summaries_left_here"]:
-        flash(f"This dispute has had its {SUMMARIES_PER_DISPUTE} AI summaries.", "error")
+        flash(f"This dispute has had its {SUMMARIES_PER_DISPUTE} CrescoGuide summaries.", "error")
     else:
         try:
             prompt = ai_summary.build_prompt(ctx, ctx["dispute"], ctx["disputed"], ctx["messages"], ctx["rates"])
-            text = ai_summary.to_text(ai_summary.summarise(prompt))
+            text = ai_summary.summarise(prompt)
         except ai_summary.SummaryUnavailable as err:
             flash(str(err), "error")
             return _back(partnership_id, dispute_id)
@@ -305,7 +311,7 @@ def dispute_summary(partnership_id, dispute_id):
                                                        "kind": "ai_summary", "body": text}).execute()
         left = ctx["ai"]["left"] - 1
         note = "" if ctx["ai"]["premium"] else f" You have {left} free summar{'y' if left == 1 else 'ies'} left."
-        flash("Summary added below. It's advisory only." + note, "success")
+        flash("The CrescoGuide's summary is below. It's advisory only." + note, "success")
     return _back(partnership_id, dispute_id)
 
 

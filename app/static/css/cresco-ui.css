@@ -773,3 +773,18 @@ form.cu-dp-reply > .cu-btn,form.cu-dp-close > .cu-btn,form.cu-dp-ai-form > .cu-b
   .cx-role,.cx-signup{margin-left:auto;}
   body{padding-bottom:calc(72px + env(safe-area-inset-bottom));}
 }
+
+/* Branded confirmation box (replaces the browser's confirm pop-up) */
+.cx-confirm{max-width:460px;border-top:4px solid var(--sage);}
+.cx-confirm h3{font-family:var(--serif);font-size:22px;}
+.cx-confirm p{color:var(--ink);font-size:15px;}
+.cx-confirm-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:22px;}
+.cx-confirm-actions .cu-btn{min-height:44px;}
+.cx-confirm-danger,button.cx-confirm-danger{background:#B3402E;border-color:#B3402E;color:#FFFFFF;}
+.cx-confirm-danger:hover,button.cx-confirm-danger:hover{background:#8F3324;border-color:#8F3324;}
+@media (max-width:600px){
+  .modal-overlay:has(.cx-confirm){align-items:flex-end;padding:0;}
+  .cx-confirm{max-width:none;padding:24px 20px calc(20px + env(safe-area-inset-bottom));}
+  .cx-confirm-actions{flex-direction:column-reverse;}
+  .cx-confirm-actions .cu-btn{width:100%;}
+}

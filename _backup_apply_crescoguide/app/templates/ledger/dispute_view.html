@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}Dispute — CrescoLedger — Crescopus{% endblock %}
+{% block main_class %}app-main-wide{% endblock %}
+
+{% macro entry_figure(e) -%}
+  {% if e.kind == "time" %}{{ e.hours_f | hours }}{% if not e.rate_pending %} · {{ e.amount_f | money(currency) }}{% else %} · rate pending{% endif %}
+  {%- else %}{{ e.amount_f | money(currency) }}{% endif %}
+{%- endmacro %}
+
+{% block content %}
+<div class="cu-plan-head">
+  <div>
+    <p class="cu-plan-kicker">{{ listing.title }} · CrescoLedger · Dispute</p>
+    <h1>Dispute: {{ disputed | map(attribute="description") | join(", ") | truncate(60) }}</h1>
+    <p class="cu-muted cu-small">
+      Raised by {{ name_of_role[dispute.raised_role] if dispute.raised_role else "a former member" }} · {{ dispute.created_at | local_time }} ·
+      <span class="cu-dp-status cu-dp-status-{{ dispute.status }}">{{ dispute_status[dispute.status] }}</span>
+    </p>
+  </div>
+  <div class="cu-plan-head-actions">
+    <a class="cu-btn cu-btn-secondary" href="{{ url_for('ledger.view', partnership_id=partnership.id) }}">Back to the ledger</a>
+  </div>
+</div>
+
+{% if open and open_proposal and not open_proposal.mine %}
+  <p class="cu-conflict">{{ name_of_role[open_proposal.role] }} has proposed a resolution. Review it below and agree or decline.</p>
+{% elif open and not i_have_spoken %}
+  <p class="cu-conflict">{{ name_of_role[other_role] }} raised this dispute. Give your side below.</p>
+{% endif %}
+
+<div class="cu-dp-layout">
+  <div class="cu-dp-main">
+
+    <section class="cu-led-section cu-dp-first">
+      <h2 class="cu-plan-h">Disputed entries</h2>
+      <div class="cu-led-settlements">
+        {% for e in disputed %}
+        <div class="cu-led-settlement {% if e.voided %}cu-dp-void{% endif %}">
+          <span>
+            <span class="cu-led-kind cu-led-kind-{{ e.kind }}">{{ e.kind | title }}</span>
+            <strong>{{ e.description }}</strong> · {{ e.entry_date | short_date }} · {{ name_of_role[e.party] }}
+            {% if e.cost_class %}· {{ e.cost_class | title }}{% endif %}
+            {% if e.voided %}<span class="cu-wd-badge">Void</span>{% endif %}
+          </span>
+          <span><strong>{{ entry_figure(e) }}</strong>
+            <a class="cu-link-btn cu-small" href="{{ url_for('ledger.entry_history', partnership_id=partnership.id, entry_id=e.id) }}">History</a></span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="cu-led-section">
+      <h2 class="cu-plan-h">What each of you has said</h2>
+      <div class="cu-dp-thread">
+        {% for m in messages %}
+          {% if m.kind == "ai_summary" %}
+          <article class="cu-dp-msg cu-dp-ai">
+            <p class="cu-section-label">AI summary · advisory only · {{ m.created_at | local_time }}</p>
+            <div class="cu-dp-body">{{ m.body | ai_summary }}</div>
+          </article>
+          {% elif m.kind == "system" %}
+          <p class="cu-dp-system cu-small">{{ m.body }} <span class="cu-muted">{{ m.created_at | local_time }}</span></p>
+          {% else %}
+          <article class="cu-dp-msg cu-dp-{{ m.role or 'unknown' }} {% if m.mine %}cu-dp-mine{% endif %}">
+            <p class="cu-section-label">{{ name_of_role[m.role] if m.role else "Former member" }}{% if m.kind == "statement" %} · their account{% endif %} · {{ m.created_at | local_time }}</p>
+            <div class="cu-dp-body">{{ m.body }}</div>
+            {% if m.evidence_url %}
+              <p class="cu-small">Evidence:
+                {% if m.evidence_url.startswith("http") %}<a href="{{ m.evidence_url }}" target="_blank" rel="noopener noreferrer nofollow">{{ m.evidence_url | truncate(60) }}</a>
+                {% else %}{{ m.evidence_url }}{% endif %}</p>
+            {% endif %}
+          </article>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      {% if open %}
+      <form method="POST" action="{{ url_for('ledger.dispute_message', partnership_id=partnership.id, dispute_id=dispute.id) }}" class="cu-dp-reply">
+        <div class="cu-field">
+          <label for="body">{{ "Your side" if not i_have_spoken else "Add a reply" }}</label>
+          <textarea id="body" name="body" rows="4" maxlength="4000" required placeholder="Stick to the facts: what happened, when, and what you'd like."></textarea>
+        </div>
+        <div class="cu-field">
+          <label for="evidence_url">Evidence link (optional)</label>
+          <input type="text" id="evidence_url" name="evidence_url" maxlength="500" placeholder="A link to a receipt, invoice, timesheet or screenshot">
+        </div>
+        <button type="submit" class="cu-btn cu-btn-primary cu-btn-sm">{{ "Send your side" if not i_have_spoken else "Send reply" }}</button>
+      </form>
+      {% endif %}
+    </section>
+
+    <section class="cu-led-section" id="resolution">
+      <h2 class="cu-plan-h">Resolution</h2>
+      {% for pr in proposals %}
+        <article class="cu-dp-proposal cu-dp-proposal-{{ pr.status }}">
+          <p class="cu-section-label">Proposed by {{ name_of_role[pr.role] if pr.role else "a former member" }} · {{ pr.created_at | local_time }} ·
+            {{ {"proposed": "Waiting for an answer", "agreed": "Agreed and applied", "declined": "Declined", "withdrawn": "Withdrawn"}[pr.status] }}</p>
+          <ul>
+            {% for l in pr.lines %}
+              <li><strong>{{ l.entry.description if l.entry else "An entry" }}</strong>:
+                {% if l.action == "keep" %}keep as it is
+                {% elif l.action == "void" %}void it (it stays visible but leaves the totals)
+                {% elif l.action == "class" %}change to {{ l.cost_class | title }}
+                {% elif l.action == "correct" %}{% if l.hours is defined and l.hours is not none %}correct to {{ l.hours | hours }}{% else %}correct to {{ l.amount | money(currency) }}{% endif %}
+                {% endif %}</li>
+            {% endfor %}
+          </ul>
+          {% if pr.note %}<p class="cu-small">“{{ pr.note }}”</p>{% endif %}
+          {% if pr.status == "proposed" and open %}
+            {% if pr.mine %}
+              <form method="POST" action="{{ url_for('ledger.dispute_withdraw_proposal', partnership_id=partnership.id, dispute_id=dispute.id, proposal_id=pr.id) }}" class="cu-led-inline">
+                <span class="cu-small cu-led-wait">Waiting for {{ name_of_role[other_role] }}</span>
+                <button type="submit" class="cu-link-btn">Withdraw</button>
+              </form>
+            {% else %}
+              <form method="POST" action="{{ url_for('ledger.dispute_respond', partnership_id=partnership.id, dispute_id=dispute.id, proposal_id=pr.id) }}" class="cu-dp-respond">
+                <label class="cu-wd-consent"><input type="checkbox" name="consent" value="1">
+                  <span>I agree, and understand the ledger will be updated straight away.</span></label>
+                <div class="cu-led-inline">
+                  <button type="submit" name="answer" value="agree" class="cu-btn cu-btn-primary cu-btn-sm">Agree</button>
+                  <button type="submit" name="answer" value="decline" class="cu-btn cu-btn-secondary cu-btn-sm">Decline</button>
+                </div>
+              </form>
+            {% endif %}
+          {% endif %}
+        </article>
+      {% endfor %}
+
+      {% if open %}
+      <details class="cu-dp-propose" {% if not proposals %}open{% endif %}>
+        <summary class="cu-btn cu-btn-secondary cu-btn-sm">{{ "Propose a different resolution" if open_proposal else "Propose a resolution" }}</summary>
+        <form method="POST" action="{{ url_for('ledger.dispute_propose', partnership_id=partnership.id, dispute_id=dispute.id) }}" class="cu-led-form cu-dp-propose-form" novalidate>
+          {% for e in disputed %}
+          <fieldset class="cu-led-choice">
+            <legend>{{ e.description }} <span class="cu-muted cu-small">({{ entry_figure(e) }})</span></legend>
+            {% for value, label in actions %}
+              {% if value != "class" or e.kind != "revenue" %}
+              <label><input type="radio" name="action_{{ e.id }}" value="{{ value }}" {% if value == "keep" %}checked{% endif %} data-entry="{{ e.id }}">
+                <span>{{ label }}{% if value == "class" %} to {{ "Goodwill" if e.cost_class == "recoverable" else "Recoverable" }}{% endif %}</span></label>
+              {% endif %}
+            {% endfor %}
+            <div class="cu-field cu-dp-value" data-for="{{ e.id }}" hidden>
+              <label for="value_{{ e.id }}">{{ "Corrected hours" if e.kind == "time" else "Corrected amount (" ~ currency ~ ")" }}</label>
+              <input type="text" inputmode="decimal" id="value_{{ e.id }}" name="value_{{ e.id }}" autocomplete="off"
+                     placeholder="{{ e.hours_f if e.kind == 'time' else e.amount_f }}">
+            </div>
+          </fieldset>
+          {% endfor %}
+          <div class="cu-field">
+            <label for="note">Note (optional)</label>
+            <input type="text" id="note" name="note" maxlength="2000" placeholder="Why this seems fair">
+          </div>
+          {% if open_proposal %}<p class="cu-small cu-muted">{{ "This replaces your earlier proposal." if open_proposal.mine else "Both proposals stay open until one is agreed." }}</p>{% endif %}
+          <button type="submit" class="cu-btn cu-btn-primary cu-btn-sm">Send proposal</button>
+        </form>
+      </details>
+      {% elif dispute.status == "unresolved" %}
+        <p class="cu-small">This dispute was closed without agreement. If you still need to settle it, an independent mediator can help; mediation is usually quicker and cheaper than going to court.</p>
+      {% endif %}
+    </section>
+
+    <section class="cu-led-section">
+      <details class="cu-dp-history">
+        <summary class="cu-plan-h">History of these entries <span class="cu-small cu-muted">(show)</span></summary>
+        <ul class="cu-small">
+          {% for ev in events %}
+            <li>{{ ev.created_at | local_time }} · <strong>{{ ev.label }}</strong> — {{ ev.entry.description if ev.entry else "entry" }}
+              {% if ev.role %}· by {{ name_of_role[ev.role] }}{% endif %}
+              {% set d = ev.detail | event_detail(currency) %}{% if d %}<span class="cu-muted"> · {{ d }}</span>{% endif %}</li>
+          {% else %}
+            <li>No history recorded.</li>
+          {% endfor %}
+        </ul>
+      </details>
+    </section>
+  </div>
+
+  <aside class="cu-dp-side">
+    {% if open %}
+    <div class="cu-led-rate-card">
+      <span class="cu-section-label">Neutral AI summary</span>
+      <p class="cu-small">Sets out both sides fairly, checks the figures, and suggests ways to settle it. It's advisory only and never changes the ledger.</p>
+      {% if ai.can_use and summaries_left_here %}
+        <form method="POST" action="{{ url_for('ledger.dispute_summary', partnership_id=partnership.id, dispute_id=dispute.id) }}" class="cu-dp-ai-form">
+          <label class="cu-wd-consent"><input type="checkbox" name="consent" value="1">
+            <span>I understand the summary is advisory, and that what we've written here is sent to an AI service to create it.</span></label>
+          <button type="submit" class="cu-btn cu-btn-primary cu-btn-sm">Create summary</button>
+        </form>
+        <p class="cu-small cu-muted">{% if ai.premium %}Included with Premium.{% else %}Free trial: {{ ai.left }} of {{ ai.free }} summaries left.{% endif %}</p>
+      {% elif not ai.can_use %}
+        <p class="cu-small"><strong>You've used your {{ ai.free }} free summaries.</strong> More will come with Crescopus Premium.</p>
+        {% if ai.interested %}
+          <p class="cu-small cu-led-ok">Thanks, we've noted your interest.</p>
+        {% else %}
+          <form method="POST" action="{{ url_for('ledger.premium_interest', partnership_id=partnership.id) }}" class="cu-led-inline">
+            <input type="hidden" name="back" value="{{ url_for('ledger.dispute_view', partnership_id=partnership.id, dispute_id=dispute.id) }}">
+            <button type="submit" class="cu-btn cu-btn-secondary cu-btn-sm">I'm interested in Premium</button>
+          </form>
+        {% endif %}
+      {% else %}
+        <p class="cu-small cu-muted">This dispute has had its AI summaries.</p>
+      {% endif %}
+    </div>
+
+    <div class="cu-led-rate-card">
+      <span class="cu-section-label">Closing the dispute</span>
+      {% if dispute.mine %}
+        <form method="POST" action="{{ url_for('ledger.dispute_withdraw', partnership_id=partnership.id, dispute_id=dispute.id) }}"
+              class="cu-led-inline" onsubmit="return confirm('Withdraw this dispute? The entries will be unlocked as they are.');">
+          <button type="submit" class="cu-link-btn">Withdraw the dispute</button>
+        </form>
+      {% endif %}
+      {% if can_close %}
+        <form method="POST" action="{{ url_for('ledger.dispute_close', partnership_id=partnership.id, dispute_id=dispute.id) }}" class="cu-dp-close">
+          <p class="cu-small">{{ name_of_role[other_role] }} hasn't responded for 14 days, so you can close this without agreement. The record stays in the ledger.</p>
+          <input type="text" name="note" maxlength="1000" placeholder="Optional note">
+          <button type="submit" class="cu-btn cu-btn-secondary cu-btn-sm">Close without agreement</button>
+        </form>
+      {% else %}
+        <p class="cu-small cu-muted">If {{ name_of_role[other_role] }} doesn't respond, you can close it without agreement in {{ close_days_left }} day{{ "" if close_days_left == 1 else "s" }}.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </aside>
+</div>
+
+<script>
+  // Show the corrected-value box only when "Correct it" is chosen.
+  document.querySelectorAll('.cu-dp-propose-form input[type=radio]').forEach(function (r) {
+    function sync() {
+      var box = document.querySelector('.cu-dp-value[data-for="' + r.dataset.entry + '"]');
+      var picked = document.querySelector('input[name="' + r.name + '"]:checked');
+      box.hidden = !(picked && picked.value === 'correct');
+    }
+    r.addEventListener('change', sync); sync();
+  });
+</script>
+{% endblock %}

@@ -34,16 +34,16 @@
       </a>
     {% endfor %}
     {% for pid, n in ledger_waiting.items() %}
-      <a class="cu-todo-item" href="{{ url_for('ledger.view', partnership_id=pid, show='open' if (n.confirm or n.queried) else None) }}">
-        <span class="cu-todo-kind cu-offers-ink">CrescoLedger</span>
+      {% set only_dispute = n.dispute == 1 and not (n.confirm or n.queried or n.answer) %}
+      <a class="cu-todo-item" href="{{ url_for('ledger.dispute_view', partnership_id=pid, dispute_id=n.dispute_ids[0]) if only_dispute else url_for('ledger.view', partnership_id=pid, show='open' if (n.confirm or n.queried) else None) }}">
+        <span class="cu-todo-kind cu-offers-ink">{{ "Dispute" if only_dispute else "CrescoLedger" }}</span>
         <span class="cu-todo-title">{{ titles.get(pid, "A partnership") }}</span>
-        <span class="cu-todo-note">
-          {%- if n.confirm %}{{ n.confirm }} entr{{ "y" if n.confirm == 1 else "ies" }} to confirm{% endif -%}
-          {%- if n.confirm and n.queried %} · {% endif -%}
-          {%- if n.queried %}{{ n.queried }} of yours queried{% endif -%}
-          {%- if (n.confirm or n.queried) and n.answer %} · {% endif -%}
-          {%- if n.answer %}{{ n.answer }} waiting for your answer{% endif -%}
-        </span>
+        {% set bits = [] %}
+        {% if n.confirm %}{% set _ = bits.append(n.confirm ~ " entr" ~ ("y" if n.confirm == 1 else "ies") ~ " to confirm") %}{% endif %}
+        {% if n.queried %}{% set _ = bits.append(n.queried ~ " of yours queried") %}{% endif %}
+        {% if n.answer %}{% set _ = bits.append(n.answer ~ " waiting for your answer") %}{% endif %}
+        {% if n.dispute %}{% set _ = bits.append(("A dispute is" if n.dispute == 1 else n.dispute ~ " disputes are") ~ " waiting for your reply") %}{% endif %}
+        <span class="cu-todo-note">{{ bits | join(" · ") }}</span>
       </a>
     {% endfor %}
     {% for u in unread_items %}

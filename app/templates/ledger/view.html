@@ -69,7 +69,7 @@
       </form>
     {% elif e.my_cost %}
       <form method="POST" action="{{ url_for('ledger.set_class', partnership_id=partnership.id, entry_id=e.id) }}" class="cu-led-inline"
-            {% if e.cost_class == "recoverable" %}data-confirm="Mark this as Goodwill? It will no longer count towards what you could recover. Changing it back needs {{ name_of_role[other_role] }} to agree."{% endif %}>
+            {% if e.cost_class == "recoverable" %}data-confirm-title="Mark this as Goodwill?" data-confirm="It will still be acknowledged in the ledger, but it will no longer count towards what you could recover. Changing it back to Recoverable needs {{ name_of_role[other_role] }} to agree." data-confirm-yes="Mark as Goodwill" data-confirm-no="Keep it Recoverable"{% endif %}>
         {% if e.cost_class == "recoverable" %}
           <input type="hidden" name="cost_class" value="goodwill">
           <button type="submit" class="cu-link-btn">Mark as Goodwill</button>
@@ -371,10 +371,4 @@
   <a class="cu-btn cu-btn-primary" href="{{ url_for('ledger.new', partnership_id=partnership.id) }}">+ Add entry</a>
 </div>
 {% endif %}
-<script>
-  // Ask before steps that are hard to undo (e.g. marking a cost as Goodwill).
-  document.querySelectorAll('form[data-confirm]').forEach(function (f) {
-    f.addEventListener('submit', function (ev) { if (!window.confirm(f.dataset.confirm)) ev.preventDefault(); });
-  });
-</script>
 {% endblock %}

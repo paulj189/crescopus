@@ -199,14 +199,15 @@ def get_ledger_waiting_on_me(supabase, profile, partnership_ids):
     haven't confirmed yet, their own entries the other side has queried, and
     rates, recovery settlements or Goodwill-to-Recoverable changes the other
     side has asked them to agree, and open disputes waiting for them.
-    Returns {partnership_id: {"confirm": n, "queried": n, "answer": n}}."""
+    Returns {partnership_id: {"confirm": n, "queried": n, "answer": n,
+                              "dispute": n, "dispute_ids": [...]}}."""
     if not partnership_ids:
         return {}
     me = profile["id"]
     out = {}
 
     def bump(pid, key):
-        out.setdefault(pid, {"confirm": 0, "queried": 0, "answer": 0})[key] += 1
+        out.setdefault(pid, {"confirm": 0, "queried": 0, "answer": 0, "dispute": 0, "dispute_ids": []})[key] += 1
 
     rows = (supabase.table("ledger_entries").select("partnership_id,status,added_by,class_change_to,class_change_by")
             .in_("partnership_id", partnership_ids)
@@ -219,17 +220,29 @@ def get_ledger_waiting_on_me(supabase, profile, partnership_ids):
             bump(r["partnership_id"], "confirm")
         if r.get("class_change_to") and r.get("class_change_by") != me:
             bump(r["partnership_id"], "answer")
+    # An open dispute needs you when the other person has proposed a resolution, when
+    # you haven't given your side yet, or when they've written since you last did.
     disputes = (supabase.table("ledger_disputes").select("id,partnership_id,raised_by")
                 .in_("partnership_id", partnership_ids).eq("status", "open").execute().data)
     if disputes:
         ids = [d["id"] for d in disputes]
-        spoke = {m["dispute_id"] for m in (supabase.table("ledger_dispute_messages").select("dispute_id")
-                 .in_("dispute_id", ids).eq("author", me).execute().data)}
+        latest_author = {}
+        spoke = set()
+        for m in (supabase.table("ledger_dispute_messages").select("dispute_id,author,created_at")
+                  .in_("dispute_id", ids).in_("kind", ["statement", "reply"])
+                  .order("created_at").execute().data):
+            if not m["author"]:
+                continue
+            latest_author[m["dispute_id"]] = m["author"]   # ends on the most recent
+            if m["author"] == me:
+                spoke.add(m["dispute_id"])
         waiting = {p["dispute_id"] for p in (supabase.table("ledger_dispute_proposals").select("dispute_id,proposed_by")
                    .in_("dispute_id", ids).eq("status", "proposed").execute().data) if p["proposed_by"] != me}
         for d in disputes:
-            if d["id"] in waiting or d["id"] not in spoke:
-                bump(d["partnership_id"], "answer")
+            their_turn_done = latest_author.get(d["id"]) not in (None, me)
+            if d["id"] in waiting or d["id"] not in spoke or their_turn_done:
+                bump(d["partnership_id"], "dispute")
+                out[d["partnership_id"]]["dispute_ids"].append(d["id"])
     for table in ("plan_rates", "recovery_settlements"):
         for r in (supabase.table(table).select("partnership_id,proposed_by")
                   .in_("partnership_id", partnership_ids).eq("status", "proposed").execute().data):

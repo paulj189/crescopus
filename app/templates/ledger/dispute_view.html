@@ -55,8 +55,8 @@
         {% for m in messages %}
           {% if m.kind == "ai_summary" %}
           <article class="cu-dp-msg cu-dp-ai">
-            <p class="cu-section-label">AI summary · advisory only · {{ m.created_at | local_time }}</p>
-            <div class="cu-dp-body">{{ m.body }}</div>
+            <p class="cu-section-label">CrescoGuide summary · advisory only · {{ m.created_at | local_time }}</p>
+            <div class="cu-dp-body">{{ m.body | ai_summary }}</div>
           </article>
           {% elif m.kind == "system" %}
           <p class="cu-dp-system cu-small">{{ m.body }} <span class="cu-muted">{{ m.created_at | local_time }}</span></p>
@@ -178,17 +178,17 @@
   <aside class="cu-dp-side">
     {% if open %}
     <div class="cu-led-rate-card">
-      <span class="cu-section-label">Neutral AI summary</span>
-      <p class="cu-small">Sets out both sides fairly, checks the figures, and suggests ways to settle it. It's advisory only and never changes the ledger.</p>
+      <span class="cu-section-label">CrescoGuide</span>
+      <p class="cu-small">A neutral summary that sets out both sides fairly, checks the figures, and suggests ways to settle it. It's advisory only and never changes the ledger.</p>
       {% if ai.can_use and summaries_left_here %}
         <form method="POST" action="{{ url_for('ledger.dispute_summary', partnership_id=partnership.id, dispute_id=dispute.id) }}" class="cu-dp-ai-form">
           <label class="cu-wd-consent"><input type="checkbox" name="consent" value="1">
-            <span>I understand the summary is advisory, and that what we've written here is sent to an AI service to create it.</span></label>
-          <button type="submit" class="cu-btn cu-btn-primary cu-btn-sm">Create summary</button>
+            <span>I understand the summary is advisory, and that what we've written here is sent to Claude (by Anthropic), which powers the CrescoGuide, to create it.</span></label>
+          <button type="submit" class="cu-btn cu-btn-primary cu-btn-sm">Ask the CrescoGuide</button>
         </form>
         <p class="cu-small cu-muted">{% if ai.premium %}Included with Premium.{% else %}Free trial: {{ ai.left }} of {{ ai.free }} summaries left.{% endif %}</p>
       {% elif not ai.can_use %}
-        <p class="cu-small"><strong>You've used your {{ ai.free }} free summaries.</strong> More will come with Crescopus Premium.</p>
+        <p class="cu-small"><strong>You've used your {{ ai.free }} free CrescoGuide summaries.</strong> More will come with Crescopus Premium.</p>
         {% if ai.interested %}
           <p class="cu-small cu-led-ok">Thanks, we've noted your interest.</p>
         {% else %}
@@ -198,7 +198,7 @@
           </form>
         {% endif %}
       {% else %}
-        <p class="cu-small cu-muted">This dispute has had its AI summaries.</p>
+        <p class="cu-small cu-muted">This dispute has had its CrescoGuide summaries.</p>
       {% endif %}
     </div>
 
@@ -206,7 +206,11 @@
       <span class="cu-section-label">Closing the dispute</span>
       {% if dispute.mine %}
         <form method="POST" action="{{ url_for('ledger.dispute_withdraw', partnership_id=partnership.id, dispute_id=dispute.id) }}"
-              class="cu-led-inline" onsubmit="return confirm('Withdraw this dispute? The entries will be unlocked as they are.');">
+              class="cu-led-inline"
+              data-confirm-title="Withdraw this dispute?"
+              data-confirm="{% set n = disputed | length %}The {{ 'entry' if n == 1 else n ~ ' entries' }} will be unlocked and stay exactly as {{ 'it is' if n == 1 else 'they are' }} now. Nothing you've discussed or proposed will be applied{% if open_proposal %}, and the open proposal will be withdrawn{% endif %}.
+{{ name_of_role[other_role] }} will see that you withdrew it, and the conversation stays on record. If you still disagree later, you can raise a new dispute."
+              data-confirm-yes="Withdraw dispute" data-confirm-no="Keep it open">
           <button type="submit" class="cu-link-btn">Withdraw the dispute</button>
         </form>
       {% endif %}

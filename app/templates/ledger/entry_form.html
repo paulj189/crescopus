@@ -187,7 +187,10 @@
 </script>
 
 {% if editing %}
-<form method="POST" class="cu-led-delete" onsubmit="return confirm('Delete this entry? This can\'t be undone.');">
+<form method="POST" class="cu-led-delete"
+      data-confirm-title="Delete this entry?"
+      data-confirm="It will be removed from the CrescoLedger and the totals straight away. This can't be undone."
+      data-confirm-yes="Delete entry" data-confirm-no="Keep it" data-confirm-tone="danger">
   <input type="hidden" name="delete" value="1">
   <button type="submit" class="cu-link-btn">Delete this entry</button>
 </form>
