@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Finish setting up — Crescopus{% endblock %}
+{% block content %}
+<h1>Finish setting up</h1>
+<p class="cu-muted">You're signed in with {{ social.label or "your account" }}. Just a couple of things so we can show you the right side of Crescopus.</p>
+
+<form method="POST" class="cx-auth-form">
+  <fieldset class="cx-role-pick">
+    <legend>I am a…</legend>
+    <label class="cx-role-option cx-role-option-builder">
+      <input type="radio" name="role" value="developer" required {% if values.role == "developer" %}checked{% endif %}>
+      <span><strong>Builder</strong><span>I've built an app and want help growing it.</span></span>
+    </label>
+    <label class="cx-role-option cx-role-option-grower">
+      <input type="radio" name="role" value="grower" {% if values.role == "grower" %}checked{% endif %}>
+      <span><strong>Grower</strong><span>I help apps find an audience: marketing, growth, ASO.</span></span>
+    </label>
+    <p class="cu-small cu-muted">Each account is one or the other, and this can't be changed later.</p>
+  </fieldset>
+
+  <div>
+    <label for="full_name">Your name</label>
+    <input type="text" id="full_name" name="full_name" value="{{ values.full_name }}" maxlength="120" required>
+  </div>
+  <div>
+    <label for="country">Country</label>
+    <select id="country" name="country" required>
+      <option value="" disabled {% if not values.country %}selected{% endif %}>Select your country</option>
+      {% for code, name in countries %}
+        <option value="{{ code }}" {% if values.country == code %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="bio">About you <span class="cu-muted" style="text-transform:none;">(optional)</span></label>
+    <textarea id="bio" name="bio" placeholder="What you're good at, what you're drawn to, anything worth knowing about your track record.">{{ values.bio }}</textarea>
+  </div>
+
+  {% if can_use_photo %}
+  <label class="cu-wd-consent cx-photo-offer">
+    <input type="checkbox" name="use_photo" value="1" {% if values.use_photo %}checked{% endif %}>
+    <img src="{{ social.photo }}" alt="" width="48" height="48" referrerpolicy="no-referrer">
+    <span>Use my {{ social.label }} photo on my card. You can change it any time.</span>
+  </label>
+  {% endif %}
+
+  <p class="cu-small cu-muted">By continuing you agree to the <a href="#" onclick="crescoModal.open('modal-terms');return false;">Terms</a> and <a href="#" onclick="crescoModal.open('modal-privacy');return false;">Privacy Policy</a>.</p>
+  <button type="submit">Continue</button>
+</form>
+{% endblock %}

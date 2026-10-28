@@ -109,6 +109,10 @@ def create_app():
         from app.extensions import get_supabase
 
         profile = current_profile()
+        # Signed in socially but not yet chosen Builder or Grower: no menu until they have.
+        nav_setup = bool(profile) and not (profile.get("is_developer") or profile.get("is_grower"))
+        if nav_setup:
+            profile = None
         attention_count = 0
         nav_counts = {"home": 0, "crescos": 0, "messages": 0}
         is_popup = request.args.get("partial") == "1" or request.headers.get("X-Requested-With") == "fetch"
@@ -141,8 +145,8 @@ def create_app():
         else:
             nav_section = ""
         top_level = endpoint in ("index", "dashboard.index", "browse.index", "plans.index",
-                                 "partnerships.inbox", "settings.index", "auth.login", "auth.signup")
-        return dict(nav_profile=profile, attention_count=attention_count, nav_counts=nav_counts,
+                                 "partnerships.inbox", "settings.index", "auth.login", "auth.signup", "auth.finish")
+        return dict(nav_profile=profile, nav_setup=nav_setup, attention_count=attention_count, nav_counts=nav_counts,
                     nav_section=nav_section, nav_top_level=top_level)
 
     return app

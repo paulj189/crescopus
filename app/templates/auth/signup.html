@@ -2,7 +2,9 @@
 {% block title %}Sign up — Crescopus{% endblock %}
 {% block content %}
 <h1>Create your account</h1>
-<form method="POST">
+<p class="cu-muted">Quickest: use an account you already have. You'll choose Builder or Grower next.</p>
+{% with or_text = "or sign up with your email" %}{% include "auth/_social.html" %}{% endwith %}
+<form method="POST" class="cx-auth-form">
   <div>
     <label for="full_name">Full name</label>
     <input type="text" id="full_name" name="full_name" required>
@@ -39,4 +41,5 @@
   </div>
   <button type="submit">Create account</button>
 </form>
+<p class="cu-small cu-muted cx-auth-switch">Already a member? <a href="{{ url_for('auth.login') }}">Log in</a></p>
 {% endblock %}
