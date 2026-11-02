@@ -65,6 +65,8 @@ def create_app():
             tenant_resolver=lambda request: app.config["MC_TENANT_ID"],
             image_base_url=f"{app.config['SUPABASE_URL']}/storage/v1/object/public/mc-images/",
             default_tenant_settings=TenantSettings(allow_anonymous=False, llm_calls_per_hour=20),
+            guide_title="CrescoHelp",
+            guide_label="Help",
                         mapper=AnthropicMapper(context=(
                 "Crescopus, a marketplace where app builders partner with growers who monetise "
                 "and grow their apps, sharing the revenue. Topics include how partnerships, roles, "

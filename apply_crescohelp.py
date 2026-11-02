@@ -1,0 +1,88 @@
+r"""
+Crescopus - CrescoHelp
+
+  - The help guide (modcontent, at /content/guide) is now called CrescoHelp.
+    CrescoGuide stays the name of the dispute summary tool.
+  - Uses modcontent v0.2.2: a question opens the best-fit page straight away,
+    with other relevant topics listed underneath.
+
+BEFORE YOU RUN THIS
+  Run apply_modcontent_best_fit.py in modcontent and push the v0.2.2 tag first,
+  otherwise installing the requirements (and the Render deploy) will fail.
+
+HOW TO USE
+  1. Save this file in your Crescopus project folder (next to wsgi.py).
+  2. In PowerShell, in that folder, with your venv active:
+         python apply_crescohelp.py
+         pip install -r requirements.txt
+  3. Any file it replaces is copied first to _backup_apply_crescohelp\.
+
+It checks each file matches the version on GitHub first. If you have changed
+one locally since your last push, it stops without writing anything.
+Your .env is never read or changed.
+"""
+import base64, hashlib, os, shutil, sys
+
+# (path, new content, sha256s of the versions it may replace)
+FILES = [
+    ('app/__init__.py', 'aW1wb3J0IG9zCmZyb20gZmxhc2sgaW1wb3J0IEZsYXNrLCByZW5kZXJfdGVtcGxhdGUsIHNlc3Npb24KCgpkZWYgY3JlYXRlX2FwcCgpOgogICAgYXBwID0gRmxhc2soX19uYW1lX18pCiAgICBhcHAuY29uZmlnLmZyb21fb2JqZWN0KCJhcHAuY29uZmlnLkNvbmZpZyIpCgogICAgZnJvbSBhcHAuYXV0aC5yb3V0ZXMgaW1wb3J0IGF1dGhfYnAKICAgIGZyb20gYXBwLmxpc3RpbmdzLnJvdXRlcyBpbXBvcnQgbGlzdGluZ3NfYnAKICAgIGZyb20gYXBwLmdyb3dlcnMucm91dGVzIGltcG9ydCBncm93ZXJzX2JwCiAgICBmcm9tIGFwcC5idWlsZGVycy5yb3V0ZXMgaW1wb3J0IGJ1aWxkZXJzX2JwCiAgICBmcm9tIGFwcC5jb25uZWN0aW9uX3JlcXVlc3RzLnJvdXRlcyBpbXBvcnQgY29ubmVjdGlvbl9yZXF1ZXN0c19icAogICAgZnJvbSBhcHAucGFydG5lcnNoaXBzLnJvdXRlcyBpbXBvcnQgcGFydG5lcnNoaXBzX2JwCiAgICBmcm9tIGFwcC5kYXNoYm9hcmQucm91dGVzIGltcG9ydCBkYXNoYm9hcmRfYnAKICAgIGZyb20gYXBwLnNldHRpbmdzLnJvdXRlcyBpbXBvcnQgc2V0dGluZ3NfYnAKICAgIGZyb20gYXBwLnJlcG9ydGluZy5yb3V0ZXMgaW1wb3J0IHJlcG9ydGluZ19icAogICAgZnJvbSBhcHAuYnJvd3NlLnJvdXRlcyBpbXBvcnQgYnJvd3NlX2JwCiAgICBmcm9tIGFwcC5wbGFucy5yb3V0ZXMgaW1wb3J0IHBsYW5zX2JwCiAgICBmcm9tIGFwcC5sZWRnZXIucm91dGVzIGltcG9ydCBsZWRnZXJfYnAKCiAgICBhcHAucmVnaXN0ZXJfYmx1ZXByaW50KGF1dGhfYnApCiAgICBhcHAucmVnaXN0ZXJfYmx1ZXByaW50KGxpc3RpbmdzX2JwKQogICAgYXBwLnJlZ2lzdGVyX2JsdWVwcmludChncm93ZXJzX2JwKQogICAgYXBwLnJlZ2lzdGVyX2JsdWVwcmludChidWlsZGVyc19icCkKICAgIGFwcC5yZWdpc3Rlcl9ibHVlcHJpbnQoY29ubmVjdGlvbl9yZXF1ZXN0c19icCkKICAgIGFwcC5yZWdpc3Rlcl9ibHVlcHJpbnQocGFydG5lcnNoaXBzX2JwKQogICAgYXBwLnJlZ2lzdGVyX2JsdWVwcmludChkYXNoYm9hcmRfYnApCiAgICBhcHAucmVnaXN0ZXJfYmx1ZXByaW50KHNldHRpbmdzX2JwKQogICAgYXBwLnJlZ2lzdGVyX2JsdWVwcmludChyZXBvcnRpbmdfYnApCiAgICBhcHAucmVnaXN0ZXJfYmx1ZXByaW50KGJyb3dzZV9icCkKICAgIGFwcC5yZWdpc3Rlcl9ibHVlcHJpbnQocGxhbnNfYnApCiAgICBhcHAucmVnaXN0ZXJfYmx1ZXByaW50KGxlZGdlcl9icCkKCiAgICAjIFRlbXBsYXRlIGZpbHRlcnM6IGNsZWFuIHVzZXIgcmljaCB0ZXh0IGJlZm9yZSBzaG93aW5nIGl0LCBhbmQgdHVybiB0YWcgc2x1Z3MgaW50byBsYWJlbHMuCiAgICBmcm9tIGFwcC51dGlscyBpbXBvcnQgY2xlYW5fbGlzdF9odG1sLCBjbGVhbl9waXRjaF9odG1sCiAgICBmcm9tIGFwcCBpbXBvcnQgdGFncwogICAgYXBwLmppbmphX2Vudi5maWx0ZXJzWyJjbGVhbl9saXN0Il0gPSBsYW1iZGEgaHRtbDogY2xlYW5fbGlzdF9odG1sKGh0bWwpIG9yICIiCiAgICBhcHAuamluamFfZW52LmZpbHRlcnNbImNsZWFuX3BpdGNoIl0gPSBjbGVhbl9waXRjaF9odG1sCiAgICBhcHAuamluamFfZW52LmZpbHRlcnNbInRhZ19sYWJlbHMiXSA9IGxhbWJkYSBzbHVnczogW3RhZ3MubGFiZWxzKCkuZ2V0KHMsIHMpIGZvciBzIGluIChzbHVncyBvciBbXSldCgogICAgaW1wb3J0IGNsaWNrCiAgICBmcm9tIG1vZGNvbnRlbnQgaW1wb3J0IElkZW50aXR5LCBTZXR0aW5ncywgU3VwYWJhc2VTdG9yZSwgY3JlYXRlX2JsdWVwcmludCwgQW50aHJvcGljTWFwcGVyLCBUZW5hbnRTZXR0aW5ncwogICAgZnJvbSBhcHAuZXh0ZW5zaW9ucyBpbXBvcnQgZ2V0X3N1cGFiYXNlX2FkbWluCgogICAgY2xhc3MgX0FkbWluQ2xpZW50OgogICAgICAgICIiIkdpdmVzIG1vZGNvbnRlbnQgdGhlIHNlY3JldC1rZXkgY2xpZW50IChzZXJ2ZXIgb25seSwgYnlwYXNzZXMgUkxTKS4iIiIKICAgICAgICBkZWYgX19nZXRhdHRyX18oc2VsZiwgbmFtZSk6CiAgICAgICAgICAgIHJldHVybiBnZXRhdHRyKGdldF9zdXBhYmFzZV9hZG1pbigpLCBuYW1lKQoKICAgIG1jX3N0b3JlID0gU3VwYWJhc2VTdG9yZShfQWRtaW5DbGllbnQoKSkKCiAgICBkZWYgbWNfaWRlbnRpdHkocmVxdWVzdCwgdGVuYW50X2lkKToKICAgICAgICB1c2VyX2lkID0gc2Vzc2lvbi5nZXQoInVzZXJfaWQiKQogICAgICAgIGlmIG5vdCB1c2VyX2lkOgogICAgICAgICAgICByZXR1cm4gTm9uZQogICAgICAgIG1lbWJlciA9IG1jX3N0b3JlLmdldF9tZW1iZXIodGVuYW50X2lkLCBzdHIodXNlcl9pZCkpCiAgICAgICAgcm9sZSA9IG1lbWJlclsicm9sZSJdIGlmIG1lbWJlciBhbmQgbWVtYmVyWyJzdGF0dXMiXSA9PSAiYWN0aXZlIiBlbHNlIE5vbmUKICAgICAgICByZXR1cm4gSWRlbnRpdHkoc3RyKHVzZXJfaWQpLCB0ZW5hbnRfaWQsIHJvbGUpCgogICAgYXBwLnJlZ2lzdGVyX2JsdWVwcmludCgKICAgICAgICBjcmVhdGVfYmx1ZXByaW50KG1jX3N0b3JlLCBTZXR0aW5ncygKICAgICAgICAgICAgaWRlbnRpdHlfbG9hZGVyPW1jX2lkZW50aXR5LAogICAgICAgICAgICBhbGxvd19zZWxmX2FwcHJvdmFsPW9zLmVudmlyb24uZ2V0KCJNQ19BTExPV19TRUxGX0FQUFJPVkFMIikgPT0gIjEiLAogICAgICAgICAgICB0ZW5hbnRfcmVzb2x2ZXI9bGFtYmRhIHJlcXVlc3Q6IGFwcC5jb25maWdbIk1DX1RFTkFOVF9JRCJdLAogICAgICAgICAgICBpbWFnZV9iYXNlX3VybD1mInthcHAuY29uZmlnWydTVVBBQkFTRV9VUkwnXX0vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL21jLWltYWdlcy8iLAogICAgICAgICAgICBkZWZhdWx0X3RlbmFudF9zZXR0aW5ncz1UZW5hbnRTZXR0aW5ncyhhbGxvd19hbm9ueW1vdXM9RmFsc2UsIGxsbV9jYWxsc19wZXJfaG91cj0yMCksCiAgICAgICAgICAgIGd1aWRlX3RpdGxlPSJDcmVzY29IZWxwIiwKICAgICAgICAgICAgICAgICAgICAgICAgbWFwcGVyPUFudGhyb3BpY01hcHBlcihjb250ZXh0PSgKICAgICAgICAgICAgICAgICJDcmVzY29wdXMsIGEgbWFya2V0cGxhY2Ugd2hlcmUgYXBwIGJ1aWxkZXJzIHBhcnRuZXIgd2l0aCBncm93ZXJzIHdobyBtb25ldGlzZSAiCiAgICAgICAgICAgICAgICAiYW5kIGdyb3cgdGhlaXIgYXBwcywgc2hhcmluZyB0aGUgcmV2ZW51ZS4gVG9waWNzIGluY2x1ZGUgaG93IHBhcnRuZXJzaGlwcywgcm9sZXMsICIKICAgICAgICAgICAgICAgICJyZXZlbnVlIHNoYXJpbmcgYW5kIGVuZGluZyBhIHBhcnRuZXJzaGlwIHdvcmsuIgogICAgICAgICAgICApKSBpZiBvcy5lbnZpcm9uLmdldCgiQU5USFJPUElDX0FQSV9LRVkiKSBlbHNlIE5vbmUsCiAgICAgICAgKSksCiAgICAgICAgdXJsX3ByZWZpeD0iL2NvbnRlbnQiLAogICAgKQoKICAgIEBhcHAuY2xpLmNvbW1hbmQoIm1jLWJvb3RzdHJhcCIpCiAgICBAY2xpY2suYXJndW1lbnQoInVzZXJfaWQiKQogICAgQGNsaWNrLm9wdGlvbigiLS1yb2xlIiwgZGVmYXVsdD0iYXBwcm92ZXIiKQogICAgZGVmIG1jX2Jvb3RzdHJhcCh1c2VyX2lkLCByb2xlKToKICAgICAgICAiIiJDcmVhdGUgdGhlIGZpcnN0IGNvbnRlbnQgbWVtYmVyLCBlLmcuIHlvdSBhcyBhcHByb3Zlci4iIiIKICAgICAgICBtY19zdG9yZS5wdXRfbWVtYmVyKHsidGVuYW50X2lkIjogYXBwLmNvbmZpZ1siTUNfVEVOQU5UX0lEIl0sCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgInVzZXJfaWQiOiB1c2VyX2lkLCAicm9sZSI6IHJvbGUsICJzdGF0dXMiOiAiYWN0aXZlIn0pCiAgICAgICAgY2xpY2suZWNobyhmInt1c2VyX2lkfSBpcyBub3cge3JvbGV9IikKCiAgICAjIEJyb3dzZXJzIChTYW1zdW5nIEludGVybmV0IGVzcGVjaWFsbHkpIGFzayBmb3IgL2Zhdmljb24uaWNvIGRpcmVjdGx5LgogICAgQGFwcC5yb3V0ZSgiL2Zhdmljb24uaWNvIikKICAgIGRlZiBmYXZpY29uKCk6CiAgICAgICAgZnJvbSBmbGFzayBpbXBvcnQgc2VuZF9mcm9tX2RpcmVjdG9yeQogICAgICAgIHJldHVybiBzZW5kX2Zyb21fZGlyZWN0b3J5KGFwcC5zdGF0aWNfZm9sZGVyLCAiZmF2aWNvbi5pY28iLCBtaW1ldHlwZT0iaW1hZ2Uvdm5kLm1pY3Jvc29mdC5pY29uIiwgbWF4X2FnZT04NjQwMCkKCiAgICBAYXBwLnJvdXRlKCIvIikKICAgIGRlZiBpbmRleCgpOgogICAgICAgICMgTG9nZ2VkLWluIHBlb3BsZSBnbyBzdHJhaWdodCB0byB0aGVpciBvd24gSG9tZTsgdGhlIGxhbmRpbmcgcGFnZSBpcyBmb3IgdmlzaXRvcnMuCiAgICAgICAgaWYgc2Vzc2lvbi5nZXQoInVzZXJfaWQiKToKICAgICAgICAgICAgZnJvbSBmbGFzayBpbXBvcnQgcmVkaXJlY3QsIHVybF9mb3IKICAgICAgICAgICAgcmV0dXJuIHJlZGlyZWN0KHVybF9mb3IoImRhc2hib2FyZC5pbmRleCIpKQogICAgICAgIHJldHVybiByZW5kZXJfdGVtcGxhdGUoImluZGV4Lmh0bWwiKQoKICAgIEBhcHAuY29udGV4dF9wcm9jZXNzb3IKICAgIGRlZiBpbmplY3RfbmF2X2NvbnRleHQoKToKICAgICAgICBmcm9tIGZsYXNrIGltcG9ydCByZXF1ZXN0CiAgICAgICAgZnJvbSBhcHAudXRpbHMgaW1wb3J0ICgKICAgICAgICAgICAgY3VycmVudF9wcm9maWxlLAogICAgICAgICAgICBnZXRfcGVuZGluZ19yZWNlaXZlZF9yZXF1ZXN0cywKICAgICAgICAgICAgZ2V0X3VucmVhZF9wYXJ0bmVyc2hpcHMsCiAgICAgICAgICAgIGdldF9sZWRnZXJfd2FpdGluZ19vbl9tZSwKICAgICAgICApCiAgICAgICAgZnJvbSBhcHAuZXh0ZW5zaW9ucyBpbXBvcnQgZ2V0X3N1cGFiYXNlCgogICAgICAgIHByb2ZpbGUgPSBjdXJyZW50X3Byb2ZpbGUoKQogICAgICAgICMgU2lnbmVkIGluIHNvY2lhbGx5IGJ1dCBub3QgeWV0IGNob3NlbiBCdWlsZGVyIG9yIEdyb3dlcjogbm8gbWVudSB1bnRpbCB0aGV5IGhhdmUuCiAgICAgICAgbmF2X3NldHVwID0gYm9vbChwcm9maWxlKSBhbmQgbm90IChwcm9maWxlLmdldCgiaXNfZGV2ZWxvcGVyIikgb3IgcHJvZmlsZS5nZXQoImlzX2dyb3dlciIpKQogICAgICAgIGlmIG5hdl9zZXR1cDoKICAgICAgICAgICAgcHJvZmlsZSA9IE5vbmUKICAgICAgICBhdHRlbnRpb25fY291bnQgPSAwCiAgICAgICAgbmF2X2NvdW50cyA9IHsiaG9tZSI6IDAsICJjcmVzY29zIjogMCwgIm1lc3NhZ2VzIjogMH0KICAgICAgICBpc19wb3B1cCA9IHJlcXVlc3QuYXJncy5nZXQoInBhcnRpYWwiKSA9PSAiMSIgb3IgcmVxdWVzdC5oZWFkZXJzLmdldCgiWC1SZXF1ZXN0ZWQtV2l0aCIpID09ICJmZXRjaCIKICAgICAgICBpZiBwcm9maWxlIGFuZCBub3QgaXNfcG9wdXA6CiAgICAgICAgICAgIGZyb20gYXBwLnBsYW5zLnJvdXRlcyBpbXBvcnQgcGxhbl9zdW1tYXJpZXMKICAgICAgICAgICAgc3VwYWJhc2UgPSBnZXRfc3VwYWJhc2UoKQogICAgICAgICAgICBwbGFucyA9IHBsYW5fc3VtbWFyaWVzKHN1cGFiYXNlLCBwcm9maWxlKQogICAgICAgICAgICBwbGFuX2lkcyA9IHtwWyJpZCJdIGZvciBwIGluIHBsYW5zIGlmIHBbImFjdGl2ZSJdfQogICAgICAgICAgICByZWNlaXZlZCA9IGdldF9wZW5kaW5nX3JlY2VpdmVkX3JlcXVlc3RzKHN1cGFiYXNlLCBwcm9maWxlKQogICAgICAgICAgICB1bnJlYWQgPSBbcGlkIGZvciBwaWQgaW4gZ2V0X3VucmVhZF9wYXJ0bmVyc2hpcHMoc3VwYWJhc2UsIHByb2ZpbGUpIGlmIHBpZCBpbiBwbGFuX2lkc10KICAgICAgICAgICAgbGVkZ2VyID0gZ2V0X2xlZGdlcl93YWl0aW5nX29uX21lKHN1cGFiYXNlLCBwcm9maWxlLCBsaXN0KHBsYW5faWRzKSkKICAgICAgICAgICAgcGxhbnNfd2FpdGluZyA9IHN1bSgxIGZvciBwIGluIHBsYW5zIGlmIHBbInN0YXRlIl1bMF0gPT0gInlvdSIpCiAgICAgICAgICAgIGF0dGVudGlvbl9jb3VudCA9IGxlbihyZWNlaXZlZCkgKyBsZW4odW5yZWFkKSArIGxlbihsZWRnZXIpICsgcGxhbnNfd2FpdGluZwogICAgICAgICAgICAjIEJhZGdlcyBvbiB0aGUgbWFpbiBtZW51OiByZXF1ZXN0cyBvbiBIb21lLCBwbGFuL2xlZGdlciBpdGVtcyBvbiBNeSBDcmVzY29zLCB1bnJlYWQgb24gTWVzc2FnZXMuCiAgICAgICAgICAgIG5hdl9jb3VudHMgPSB7ImhvbWUiOiBsZW4ocmVjZWl2ZWQpLCAiY3Jlc2NvcyI6IHBsYW5zX3dhaXRpbmcgKyBsZW4obGVkZ2VyKSwgIm1lc3NhZ2VzIjogbGVuKHVucmVhZCl9CgogICAgICAgICMgV2hpY2ggbWFpbiBtZW51IGl0ZW0gdGhlIGN1cnJlbnQgcGFnZSBiZWxvbmdzIHRvLgogICAgICAgIGVuZHBvaW50ID0gcmVxdWVzdC5lbmRwb2ludCBvciAiIgogICAgICAgIGJsdWVwcmludCA9IGVuZHBvaW50LnNwbGl0KCIuIilbMF0gaWYgIi4iIGluIGVuZHBvaW50IGVsc2UgIiIKICAgICAgICBpZiBlbmRwb2ludCA9PSAicGFydG5lcnNoaXBzLmluYm94IjoKICAgICAgICAgICAgbmF2X3NlY3Rpb24gPSAibWVzc2FnZXMiCiAgICAgICAgZWxpZiBibHVlcHJpbnQgaW4gKCJwbGFucyIsICJsZWRnZXIiLCAicGFydG5lcnNoaXBzIiwgInJlcG9ydGluZyIpOgogICAgICAgICAgICBuYXZfc2VjdGlvbiA9ICJjcmVzY29zIgogICAgICAgIGVsaWYgYmx1ZXByaW50ID09ICJicm93c2UiIGFuZCBub3QgZW5kcG9pbnQuc3RhcnRzd2l0aCgoImJyb3dzZS5lZGl0IiwgImJyb3dzZS53aXRoZHJhdyIpKToKICAgICAgICAgICAgbmF2X3NlY3Rpb24gPSAiZmluZCIKICAgICAgICBlbGlmIGJsdWVwcmludCA9PSAic2V0dGluZ3MiOgogICAgICAgICAgICBuYXZfc2VjdGlvbiA9ICJhY2NvdW50IgogICAgICAgIGVsaWYgYmx1ZXByaW50IGluICgiZGFzaGJvYXJkIiwgImxpc3RpbmdzIiwgImNvbm5lY3Rpb25fcmVxdWVzdHMiKSBvciBlbmRwb2ludC5zdGFydHN3aXRoKCgiYnJvd3NlLmVkaXQiLCAiYnJvd3NlLndpdGhkcmF3IikpOgogICAgICAgICAgICBuYXZfc2VjdGlvbiA9ICJob21lIgogICAgICAgIGVsc2U6CiAgICAgICAgICAgIG5hdl9zZWN0aW9uID0gIiIKICAgICAgICB0b3BfbGV2ZWwgPSBlbmRwb2ludCBpbiAoImluZGV4IiwgImRhc2hib2FyZC5pbmRleCIsICJicm93c2UuaW5kZXgiLCAicGxhbnMuaW5kZXgiLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAicGFydG5lcnNoaXBzLmluYm94IiwgInNldHRpbmdzLmluZGV4IiwgImF1dGgubG9naW4iLCAiYXV0aC5zaWdudXAiLCAiYXV0aC5maW5pc2giKQogICAgICAgIHJldHVybiBkaWN0KG5hdl9wcm9maWxlPXByb2ZpbGUsIG5hdl9zZXR1cD1uYXZfc2V0dXAsIGF0dGVudGlvbl9jb3VudD1hdHRlbnRpb25fY291bnQsIG5hdl9jb3VudHM9bmF2X2NvdW50cywKICAgICAgICAgICAgICAgICAgICBuYXZfc2VjdGlvbj1uYXZfc2VjdGlvbiwgbmF2X3RvcF9sZXZlbD10b3BfbGV2ZWwpCgogICAgcmV0dXJuIGFwcAo=', ['2c16ffd3118b8885924c96e9ceac057ef71ee30858f09995e4ad5be35a244822']),
+    ('requirements.txt', 'Rmxhc2s9PTMuMC4zCnB5dGhvbi1kb3RlbnY9PTEuMC4xCnN1cGFiYXNlPj0yLjMyLDwzCm5oMwpQeUpXVFtjcnlwdG9dCmd1bmljb3JuPT0yMi4wLjAKZW1haWwtdmFsaWRhdG9yPT0yLjIuMApyZXF1ZXN0cz09Mi4zMi4zCmFudGhyb3BpYwptb2Rjb250ZW50IEAgZ2l0K2h0dHBzOi8vJHtNT0RDT05URU5UX1RPS0VOfUBnaXRodWIuY29tL3BhdWxqMTg5L21vZGNvbnRlbnQuZ2l0QHYwLjIuMgp0emRhdGEK', ['fe703ed23eeee8f45a9d50c3657ae71b3291cc365faf617801edd1efec55ca09']),
+]
+BACKUP = '_backup_apply_crescohelp'
+NEXT = 'pip install -r requirements.txt, restart python wsgi.py, try a question at /content/guide, then commit and push.'
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+def main():
+    root = os.path.dirname(os.path.abspath(__file__))
+    if not (os.path.isfile(os.path.join(root, *['wsgi.py'])) and os.path.isfile(os.path.join(root, *['app', '__init__.py']))):
+        sys.exit("Stopped: put this file in the Crescopus project folder, then run it again.")
+    clashes = []
+    for rel, b64, expected in FILES:
+        path = os.path.join(root, *rel.split("/"))
+        if not os.path.exists(path):
+            continue
+        new = base64.b64decode(b64)
+        with open(path, "rb") as fh:
+            current = fh.read()
+        current_norm = current.replace(b"\r\n", b"\n")
+        if current == new or current_norm == new:
+            continue
+        if not expected or sha(current_norm) not in expected:
+            clashes.append(rel)
+    if clashes:
+        print("Stopped - nothing written. These files differ from the version this update was built from:")
+        for c in clashes:
+            print("   " + c)
+        sys.exit("Push or share your latest changes and ask for the update to be rebuilt.")
+
+    backup = os.path.join(root, BACKUP)
+    changed = 0
+    for rel, b64, expected in FILES:
+        path = os.path.join(root, *rel.split("/"))
+        data = base64.b64decode(b64)
+        status = "new     "
+        if os.path.exists(path):
+            with open(path, "rb") as fh:
+                current = fh.read()
+            if current == data or current.replace(b"\r\n", b"\n") == data:
+                print("same     " + rel)
+                continue
+            dest = os.path.join(backup, *rel.split("/"))
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            shutil.copy2(path, dest)
+            status = "updated "
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "wb") as fh:
+            fh.write(data)
+        changed += 1
+        print(status + " " + rel)
+    print("\nDone - %d of %d files written." % (changed, len(FILES)))
+    if os.path.isdir(backup):
+        print("Originals of replaced files are in " + BACKUP + os.sep)
+    if NEXT:
+        print("Next: " + NEXT)
+
+if __name__ == "__main__":
+    main()

@@ -4,6 +4,7 @@ Run from the Crescopus folder, with the venv active:
 
     python load_pages.py <your-user-id>            # create the pages as drafts
     python load_pages.py <your-user-id> --check    # show what would happen, change nothing
+    python load_pages.py <your-user-id> --growers  # load the grower topics instead
 
 Pages are always created as DRAFTS. Nothing is published: each page still has to be edited,
 submitted and approved by a different person. A key that already exists is skipped, so it is
@@ -19,13 +20,16 @@ load_dotenv()
 from supabase import create_client  # noqa: E402
 
 from crescopus_pages_v1 import PAGES, fields_for  # noqa: E402
+
+if "--growers" in sys.argv:  # the grower topics, written from a neutral point of view
+    from crescopus_pages_growers import PAGES  # noqa: E402,F811
 from modcontent import ContentService, Identity, Settings, SupabaseStore  # noqa: E402
 from modcontent.errors import McError  # noqa: E402
 
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
 check_only = "--check" in sys.argv
 if len(args) != 1:
-    sys.exit("Usage: python load_pages.py <your-user-id> [--check]")
+    sys.exit("Usage: python load_pages.py <your-user-id> [--check] [--growers]")
 
 user_id, tenant_id = args[0], os.environ["MC_TENANT_ID"]
 store = SupabaseStore(create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SECRET_KEY"]))
