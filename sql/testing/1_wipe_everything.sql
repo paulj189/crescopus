@@ -5,13 +5,16 @@
 -- !! linked to them: cards, Crescos, plans, ledgers, disputes, messages.
 -- !! It can't be undone. Only run it while Crescopus has no real users.
 --
--- Kept: the tag list (Needs / Offers options) and the site's content pages.
+-- Kept: the tag list (Needs / Offers options) and the site's content pages
+--       (mc_items, mc_versions, mc_nav_rules, mc_change_log).
+-- Cleared from the content tools: who has access (mc_members) and who
+--       viewed what (mc_view_log), as those point at accounts being deleted.
 -- Run in the Supabase SQL editor. Safe to re-run.
 --
 -- Afterwards:
 --   - Sign up again yourself (or run 2_load_test_scenarios.sql).
---   - Your content-tools access is linked to your old account, so re-run
---     `flask mc-bootstrap <your new user id>` if you use them.
+--   - Content-tools access is cleared, so after signing up again run
+--     `flask mc-bootstrap <your new user id>` to make yourself approver.
 --   - Uploaded images stay in Storage (harmless). To clear them too:
 --     Storage -> listing-media -> select all -> Delete.
 -- =====================================================================
@@ -32,7 +35,9 @@ declare
     'partnerships', 'connection_requests',
     'listing_images', 'revenue_streams', 'proposals', 'listings',
     'ai_usage', 'premium_interest', 'account_entitlements', 'profile_verifications',
-    'profiles'
+    'profiles',
+    -- Content tools: access and viewing history (the content itself is kept).
+    'mc_members', 'mc_view_log'
   ];
   present text[] := '{}';
   t text;
@@ -52,7 +57,7 @@ delete from auth.users;
 
 commit;
 
--- Check: everything should be 0.
+-- Check: everything should be 0, except tags_kept (your Needs / Offers tag list, 14).
 select (select count(*) from auth.users)    as users,
        (select count(*) from profiles)      as profiles,
        (select count(*) from listings)      as app_cards,
