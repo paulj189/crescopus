@@ -148,7 +148,12 @@ def social_start(provider):
     try:
         res = client.auth.sign_in_with_oauth({
             "provider": supabase_name,
-            "options": {"redirect_to": _callback_url()},
+            "options": {
+                "redirect_to": _callback_url(),
+                # Google: always show the account picker, rather than silently
+                # reusing whichever Google account was used last.
+                **({"query_params": {"prompt": "select_account"}} if provider == "google" else {}),
+            },
         })
         storage = client.auth._storage
         verifier = storage.get_item(f"{client.auth._storage_key}-code-verifier")
