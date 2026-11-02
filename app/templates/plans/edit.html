@@ -37,6 +37,28 @@
 </div>
 {%- endmacro %}
 
+{% macro card_tag_box(kind, target) -%}
+{% set rows = card_tags[kind] %}
+{% if rows | selectattr(2) | list %}
+<div class="cx-card-tags">
+  <p class="cu-small cu-muted">Ticked on your cards. Tap one to add it to the plan.
+    {% if kind == "needs" %}<span class="cx-tag-match-key">✓ the other person offers this</span>{% else %}<span class="cx-tag-match-key">✓ the other person needs this</span>{% endif %}</p>
+  {% for role, name, items in rows %}{% if items %}
+  <div class="cx-card-tags-row">
+    <span class="cx-card-tags-who cx-who-{{ role }}">{{ name }} {{ kind }}</span>
+    <span class="cx-card-tags-list">
+      {% for t in items %}
+      <button type="button" class="cu-tag cu-tag-{{ kind }} cx-tag-add{% if t.match %} cx-tag-match{% endif %}"
+              data-add-tag="{{ target }}" data-text="{{ name }}: {{ t.label }}"
+              title="Add “{{ name }}: {{ t.label }}” to the plan{% if t.match %} (a match){% endif %}">{% if t.match %}✓ {% endif %}{{ t.label }}</button>
+      {% endfor %}
+    </span>
+  </div>
+  {% endif %}{% endfor %}
+</div>
+{% endif %}
+{%- endmacro %}
+
 {% block content %}
 <form method="POST" class="cu-editor" id="cu-plan-form">
   <input type="hidden" name="base_version" value="{{ base_version }}">
@@ -45,7 +67,8 @@
     <div>
       <p class="cu-plan-kicker">{{ listing.title }} · {{ builder.full_name }} &amp; {{ grower.full_name }}</p>
       <h1>Edit CrescoPlan</h1>
-      <p class="cu-muted cu-small">Saving creates version {{ base_version + 1 }}. You'll both need to agree to it again.</p>
+      {% if base_version == 1 and is_empty %}<p class="cu-muted cu-small">Saving creates version 1. You'll both need to agree to it.</p>
+      {% else %}<p class="cu-muted cu-small">Saving creates version {{ base_version + 1 }}. You'll both need to agree to it again.</p>{% endif %}
     </div>
     <div class="cu-editor-head-actions">
       <a class="cu-btn cu-btn-secondary" href="{{ url_for('plans.view', partnership_id=partnership.id) }}">Cancel</a>
@@ -65,12 +88,14 @@
       <section class="cu-edit-panel cu-box-needs">
         <h2 class="cu-plan-h"><span class="cu-plan-num cu-needs-ink">01</span>Agreed needs</h2>
         <p class="cu-small cu-muted">What each of you needs for this to work. Use one bullet per point, starting with who it's for.</p>
+        {{ card_tag_box("needs", "needs_html") }}
         <textarea data-rich="list" data-target="needs_html"></textarea>
         <input type="hidden" id="needs_html" name="needs_html" value="{{ draft.agreed_needs_html or '' }}">
       </section>
       <section class="cu-edit-panel cu-box-offers">
         <h2 class="cu-plan-h"><span class="cu-plan-num cu-offers-ink">02</span>Agreed offers</h2>
         <p class="cu-small cu-muted">What each of you will contribute: access, effort, resources and terms.</p>
+        {{ card_tag_box("offers", "offers_html") }}
         <textarea data-rich="list" data-target="offers_html"></textarea>
         <input type="hidden" id="offers_html" name="offers_html" value="{{ draft.agreed_offers_html or '' }}">
       </section>

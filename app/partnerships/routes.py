@@ -109,6 +109,11 @@ def send_message(partnership_id):
             "sender_id": profile["id"],
             "body": body,
         }).execute()
+        mark_partnership_read(get_supabase(), partnership_id, profile["id"])
+        other_id = partnership["grower_id"] if profile["id"] == partnership["developer_id"] else partnership["developer_id"]
+        rows = get_supabase().table("profiles").select("full_name").eq("id", other_id).execute().data
+        other = (rows[0]["full_name"] if rows else "") or "Your partner"
+        flash(f"Message sent. {other} will see it under Needs your attention.", "success")
     return redirect(url_for("partnerships.detail", partnership_id=partnership_id) + "#latest")
 
 

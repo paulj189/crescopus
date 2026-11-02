@@ -98,22 +98,27 @@
   </div>
 </div>
 {% set cresco_tab = "ledger" %}{% include "partnerships/_cresco_tabs.html" %}
+{% include "ledger/_notice.html" %}
 
 {% if totals.to_answer %}
 <p class="cu-conflict">{{ totals.to_answer }} thing{{ "" if totals.to_answer == 1 else "s" }} waiting for your answer below: a dispute, a rate, a settlement or a change to Recoverable.</p>
 {% endif %}
 
 {% if active and not entries %}
-<form method="POST" action="{{ url_for('ledger.set_currency', partnership_id=partnership.id) }}" class="cu-led-currency-form">
-  <label for="ledger-currency">Ledger currency</label>
-  <select id="ledger-currency" name="currency">
-    {% for code, symbol, name in currencies %}
-      <option value="{{ code }}" {% if code == currency %}selected{% endif %}>{{ code }} · {{ name }}</option>
-    {% endfor %}
-  </select>
-  <button type="submit" class="cu-btn cu-btn-secondary cu-btn-sm">Save</button>
-  <p class="cu-small cu-muted">Agree this with your partner first. It can't be changed once the ledger has entries. Entries in other currencies are converted into it.</p>
-</form>
+  {% if me_role == "builder" %}
+  <form method="POST" action="{{ url_for('ledger.set_currency', partnership_id=partnership.id) }}" class="cu-led-currency-form">
+    <label for="ledger-currency">Ledger currency</label>
+    <select id="ledger-currency" name="currency">
+      {% for code, symbol, name in currencies %}
+        <option value="{{ code }}" {% if code == currency %}selected{% endif %}>{{ code }} · {{ name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="cu-btn cu-btn-secondary cu-btn-sm">Save</button>
+    <p class="cu-small cu-muted">As the Builder, you choose the currency, usually the one your app earns in. It can't be changed once the ledger has entries. Entries in other currencies are converted into it.</p>
+  </form>
+  {% else %}
+  <p class="cu-small cu-muted cu-led-currency-form">This ledger is in <strong>{{ currency }}</strong>, chosen by {{ name_of_role["builder"] }} (the Builder). Entries in other currencies are converted into it.</p>
+  {% endif %}
 {% endif %}
 
 <div class="cu-led-totals">
@@ -145,6 +150,8 @@
     </span>
   </div>
 </div>
+
+<p class="cx-led-disclaimer cu-small">The CrescoLedger is a shared record to support your discussions. Confirming an entry agrees it's accurate; it doesn't create an obligation. Any obligations are dealt with directly between you, outside Crescopus.</p>
 
 <p class="cu-led-jump cu-small"><a href="#contributions">Contributions</a> · <a href="#rates">Hourly rates</a> · <a href="#recovery">Recovery settlements</a> · <a href="#disputes">Disputes{% if disputes | selectattr("status", "equalto", "open") | list %} ({{ disputes | selectattr("status", "equalto", "open") | list | length }} open){% endif %}</a></p>
 

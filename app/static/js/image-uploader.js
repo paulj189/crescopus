@@ -60,21 +60,25 @@ export async function uploadListingImage(supabase, file, listingId, onError) {
         }
     }
 
-    const MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
-    const ext = file.size > MAX_BYTES ? 'jpg' : (MIME_EXT[file.type] || 'jpg');
-    const path = `${listingId}/${crypto.randomUUID()}.${ext}`;
-
-    const { error } = await supabase.storage
-        .from('listing-media')
-        .upload(path, uploadBlob, { contentType: uploadBlob.type || file.type });
-
-    if (error) {
-        onError('Upload failed — please try again.');
+    // Sent to Crescopus, which checks you own the card and stores it. (The browser
+    // isn't signed in to Supabase itself, so it can't write to Storage directly.)
+    const body = new FormData();
+    body.append('file', uploadBlob, file.name || 'image');
+    body.append('upload_id', listingId);
+    try {
+        const res = await fetch('/browse/upload-image', {
+            method: 'POST', body, headers: { 'X-Requested-With': 'fetch' }, credentials: 'same-origin',
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.url) {
+            onError(data.error || 'Upload failed. Please try again.');
+            return null;
+        }
+        return data.url;
+    } catch (e) {
+        onError('Upload failed. Check your connection and try again.');
         return null;
     }
-
-    const { data } = supabase.storage.from('listing-media').getPublicUrl(path);
-    return data.publicUrl;
 }
 
 export const IMAGE_UPLOAD_LIMITS = { MAX_BYTES, ALLOWED_TYPES };

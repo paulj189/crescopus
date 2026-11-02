@@ -109,10 +109,30 @@ def get_unread_partnerships(supabase, profile):
         pid = m["partnership_id"]
         if pid in unread:
             continue  # already have the latest for this partnership
-        cutoff = last_read_by_id.get(pid, started_at_by_id.get(pid))
-        if not cutoff or m["created_at"] > cutoff:
+        cutoff = _when(last_read_by_id.get(pid)) or _when(started_at_by_id.get(pid))
+        sent = _when(m["created_at"])
+        if not cutoff or not sent or sent > cutoff:
             unread[pid] = m
     return unread
+
+
+def _when(stamp):
+    """A database timestamp as a real date-time, so times compare correctly
+    whatever number of decimal places the database returns."""
+    if not stamp:
+        return None
+    import re
+    from datetime import datetime, timezone
+    text = str(stamp).strip().replace(" ", "T").replace("Z", "+00:00")
+    # Pad or trim fractions of a second to 6 digits (older Pythons insist on it).
+    text = re.sub(r"\.(\d+)", lambda m: "." + (m.group(1) + "000000")[:6], text, count=1)
+    if re.search(r"[+-]\d\d$", text):
+        text += ":00"
+    try:
+        dt = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
 def mark_partnership_read(supabase, partnership_id, profile_id):

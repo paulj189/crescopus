@@ -255,6 +255,60 @@ def grower_detail(grower_id):
 PLATFORMS = [("web", "Web"), ("ios", "iOS"), ("android", "Android"), ("multi", "Multiple")]
 
 
+UPLOAD_TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+UPLOAD_MAX_BYTES = 2 * 1024 * 1024
+
+
+def _sniff_image(data):
+    """The real type from the file's first bytes, so a renamed file can't slip through."""
+    if data[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None
+
+
+@browse_bp.route("/upload-image", methods=["POST"])
+@login_required
+def upload_image():
+    """Stores a card photo or an image in a pitch, for the signed-in owner only."""
+    from flask import jsonify
+    from app.extensions import get_supabase_admin
+    import uuid
+
+    profile = current_profile()
+    upload_id = (request.form.get("upload_id") or "").strip()
+    if not profile or not upload_id:
+        return jsonify(error="Please sign in again and retry."), 403
+    allowed = upload_id == profile["id"]
+    if not allowed:
+        allowed = bool(get_supabase().table("listings").select("id").eq("id", upload_id)
+                       .eq("developer_id", profile["id"]).execute().data)
+    if not allowed:
+        return jsonify(error="You can only add images to your own cards."), 403
+
+    f = request.files.get("file")
+    data = f.read(UPLOAD_MAX_BYTES + 1) if f else b""
+    if not data:
+        return jsonify(error="No image was received. Please try again."), 400
+    if len(data) > UPLOAD_MAX_BYTES:
+        return jsonify(error="That image is over 2MB. Try a smaller one."), 400
+    ctype = _sniff_image(data)
+    if ctype not in UPLOAD_TYPES:
+        return jsonify(error="Please upload a JPG, PNG or WebP image."), 400
+
+    path = f"{upload_id}/{uuid.uuid4()}.{UPLOAD_TYPES[ctype]}"
+    try:
+        bucket = get_supabase_admin().storage.from_("listing-media")
+        bucket.upload(path, data, {"content-type": ctype})
+        url = bucket.get_public_url(path)
+    except Exception:  # noqa: BLE001
+        return jsonify(error="Upload failed. Please try again."), 502
+    return jsonify(url=url.rstrip("?"))
+
+
 def _clean_url(url):
     url = (url or "").strip()
     return url if url.startswith(("https://", "http://")) else None

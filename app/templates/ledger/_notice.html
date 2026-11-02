@@ -1,0 +1,17 @@
+{# CrescoLedger notice. Shown until the person has acknowledged it once (profiles.ledger_notice_at). #}
+{% if nav_profile and not nav_profile.ledger_notice_at %}
+<div class="cx-notice-overlay" id="ledger-notice">
+  <div class="modal-box cx-confirm" role="alertdialog" aria-modal="true" aria-labelledby="ledger-notice-title">
+    <h3 id="ledger-notice-title">Before you use the CrescoLedger</h3>
+    <p>The CrescoLedger is a shared record to help you both keep track of costs, time and revenue, and to support your discussions and negotiations.</p>
+    <p><strong>Confirming an entry only means you agree it's an accurate record.</strong> It doesn't create any obligation to pay, repay, share or recover anything.</p>
+    <p>Any obligations between you, including payments, recovering costs and sharing revenue, are agreed and dealt with directly between the Builder and the Grower, outside the scope of Crescopus.</p>
+    <p>Crescopus doesn't hold or move money, isn't a party to any arrangement between you, and doesn't check or guarantee the figures.</p>
+    <form method="POST" action="{{ url_for('ledger.acknowledge_notice') }}" class="cx-confirm-actions">
+      <input type="hidden" name="next" value="{{ request.full_path }}">
+      <a class="cu-btn cu-btn-secondary" href="{{ url_for('plans.index') }}">Not now</a>
+      <button type="submit" class="cu-btn cu-btn-primary">I understand</button>
+    </form>
+  </div>
+</div>
+{% endif %}

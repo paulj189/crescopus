@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ "Edit entry" if editing else "Add entry" }} — CrescoLedger — Crescopus{% endblock %}
 {% block content %}
+{% include "ledger/_notice.html" %}
 <p class="cu-plan-kicker">{{ listing.title }} · CrescoLedger</p>
 <h1>{{ "Edit entry" if editing else "Add an entry" }}</h1>
 {% if editing %}

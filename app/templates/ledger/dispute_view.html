@@ -8,6 +8,7 @@
 {%- endmacro %}
 
 {% block content %}
+{% include "ledger/_notice.html" %}
 <div class="cu-plan-head">
   <div>
     <p class="cu-plan-kicker">{{ listing.title }} · CrescoLedger · Dispute</p>
@@ -57,6 +58,7 @@
           <article class="cu-dp-msg cu-dp-ai">
             <p class="cu-section-label">CrescoGuide summary · advisory only · {{ m.created_at | local_time }}</p>
             <div class="cu-dp-body">{{ m.body | ai_summary }}</div>
+            <p class="cx-ai-disclaimer cu-small">Created by AI, so it may contain mistakes. It's general information to help you talk, not legal, financial, accounting or other professional advice. Check the figures yourselves before relying on it. Crescopus accepts no liability for its content or for anything done in reliance on it.</p>
           </article>
           {% elif m.kind == "system" %}
           <p class="cu-dp-system cu-small">{{ m.body }} <span class="cu-muted">{{ m.created_at | local_time }}</span></p>
@@ -179,11 +181,11 @@
     {% if open %}
     <div class="cu-led-rate-card">
       <span class="cu-section-label">CrescoGuide</span>
-      <p class="cu-small">A neutral summary that sets out both sides fairly, checks the figures, and suggests ways to settle it. It's advisory only and never changes the ledger.</p>
+      <p class="cu-small">An AI-written neutral summary that sets out both sides, checks the figures, and suggests ways to settle it. It's advisory only, may contain mistakes, and never changes the ledger.</p>
       {% if ai.can_use and summaries_left_here %}
         <form method="POST" action="{{ url_for('ledger.dispute_summary', partnership_id=partnership.id, dispute_id=dispute.id) }}" class="cu-dp-ai-form">
           <label class="cu-wd-consent"><input type="checkbox" name="consent" value="1">
-            <span>I understand the summary is advisory, and that what we've written here is sent to Claude (by Anthropic), which powers the CrescoGuide, to create it.</span></label>
+            <span>I understand the CrescoGuide is an AI tool and its summary may contain mistakes. It isn't legal, financial, accounting or other professional advice, and Crescopus accepts no liability for it or for anything done in reliance on it. What we've written here is sent to Claude (by Anthropic), which powers the CrescoGuide, to create it.</span></label>
           <button type="submit" class="cu-btn cu-btn-primary cu-btn-sm">Ask the CrescoGuide</button>
         </form>
         <p class="cu-small cu-muted">{% if ai.premium %}Included with Premium.{% else %}Free trial: {{ ai.left }} of {{ ai.free }} summaries left.{% endif %}</p>

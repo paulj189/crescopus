@@ -200,6 +200,32 @@ def view(partnership_id):
                            roles=dict(ROLES), statuses=STATUSES, status_labels=dict(STATUSES), **ctx)
 
 
+def _card_tags(ctx):
+    """The Needs and Offers each person ticked on their card, to help write the plan.
+    A tag is marked as a match when the other person's card offers (or needs) it."""
+    from app import tags
+    supabase = get_supabase()
+    p = ctx["partnership"]
+    app_rows = (supabase.table("listings").select("needs_tags,offers_tags")
+                .eq("id", p["listing_id"]).execute().data) if p.get("listing_id") else []
+    grower_rows = (supabase.table("profiles").select("needs_tags,offers_tags")
+                   .eq("id", p["grower_id"]).execute().data)
+    b = app_rows[0] if app_rows else {}
+    g = grower_rows[0] if grower_rows else {}
+    names = tags.labels()
+
+    def side(mine, theirs):
+        theirs = set(theirs or [])
+        return [{"label": names.get(slug, slug), "match": slug in theirs} for slug in (mine or [])]
+
+    return {
+        "needs": [("builder", ctx["builder"]["full_name"], side(b.get("needs_tags"), g.get("offers_tags"))),
+                  ("grower", ctx["grower"]["full_name"], side(g.get("needs_tags"), b.get("offers_tags")))],
+        "offers": [("builder", ctx["builder"]["full_name"], side(b.get("offers_tags"), g.get("needs_tags"))),
+                   ("grower", ctx["grower"]["full_name"], side(g.get("offers_tags"), b.get("needs_tags")))],
+    }
+
+
 @plans_bp.route("/<partnership_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit(partnership_id):
@@ -241,7 +267,7 @@ def edit(partnership_id):
             flash(f"{ctx['updated_by_name'] or 'Your partner'} saved version {plan['version']} while you were editing. "
                   "Your changes are still below. Check their version, then save again to replace it.", "error")
             return render_template("plans/edit.html", draft=draft, base_version=plan["version"],
-                                   roles=ROLES, statuses=STATUSES, conflict=True, **ctx)
+                                   roles=ROLES, statuses=STATUSES, conflict=True, card_tags=_card_tags(ctx), **ctx)
 
         try:
             new_version = get_supabase().rpc("save_plan", {
@@ -254,12 +280,12 @@ def edit(partnership_id):
         except Exception as err:  # noqa: BLE001 - show the database's message
             flash(f"The plan couldn't be saved: {_rpc_error(err)}", "error")
             return render_template("plans/edit.html", draft=draft, base_version=plan["version"],
-                                   roles=ROLES, statuses=STATUSES, conflict=False, **ctx)
+                                   roles=ROLES, statuses=STATUSES, conflict=False, card_tags=_card_tags(ctx), **ctx)
         flash(f"Saved as version {new_version}. You'll both need to agree to this version.", "success")
         return redirect(url_for("plans.view", partnership_id=partnership_id))
 
     return render_template("plans/edit.html", draft=plan, base_version=plan["version"],
-                           roles=ROLES, statuses=STATUSES, conflict=False, **ctx)
+                           roles=ROLES, statuses=STATUSES, conflict=False, card_tags=_card_tags(ctx), **ctx)
 
 
 @plans_bp.route("/<partnership_id>/agree", methods=["POST"])

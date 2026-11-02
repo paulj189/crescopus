@@ -481,12 +481,34 @@ def export(partnership_id):
                     headers={"Content-Disposition": f'attachment; filename="CrescoLedger-{name}-{date.today().isoformat()}.csv"'})
 
 
+@ledger_bp.route("/notice", methods=["POST"])
+@login_required
+def acknowledge_notice():
+    """Records that this person has read the CrescoLedger notice."""
+    from datetime import datetime, timezone
+    from app.extensions import get_supabase_admin
+    profile = current_profile()
+    if profile:
+        (get_supabase_admin().table("profiles")
+         .update({"ledger_notice_at": datetime.now(timezone.utc).isoformat()})
+         .eq("id", profile["id"]).execute())
+    nxt = request.form.get("next") or ""
+    if not nxt.startswith("/") or nxt.startswith("//"):
+        nxt = url_for("plans.index")
+    return redirect(nxt.rstrip("?"))
+
+
 @ledger_bp.route("/<partnership_id>/currency", methods=["POST"])
 @login_required
 def set_currency(partnership_id):
-    """Change the ledger currency. Only allowed while the ledger has no entries."""
+    """Change the ledger currency. Only the Builder, and only while the ledger has no entries."""
     code = (request.form.get("currency") or "").upper()
-    if code not in CURRENCY_CODES:
+    ctx = _load(partnership_id)
+    if not ctx:
+        abort(404)
+    if ctx["me_role"] != "builder":
+        flash("The Builder chooses the ledger currency.", "error")
+    elif code not in CURRENCY_CODES:
         flash("Choose a currency from the list.", "error")
     else:
         try:
