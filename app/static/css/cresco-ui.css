@@ -847,3 +847,33 @@ button.cx-tag-match{font-weight:700;border-color:currentColor;}
 button.cx-tag-added{opacity:0.55;}
 .cx-who-builder{color:#176B3B;}
 .cx-who-grower{color:var(--brass-ink);}
+
+/* ---------- CrescoHelp: a Help button on every page and its popup ---------- */
+.cx-help-fab{position:fixed;right:24px;bottom:24px;z-index:150;display:flex;align-items:center;gap:10px;
+  min-height:48px;padding:0 20px 0 8px;width:auto;border:1px solid var(--ink);border-radius:999px;
+  background:var(--sage);color:#FFFFFF;box-shadow:0 4px 16px rgba(23,35,26,0.25);cursor:pointer;
+  font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+  transition:background 0.15s ease,transform 0.15s ease;}
+.cx-help-fab:hover{background:#2F4B2A;transform:translateY(-1px);}
+.cx-help-fab:focus-visible{outline:3px solid var(--brass);outline-offset:3px;}
+.cx-help-fab-mark{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;
+  background:var(--brass);color:var(--ink);font-family:var(--serif);font-size:18px;font-weight:700;letter-spacing:0;}
+.cx-help-overlay{z-index:210;}
+.cx-help{display:flex;flex-direction:column;max-width:640px;height:min(80vh,720px);max-height:none;padding:0;
+  overflow:hidden;border-top:4px solid var(--sage);}
+.cx-help-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:20px 24px 14px;
+  border-bottom:1px solid var(--line);background:var(--bg);}
+.cx-help-head h3{margin:0;padding:0;font-family:var(--serif);font-size:24px;}
+.cx-help .cx-help-sub{margin:4px 0 0;font-family:var(--mono);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);}
+.cx-help-head .modal-close{position:static;margin:-6px -10px 0 0;}
+.cx-help-frame{flex:1 1 auto;width:100%;border:0;background:#FFFFFF;}
+.cx-help-foot{padding:10px 24px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;
+  letter-spacing:0.04em;text-transform:uppercase;text-align:right;background:var(--bg);}
+.cx-help-foot a{color:var(--sage);text-decoration:underline;text-underline-offset:2px;}
+@media (max-width:860px){
+  /* sit just above the bottom tab bar */
+  .cx-help-fab{right:14px;bottom:calc(78px + env(safe-area-inset-bottom));min-height:44px;padding:0 16px 0 6px;}
+  .cx-help-overlay{align-items:flex-end;padding:0;}
+  .cx-help{max-width:none;height:92vh;height:92dvh;}
+}
+@media print{ .cx-help-fab{display:none;} }

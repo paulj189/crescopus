@@ -64,9 +64,11 @@ def create_app():
             allow_self_approval=os.environ.get("MC_ALLOW_SELF_APPROVAL") == "1",
             tenant_resolver=lambda request: app.config["MC_TENANT_ID"],
             image_base_url=f"{app.config['SUPABASE_URL']}/storage/v1/object/public/mc-images/",
-            default_tenant_settings=TenantSettings(allow_anonymous=False, llm_calls_per_hour=20),
+            # Visitors can use CrescoHelp too (AI matching is limited to 20 questions an hour each).
+            default_tenant_settings=TenantSettings(allow_anonymous=True, llm_calls_per_hour=20),
             guide_title="CrescoHelp",
             guide_label="Help",
+            stylesheet_url="/static/css/crescohelp.css",
                         mapper=AnthropicMapper(context=(
                 "Crescopus, a marketplace where app builders partner with growers who monetise "
                 "and grow their apps, sharing the revenue. Topics include how partnerships, roles, "

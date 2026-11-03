@@ -208,6 +208,26 @@
   </div>
 </footer>
 
+{# CrescoHelp: on every page. The popup shows the help pages (modcontent) in a frame. #}
+<button type="button" class="cx-help-fab" onclick="crescoHelp.open()" aria-haspopup="dialog" aria-controls="modal-help">
+  <span class="cx-help-fab-mark" aria-hidden="true">?</span><span>Help</span>
+</button>
+<div class="modal-overlay cx-help-overlay" id="modal-help" hidden>
+  <div class="modal-box cx-help" role="dialog" aria-modal="true" aria-labelledby="modal-help-title">
+    <div class="cx-help-head">
+      <div>
+        <h3 id="modal-help-title">CrescoHelp</h3>
+        <p class="cx-help-sub">Ask a question or choose a topic</p>
+      </div>
+      <button type="button" class="modal-close" onclick="crescoHelp.close()" aria-label="Close help">&times;</button>
+    </div>
+    <iframe class="cx-help-frame" title="CrescoHelp" data-src="/content/help?embed=1"></iframe>
+    <div class="cx-help-foot">
+      <a href="/content/help" target="_blank" rel="noopener">Open in a new tab</a>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-info" hidden>
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-info-title">
     <button type="button" class="modal-close" onclick="crescoModal.close('modal-info')" aria-label="Close">&times;</button>
@@ -280,6 +300,22 @@
   const crescoModal = {
     open(id){ const el = document.getElementById(id); if (el) el.hidden = false; },
     close(id){ const el = document.getElementById(id); if (el) el.hidden = true; }
+  };
+  // CrescoHelp popup: the help page loads the first time it is opened, then keeps its place.
+  const crescoHelp = {
+    lastFocus: null,
+    open(){
+      const box = document.getElementById('modal-help');
+      const frame = box.querySelector('.cx-help-frame');
+      if (!frame.src) frame.src = frame.dataset.src;
+      this.lastFocus = document.activeElement;
+      box.hidden = false;
+      box.querySelector('.modal-close').focus();
+    },
+    close(){
+      document.getElementById('modal-help').hidden = true;
+      if (this.lastFocus && this.lastFocus.focus) this.lastFocus.focus();
+    }
   };
   document.querySelectorAll('.modal-overlay').forEach(function(overlay){
     overlay.addEventListener('click', function(e){ if (e.target === overlay) overlay.hidden = true; });

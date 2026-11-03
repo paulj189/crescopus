@@ -1,0 +1,35 @@
+/* CrescoHelp: Crescopus branding for the help pages (modcontent).
+   Loaded after modcontent's own styles, inside the Help popup and at /content/help. */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Public+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap');
+
+:root{
+  --mc-ink:#17231A; --mc-muted:#48533F; --mc-paper:#F3F4EF; --mc-card:#FFFFFF;
+  --mc-line:#DBDED0; --mc-accent:#3F6238; --mc-bad:#B3402E;
+}
+body{font-family:'Public Sans',sans-serif;font-size:16px;-webkit-font-smoothing:antialiased;}
+body.embed{background:#FFFFFF;}
+h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;}
+nav a{font-family:'IBM Plex Mono',monospace;font-size:13px;text-transform:uppercase;letter-spacing:0.04em;}
+label{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--mc-muted);}
+input,select,textarea,.mc-rt,.box,.notice,.status{border-radius:2px;}
+input:focus{border-color:var(--mc-accent);}
+button{border-radius:2px;border-color:#17231A;background:#17231A;font-family:'IBM Plex Mono',monospace;
+  font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;min-height:40px;}
+button:hover{background:#3F6238;border-color:#3F6238;}
+button:focus-visible,a:focus-visible,input:focus-visible{outline-color:#B98A2E;}
+body.embed .box{background:#F7F8F3;}
+
+/* topic choices: full-width rows rather than loose buttons */
+#mc-root button.secondary{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;
+  text-align:left;padding:12px 14px;background:#FFFFFF;color:var(--mc-ink);border:1px solid var(--mc-line);
+  font-family:'Public Sans',sans-serif;font-size:15px;font-weight:600;text-transform:none;letter-spacing:0;}
+#mc-root button.secondary::after{content:"\2192";color:#B98A2E;font-weight:400;}
+#mc-root button.secondary:hover{border-color:var(--mc-accent);background:#F4F8F1;}
+#mc-root p:has(> button.secondary){margin:6px 0;}
+
+/* the answer box */
+#mc-root .box h2{margin-top:0;font-size:1.3rem;}
+#mc-root .box h3{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;text-transform:uppercase;
+  letter-spacing:0.08em;color:var(--mc-muted);margin:16px 0 4px;}
+#mc-root .content a,#mc-root .box a{color:var(--mc-accent);}
+.muted{color:var(--mc-muted);}
