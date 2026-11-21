@@ -18,3 +18,9 @@ services:
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: CRESCONTENT_URL
+        sync: false
+      - key: CRESCONTENT_SITE_ID
+        sync: false
+      - key: CRESCONTENT_VERIFY
+        sync: false

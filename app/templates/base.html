@@ -16,7 +16,7 @@
 <script src="{{ url_for('static', filename='vendor/tinymce/tinymce.min.js') }}"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/cresco-ui.css') }}">
-<meta name="crescontent-verify" content="d577f0b01f1acb08adec3f25a6e90064">
+{% if config.CRESCONTENT_VERIFY %}<meta name="crescontent-verify" content="{{ config.CRESCONTENT_VERIFY }}">{% endif %}
 </head>
 <body>
 
@@ -348,7 +348,8 @@
   document.addEventListener('DOMContentLoaded', sizeSeascape);
   window.addEventListener('load', () => setTimeout(sizeSeascape, 400));
 </script>
-{# Help: Crescontent's help popup (crescontent.com). Settings and topics are managed there. #}
-<script src="https://crescontent.onrender.com/4ee3501b-0007-4d96-9784-8059ece7a890/popup.js" async></script>
+{# Help: Crescontent's help popup. Settings and topics are managed in Crescontent; the server and
+   site come from CRESCONTENT_URL and CRESCONTENT_SITE_ID (one per Render service). #}
+{% if config.CRESCONTENT_SITE_ID %}<script src="{{ config.CRESCONTENT_URL }}/{{ config.CRESCONTENT_SITE_ID }}/popup.js" async></script>{% endif %}
 </body>
 </html>
