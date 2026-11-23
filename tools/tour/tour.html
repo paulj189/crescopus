@@ -1,0 +1,262 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F3F4EF;--ink:#17231A;--muted:#48533F;--sage:#3F6238;--brass:#B98A2E;--brass-ink:#8C6118;--emerald:#1E8A4C;--line:#DBDED0;
+  --card:#FBFCF8;--cline:#D4DACB;--needs-ink:#17703C;--needs-bg:#E1EEDF;--offers-ink:#8C6118;--offers-bg:#F3E8D6;
+  --serif:'Fraunces',serif;--sans:'Public Sans',sans-serif;--mono:'IBM Plex Mono',monospace;}
+*{box-sizing:border-box}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden}
+body{background:radial-gradient(120% 90% at 30% 20%,#F6F7F2 0%,#E4E9E0 100%);color:var(--ink);font-family:var(--sans)}
+.scene{position:absolute;inset:0;opacity:0;
+  animation:fin .5s ease var(--s) both,fout .5s ease calc(var(--e) - .5s) forwards}
+@keyframes fin{from{opacity:0}to{opacity:1}}
+@keyframes fout{from{opacity:1}to{opacity:0}}
+.up{animation:up .7s cubic-bezier(.2,.7,.2,1) var(--d) both}
+@keyframes up{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+.pop{animation:pop .45s cubic-bezier(.3,1.6,.5,1) var(--d) both}
+@keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+.fade{animation:fin .5s ease var(--d) both}
+.gone{animation:fout .3s ease var(--d) forwards}
+
+/* text column */
+.split{position:absolute;inset:0;display:grid;grid-template-columns:640px 900px;gap:110px;align-items:center;padding:0 135px}
+.eyebrow{font:500 22px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--brass-ink);margin:0 0 18px}
+h1{font:600 84px/1.04 var(--serif);margin:0 0 28px;letter-spacing:-.01em}
+h1 em{font-style:italic;color:var(--emerald)}
+.lede{font-size:32px;line-height:1.45;color:var(--muted);margin:0}
+.center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+
+/* badge */
+.badge svg{overflow:visible}
+.arm{fill:none;stroke-width:13;stroke-linecap:round;stroke-dasharray:500;stroke-dashoffset:500;animation:draw 1.4s ease-out var(--d) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+/* UI bits */
+.panel{background:var(--card);border:1px solid var(--cline);border-radius:18px;box-shadow:0 24px 60px rgba(23,35,26,.13)}
+.lbl{font:500 15px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#4F5A4A;margin:0 0 10px}
+.chip{display:inline-flex;align-items:center;height:40px;padding:0 16px;border-radius:999px;font:500 19px var(--sans);margin:0 8px 10px 0}
+.chip.n{background:var(--needs-bg);color:var(--needs-ink)}
+.chip.o{background:var(--offers-bg);color:var(--offers-ink)}
+.av{display:inline-flex;align-items:center;justify-content:center;flex:none;color:#fff;font:600 30px var(--serif);width:76px;height:76px;border-radius:50%}
+.av.sq{border-radius:14px}
+.tag{font:500 14px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:4px}
+.tag.b{background:#E1EEDF;color:#14502E}.tag.g{background:#F3E8D6;color:#6B430E}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:60px;padding:0 28px;border-radius:10px;background:var(--ink);color:#fff;font:500 18px var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.tick{display:inline-flex;align-items:center;gap:8px;font:600 17px var(--sans);color:var(--emerald)}
+.tick svg{width:24px;height:24px}
+
+/* scene 2 */
+.duo{display:flex;gap:120px;align-items:center;margin-top:60px;position:relative}
+.person{width:420px;padding:34px;text-align:left}
+.person h3{font:600 38px var(--serif);margin:14px 0 8px}
+.person p{font-size:24px;color:var(--muted);margin:0}
+.join{position:absolute;left:50%;top:50%;width:84px;height:84px;margin:-42px;border-radius:50%;background:var(--emerald);display:grid;place-items:center;box-shadow:0 0 0 10px rgba(30,138,76,.15)}
+.join svg{width:42px;height:42px}
+
+/* browse grid */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.gcard{padding:22px;display:flex;gap:16px;align-items:flex-start;transition:none}
+.gcard h4{font:600 25px var(--serif);margin:2px 0 4px}
+.gcard p{font-size:18px;color:var(--muted);margin:0 0 10px}
+.gcard .chip{height:32px;font-size:16px;padding:0 12px}
+.hl{animation:hl .5s ease var(--d) both}
+@keyframes hl{from{box-shadow:0 24px 60px rgba(23,35,26,.13);border-color:var(--cline)}to{box-shadow:0 0 0 4px var(--emerald),0 24px 60px rgba(23,35,26,.2);border-color:var(--emerald)}}
+.dim{animation:dim .5s ease var(--d) forwards}
+@keyframes dim{to{opacity:.35}}
+.typed{display:inline-block;white-space:nowrap;clip-path:inset(0 100% 0 0);animation:type var(--t) steps(var(--n)) var(--d) forwards}
+@keyframes type{to{clip-path:inset(0 0 0 0)}}
+
+/* rows */
+.row{display:flex;align-items:center;gap:16px;padding:18px 24px;border-top:1px solid var(--line);font-size:22px}
+.row:first-child{border-top:0}
+.row .grow{flex:1}
+.date{font:500 16px var(--mono);color:#4F5A4A}
+.amt{font:600 24px var(--mono);width:150px;text-align:right}
+.amt.neg{color:#A8402A}.amt.pos{color:var(--emerald)}
+
+.benefits{display:flex;gap:32px;margin-top:70px}
+.benefit{width:440px;padding:36px;text-align:left;border-top:6px solid var(--emerald)}
+.benefit:nth-child(2){border-top-color:var(--brass)}
+.benefit h3{font:600 36px/1.15 var(--serif);margin:0 0 12px}
+.benefit p{font-size:23px;color:var(--muted);margin:0}
+.cta{display:inline-block;margin-top:34px;background:var(--brass);color:var(--ink);font:600 26px var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:22px 44px;border:3px solid var(--ink);border-radius:6px}
+</style></head>
+<body>
+
+<!-- reusable badge -->
+<template id="badgeTpl">
+<svg viewBox="0 0 320 320" width="420" height="420">
+  <defs>
+    <radialGradient id="bf" cx="42%" cy="38%" r="75%"><stop offset="0%" stop-color="#FCFBF6"/><stop offset="100%" stop-color="#E7EAD9"/></radialGradient>
+    <filter id="bs" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#17231A" flood-opacity="0.28"/></filter>
+    <path id="ta" d="M40,160 A120,120 0 0 1 280,160" fill="none"/><path id="ba" d="M40,160 A120,120 0 0 0 280,160" fill="none"/>
+  </defs>
+  <g filter="url(#bs)"><circle cx="160" cy="160" r="140" fill="url(#bf)" stroke="#17231A" stroke-width="5"/>
+    <path d="M42,160 A118,118 0 0 1 92,63" fill="none" stroke="#fff" stroke-width="3" opacity=".55"/>
+    <path d="M228,63 A118,118 0 0 1 278,160" fill="none" stroke="#fff" stroke-width="3" opacity=".55"/></g>
+  <text font-family="IBM Plex Mono" font-size="15" font-weight="600" fill="#17231A" letter-spacing="3"><textPath href="#ta" startOffset="50%" text-anchor="middle">CRESCOPUS</textPath></text>
+  <text font-family="IBM Plex Mono" font-size="9" fill="#5C6858" letter-spacing="2"><textPath href="#ba" startOffset="50%" text-anchor="middle">GROW APPS TOGETHER</textPath></text>
+  <g transform="translate(160,166) scale(0.34) translate(-340,-320)">
+    <path class="arm" style="stroke:#17231A;--d:calc(var(--b) + 0s)" d="M260 270 C200 340,140 380,120 460 C105 510,130 545,160 555"/>
+    <path class="arm" style="stroke:#B98A2E;--d:calc(var(--b) + .1s)" d="M300 275 C260 350,220 420,210 500 C205 530,220 555,245 560"/>
+    <path class="arm" style="stroke:#1E8A4C;--d:calc(var(--b) + .2s)" d="M340 278 C338 360,335 440,335 540"/>
+    <path class="arm" style="stroke:#B98A2E;--d:calc(var(--b) + .3s)" d="M380 275 C420 350,460 420,470 500 C475 530,460 555,435 560"/>
+    <path class="arm" style="stroke:#17231A;--d:calc(var(--b) + .4s)" d="M420 270 C480 340,540 380,560 460 C575 510,550 545,520 555"/>
+    <g class="pop" style="--d:calc(var(--b) + .2s);transform-box:fill-box;transform-origin:center">
+      <path d="M215 195 C215 120,270 80,340 80 C410 80,465 120,465 195 C465 250,410 285,340 285 C270 285,215 250,215 195 Z" fill="#1E8A4C" stroke="#17231A" stroke-width="4"/>
+      <circle cx="300" cy="175" r="16" fill="#F3F4EF" stroke="#17231A" stroke-width="3"/><circle cx="385" cy="175" r="16" fill="#F3F4EF" stroke="#17231A" stroke-width="3"/>
+      <circle cx="304" cy="178" r="6" fill="#17231A"/><circle cx="389" cy="178" r="6" fill="#17231A"/>
+      <path d="M315 222 C330 234,350 234,365 222" fill="none" stroke="#17231A" stroke-width="5" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>
+</template>
+<svg width="0" height="0" style="position:absolute"><symbol id="ck" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#1E8A4C"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol></svg>
+
+<!-- 1. Intro -->
+<section class="scene" style="--s:0s;--e:4.6s">
+  <div class="center">
+    <div class="badge" style="--b:.2s" data-badge></div>
+    <h1 class="up" style="--d:1.6s;margin-top:40px">Grow apps <em>together.</em></h1>
+  </div>
+</section>
+
+<!-- 2. Problem -->
+<section class="scene" style="--s:4.6s;--e:10.6s">
+  <div class="center">
+    <h1 class="up" style="--d:4.8s;margin:0 0 18px">Great apps stall.</h1>
+    <p class="lede up" style="--d:5.4s;font-size:36px">The person who built it isn't the person who can grow it.</p>
+    <div class="duo">
+      <div class="panel person up" style="--d:6.2s"><span class="tag b">The builder</span><h3>“I built it.”</h3><p>Loves making the product. Marketing? Not so much.</p></div>
+      <div class="panel person up" style="--d:6.8s"><span class="tag g">The grower</span><h3>“I can grow it.”</h3><p>Knows how to find an audience. Needs a product.</p></div>
+      <div class="join pop" style="--d:7.9s"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5v14" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></div>
+    </div>
+    <p class="lede up" style="--d:8.4s;margin-top:50px;font-size:34px">Crescopus brings them together. <strong style="color:var(--emerald);font-family:var(--serif)">Free.</strong></p>
+  </div>
+</section>
+
+<!-- 3. Step 1: card -->
+<section class="scene" style="--s:10.6s;--e:16.8s">
+  <div class="split">
+    <div class="up" style="--d:10.8s"><p class="eyebrow">Step 1</p><h1>Make your card.</h1>
+      <p class="lede">Builders make one for each app; growers make one for themselves. Say what you need and what you offer.</p></div>
+    <div class="panel up" style="--d:11.2s;padding:40px 44px">
+      <div style="display:flex;gap:22px;align-items:center;margin-bottom:30px">
+        <span class="av sq" style="background:#2F6F8F">Tl</span>
+        <div style="flex:1"><div style="font:600 38px var(--serif)">Tidelog <svg style="width:26px;height:26px;vertical-align:-2px"><use href="#ck"/></svg></div>
+          <div style="font-size:22px;color:var(--muted)">Tide &amp; weather for small-boat sailors · iOS &amp; Android</div></div>
+        <span class="tag b">Builder</span>
+      </div>
+      <p class="lbl">Needs</p>
+      <div style="margin-bottom:22px"><span class="chip n pop" style="--d:12.2s">App Store optimisation</span><span class="chip n pop" style="--d:12.5s">Social growth</span><span class="chip n pop" style="--d:12.8s">Launch plan</span></div>
+      <p class="lbl">Offers</p>
+      <div style="margin-bottom:26px"><span class="chip o pop" style="--d:13.4s">30% revenue share</span><span class="chip o pop" style="--d:13.7s">Roadmap input</span><span class="chip o pop" style="--d:14.0s">2,000 loyal users</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:24px">
+        <span class="fade" style="--d:14.8s;font:500 17px var(--mono);color:var(--emerald);letter-spacing:.06em;text-transform:uppercase">● Card published · free</span>
+        <span class="btn">Publish card</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. Step 2: browse & reach out -->
+<section class="scene" style="--s:16.8s;--e:23.4s">
+  <div class="split">
+    <div class="up" style="--d:17s"><p class="eyebrow">Step 2</p><h1>Browse and reach out.</h1>
+      <p class="lede">Filter by needs, offers and verified members. When one fits, send a short intro.</p></div>
+    <div style="position:relative">
+      <div class="up" style="--d:17.3s;margin-bottom:18px"><span class="chip n">Offers: ASO ✕</span><span class="chip" style="background:#fff;border:1px solid var(--cline)">Verified only ✕</span></div>
+      <div class="grid">
+        <div class="panel gcard up hl" style="--d:17.5s"><span class="av" style="background:#B98A2E">MR</span><div style="animation:none"><h4>Maya R.</h4><p>Growth marketer · 40+ apps</p><span class="chip o">ASO</span><span class="chip o">TikTok</span></div></div>
+        <div class="panel gcard up" style="--d:17.65s"><span class="av" style="background:#3F6238">JK</span><div><h4>Jonas K.</h4><p>Paid social &amp; ads</p><span class="chip o">ASO</span><span class="chip o">Meta ads</span></div></div>
+        <div class="panel gcard up" style="--d:17.8s"><span class="av" style="background:#8C6118">AP</span><div><h4>Aisha P.</h4><p>Community builder</p><span class="chip o">ASO</span><span class="chip o">Reddit</span></div></div>
+        <div class="panel gcard up" style="--d:17.95s"><span class="av" style="background:#2F6F8F">LT</span><div><h4>Leo T.</h4><p>Partnerships &amp; PR</p><span class="chip o">ASO</span><span class="chip o">Press</span></div></div>
+      </div>
+      <!-- highlight Maya -->
+      <style>.grid>.gcard:first-child{animation:up .7s cubic-bezier(.2,.7,.2,1) 17.5s both,hl .5s ease 18.8s both}
+        .grid>.gcard:not(:first-child){animation:up .7s cubic-bezier(.2,.7,.2,1) var(--d) both,dim .5s ease 18.8s forwards}</style>
+      <div class="panel up" style="--d:19.4s;position:absolute;left:120px;right:-20px;top:250px;padding:30px 34px;box-shadow:0 30px 80px rgba(23,35,26,.28)">
+        <p class="lbl">Intro to Maya R.</p>
+        <div style="font-size:24px;line-height:1.45;min-height:72px;border:1px solid var(--cline);border-radius:10px;padding:14px 18px;background:#fff">
+          <span class="typed" style="--d:19.9s;--t:1.6s;--n:44;--w:22.5em">Hi Maya, Tidelog has 2,000 loyal sailors</span><br>
+          <span class="typed" style="--d:21.5s;--t:.8s;--n:24;--w:14em">and no marketing yet. Fancy a look?</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px">
+          <span class="tick pop" style="--d:22.6s"><svg><use href="#ck"/></svg>Accepted · you're connected</span>
+          <span class="btn">Send intro</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. Step 3: CrescoPlan -->
+<section class="scene" style="--s:23.4s;--e:30s">
+  <div class="split">
+    <div class="up" style="--d:23.6s"><p class="eyebrow">Step 3</p><h1>Agree a CrescoPlan.</h1>
+      <p class="lede">Actions with owners and dates, and how you'll measure success. It only counts when you both agree.</p></div>
+    <div class="panel up" style="--d:23.9s;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:26px 30px;background:var(--ink);color:#fff">
+        <span style="font:600 30px var(--serif)">CrescoPlan · Tidelog × Maya</span><span style="font:500 17px var(--mono);opacity:.75">VERSION 3</span></div>
+      <div>
+        <div class="row up" style="--d:24.6s"><span class="grow">Rewrite store listing &amp; screenshots</span><span class="tag g">Maya</span><span class="date">12 Jan</span></div>
+        <div class="row up" style="--d:24.9s"><span class="grow">Add share-a-tide feature</span><span class="tag b">Builder</span><span class="date">26 Jan</span></div>
+        <div class="row up" style="--d:25.2s"><span class="grow">Launch on sailing forums &amp; TikTok</span><span class="tag g">Maya</span><span class="date">2 Feb</span></div>
+        <div class="row up" style="--d:25.5s;background:#EEF5EC"><span class="grow"><b>Measure of success:</b> 10,000 installs by June</span></div>
+      </div>
+      <div style="display:flex;gap:36px;align-items:center;padding:24px 30px;border-top:1px solid var(--line);background:#fff">
+        <span class="tick pop" style="--d:26.6s"><svg><use href="#ck"/></svg>Agreed by Builder</span>
+        <span class="tick pop" style="--d:27.4s"><svg><use href="#ck"/></svg>Agreed by Maya</span>
+        <span class="fade" style="--d:28.1s;margin-left:auto;font:600 17px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--emerald);padding:8px 14px;border-radius:4px">Plan agreed</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. Step 4: CrescoLedger -->
+<section class="scene" style="--s:30s;--e:36.6s">
+  <div class="split">
+    <div class="up" style="--d:30.2s"><p class="eyebrow">Step 4</p><h1>Keep a shared ledger.</h1>
+      <p class="lede">Record costs and revenue in the CrescoLedger. Each entry is confirmed by the other person, so you both trust the totals.</p></div>
+    <div class="panel up" style="--d:30.5s;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:26px 30px;background:var(--ink);color:#fff">
+        <span style="font:600 30px var(--serif)">CrescoLedger</span><span style="font:500 17px var(--mono);opacity:.75">TIDELOG × MAYA</span></div>
+      <div class="row up" style="--d:31.1s"><span class="grow">TikTok ads<br><span class="date">Added by Maya</span></span><span class="tick pop" style="--d:31.8s"><svg><use href="#ck"/></svg>Confirmed</span><span class="amt neg">−£240</span></div>
+      <div class="row up" style="--d:32.1s"><span class="grow">App Store revenue · Feb<br><span class="date">Added by Builder</span></span><span class="tick pop" style="--d:32.8s"><svg><use href="#ck"/></svg>Confirmed</span><span class="amt pos">+£1,120</span></div>
+      <div class="row up" style="--d:33.1s"><span class="grow">Screenshot design<br><span class="date">Added by Maya</span></span><span class="tick pop" style="--d:33.8s"><svg><use href="#ck"/></svg>Confirmed</span><span class="amt neg">−£80</span></div>
+      <div class="row fade" style="--d:34.4s;background:#EEF5EC;font-weight:600"><span class="grow" style="font-family:var(--serif);font-size:28px">Net, agreed by both</span><span class="amt pos" style="font-size:30px">+£800</span></div>
+      <div class="fade" style="--d:35s;padding:16px 30px;font-size:19px;color:var(--muted);border-top:1px solid var(--line)">You settle up directly. Crescopus never holds your money.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. Fair -->
+<section class="scene" style="--s:36.6s;--e:41.2s">
+  <div class="center">
+    <h1 class="up" style="--d:36.8s;margin:0">Fair to both sides, by design.</h1>
+    <div class="benefits">
+      <div class="panel benefit up" style="--d:37.3s"><h3>Free, and free for life</h3><p>Partnerships started now never pay a fee.</p></div>
+      <div class="panel benefit up" style="--d:37.6s"><h3>Builders keep ownership</h3><p>You set what a partner can and can't touch.</p></div>
+      <div class="panel benefit up" style="--d:37.9s"><h3>Growers earn what they build</h3><p>Confirmed revenue and a track record to show.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. End -->
+<section class="scene" style="--s:41.2s;--e:99s">
+  <div class="center">
+    <div class="badge" style="--b:41.3s" data-badge></div>
+    <div class="up" style="--d:42.4s;font:600 76px var(--serif);margin-top:26px">crescopus.com</div>
+    <div class="up" style="--d:42.9s"><span class="cta">Sign up free</span></div>
+  </div>
+</section>
+
+<script>
+const tpl=document.getElementById('badgeTpl');
+document.querySelectorAll('[data-badge]').forEach((el,i)=>{
+  let h=tpl.innerHTML.replace(/id="(\w+)"/g,'id="$1'+i+'"').replace(/#(bf|bs|ta|ba)\b/g,'#$1'+i);
+  el.innerHTML=h;
+});
+window.seek=t=>{for(const a of document.getAnimations()){a.pause();a.currentTime=t*1000;}};
+seek(0);
+</script>
+</body></html>
