@@ -1,0 +1,48 @@
+{# Live revenue calculator. Needs: builder, grower, symbol, terms (used when there's no wizard form on the page). #}
+<section class="cu-panel rv-calc" id="rv-calc"
+         data-symbol="{{ symbol }}" data-builder="{{ builder.full_name }}" data-grower="{{ grower.full_name }}"
+         data-terms='{{ terms | tojson }}'>
+  <div class="cu-panel-row">
+    <h2 class="cu-section-label">Calculator</h2>
+    <span class="cu-small cu-muted">per month · estimate</span>
+  </div>
+
+  <div class="rv-field">
+    <label for="rv-rev">What customers pay</label>
+    <div class="rv-row"><input type="range" id="rv-rev" min="0" max="20000" step="100" value="2400"><output class="rv-big" id="rv-rev-out"></output></div>
+  </div>
+  <div class="rv-field">
+    <span class="rv-label">Where they pay (%)</span>
+    <div class="rv-mix">
+      <div><label for="rv-ios">App Store</label><input type="number" id="rv-ios" min="0" max="100" value="55" inputmode="numeric"></div>
+      <div><label for="rv-android">Play</label><input type="number" id="rv-android" min="0" max="100" value="30" inputmode="numeric"></div>
+      <div><label for="rv-web">Web</label><input type="number" id="rv-web" min="0" max="100" value="15" inputmode="numeric"></div>
+    </div>
+  </div>
+  <div class="rv-mix rv-mix-2">
+    <div><label for="rv-fee">Store fee</label>
+      <select id="rv-fee"><option value="15" selected>15% (small business)</option><option value="30">30% (standard)</option></select></div>
+    <div><label for="rv-refund">Refunds %</label><input type="number" id="rv-refund" min="0" max="50" step="0.5" value="2" inputmode="decimal"></div>
+  </div>
+  <div class="rv-field" id="rv-costs-wrap" hidden>
+    <label for="rv-costs">Running costs per month</label>
+    <input type="number" id="rv-costs" min="0" step="10" value="300" inputmode="numeric">
+  </div>
+
+  <div class="rv-bar" id="rv-bar" role="img" aria-label="Where each month's revenue goes"></div>
+  <div class="rv-legend" id="rv-legend"></div>
+  <div class="rv-split">
+    <div class="rv-split-g"><span>{{ grower.full_name }} receives</span><strong id="rv-g"></strong></div>
+    <div class="rv-split-b"><span>{{ builder.full_name }} keeps</span><strong id="rv-b"></strong></div>
+  </div>
+  <div id="rv-warn"></div>
+
+  <div class="rv-field">
+    <div class="rv-row rv-row-between"><label for="rv-growth">Growth per month</label><output class="cu-small" id="rv-growth-out"></output></div>
+    <input type="range" id="rv-growth" min="0" max="20" step="1" value="8">
+  </div>
+  <svg class="rv-spark" id="rv-spark" viewBox="0 0 340 120" role="img" aria-label="Twelve month projection"></svg>
+  <p class="cu-small cu-muted" id="rv-year"></p>
+  <p class="cu-small cu-muted">Uses Apple and Google's fee rates and about 2.9% for web payments. Real figures come from your RevenueCat or store reports.</p>
+</section>
+<script src="{{ url_for('static', filename='js/revenue.js') }}"></script>

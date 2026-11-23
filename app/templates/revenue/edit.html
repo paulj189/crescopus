@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Revenue sharing — {{ listing.title }} — Crescopus{% endblock %}
+{% block main_class %}app-main-wide{% endblock %}
+{% block content %}
+{% set t = draft %}
+
+<div class="cu-plan-head">
+  <div>
+    <p class="cu-plan-kicker">{{ listing.title }} · {{ builder.full_name }} &amp; {{ grower.full_name }}</p>
+    <h1>{{ "Change the revenue terms" if agreement else "Agree how revenue is shared" }}</h1>
+    <p class="cu-muted cu-small">{% if agreement %}Saving creates version {{ base_version + 1 }}, which {{ other.full_name }} will need to agree to.{% else %}Five short steps. The calculator shows what the choices mean in money.{% endif %}</p>
+  </div>
+  <div class="cu-plan-head-actions">
+    <a class="cu-btn cu-btn-secondary" href="{{ url_for('revenue.view', partnership_id=partnership.id) }}">Cancel</a>
+  </div>
+</div>
+{% set cresco_tab = "revenue" %}{% include "partnerships/_cresco_tabs.html" %}
+
+{% set step_names = ["What's shared", grower.full_name ~ "'s share", "Payment terms", "Ending & buy-out", "Check & agree"] %}
+<ol class="rv-rail" id="rv-rail" hidden>
+  {% for s in step_names %}<li><button type="button" data-go="{{ loop.index0 }}"><span class="rv-n">{{ loop.index }}</span>{{ s }}</button></li>{% endfor %}
+</ol>
+
+<div class="cu-plan-layout">
+  <div class="cu-plan-main">
+    <form method="POST" id="rv-wizard" class="rv-form cu-panel" {% if request.method == "POST" %}data-start-step="4"{% endif %}>
+      <input type="hidden" name="base_version" value="{{ base_version }}">
+
+      <section class="rv-step">
+        <p class="rv-eyebrow">Step 1 of 5</p>
+        <h2>What is {{ grower.full_name }}'s share taken from?</h2>
+        <p class="rv-lead">This decides which number the percentage applies to each month. Apple and Google keep their fee before paying {{ builder.full_name }}, so the choice makes a real difference.</p>
+        <fieldset class="rv-opts">
+          <legend class="cu-sr">Share basis</legend>
+          {% for key, (title, desc) in bases.items() %}
+          <label class="rv-opt"><input type="radio" name="basis" value="{{ key }}" {% if t.basis == key %}checked{% endif %}>
+            <span><b>{{ title }}{% if key == "net" %}<span class="rv-tag">Recommended</span>{% endif %}</b><small>{{ desc }}</small></span></label>
+          {% endfor %}
+        </fieldset>
+        <p class="rv-hint">Sales tax and VAT are never shared. The stores collect and pay them before anything reaches {{ builder.full_name }}.</p>
+        <div class="rv-nav"><span></span><button class="cu-btn cu-btn-primary" type="button" data-step-go="1">Next</button></div>
+      </section>
+
+      <section class="rv-step">
+        <p class="rv-eyebrow">Step 2 of 5</p>
+        <h2>How much does {{ grower.full_name }} receive?</h2>
+        <p class="rv-lead">Revenue shares of 15–35% of net revenue are common for marketing partnerships. Move the slider and watch the calculator.</p>
+        <div class="rv-field">
+          <label for="rv-share">{{ grower.full_name }}'s share</label>
+          <div class="rv-row"><input type="range" id="rv-share" name="share" min="1" max="60" step="1" value="{{ t.share }}"><output class="rv-big" id="rv-share-out">{{ t.share }}%</output></div>
+        </div>
+        <label class="cu-check"><input type="checkbox" name="tiers" value="1" {% if t.tiers %}checked{% endif %}> Use a lower rate above a monthly amount</label>
+        <div class="rv-box" id="rv-tier-box">
+          <p class="rv-hint">Keeps the deal fair if the app takes off. {{ grower.full_name }} gets <span id="rv-tier-share">{{ t.share }}%</span> up to the threshold, then a lower rate on everything above it.</p>
+          <div class="rv-two">
+            <div class="rv-field"><label for="rv-tier-at">Threshold per month ({{ symbol or currency }})</label><input type="number" id="rv-tier-at" name="tier_at" min="0" step="500" value="{{ t.tier_at }}"></div>
+            <div class="rv-field"><label for="rv-share2">Rate above it (%)</label><input type="number" id="rv-share2" name="share2" min="0" max="100" value="{{ t.share2 }}"></div>
+          </div>
+        </div>
+        <div class="rv-nav"><button class="cu-btn cu-btn-secondary" type="button" data-step-go="-1">Back</button><button class="cu-btn cu-btn-primary" type="button" data-step-go="1">Next</button></div>
+      </section>
+
+      <section class="rv-step">
+        <p class="rv-eyebrow">Step 3 of 5</p>
+        <h2>When and how is {{ grower.full_name }} paid?</h2>
+        <p class="rv-lead">{{ builder.full_name }} pays {{ grower.full_name }} directly by bank transfer, PayPal or similar. Crescopus never holds or moves the money.</p>
+        <div class="rv-two">
+          <div class="rv-field"><label for="rv-freq">Statement</label>
+            <select id="rv-freq" name="freq">{% for k, v in freqs.items() %}<option value="{{ k }}" {% if t.freq == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+          <div class="rv-field"><label for="rv-due">Pay within (days of the store payout)</label><input type="number" id="rv-due" name="due_days" min="1" max="90" value="{{ t.due_days }}"></div>
+          <div class="rv-field"><label for="rv-min">Minimum payment ({{ symbol or currency }})</label><input type="number" id="rv-min" name="min_payout" min="0" step="5" value="{{ t.min_payout }}"></div>
+        </div>
+        <p class="rv-hint">Apple and Google pay about 30–45 days after the end of each month. Payments follow the money actually received, so {{ builder.full_name }} is never asked to pay a share before it arrives.</p>
+        <fieldset class="rv-opts">
+          <legend class="rv-legend-title">Refunds after a payment</legend>
+          {% for key, (title, desc) in refund_opts.items() %}
+          <label class="rv-opt"><input type="radio" name="refunds" value="{{ key }}" {% if t.refunds == key %}checked{% endif %}>
+            <span><b>{{ title | replace("under 50", "under " ~ symbol ~ "50") }}{% if key == "next" %}<span class="rv-tag">Recommended</span>{% endif %}</b><small>{{ desc }}</small></span></label>
+          {% endfor %}
+        </fieldset>
+        <div class="rv-nav"><button class="cu-btn cu-btn-secondary" type="button" data-step-go="-1">Back</button><button class="cu-btn cu-btn-primary" type="button" data-step-go="1">Next</button></div>
+      </section>
+
+      <section class="rv-step">
+        <p class="rv-eyebrow">Step 4 of 5</p>
+        <h2>How long it runs, and how it ends</h2>
+        <p class="rv-lead">{{ builder.full_name }} keeps ownership of {{ listing.title }} throughout. These terms only cover {{ grower.full_name }}'s share.</p>
+        <div class="rv-two">
+          <div class="rv-field"><label for="rv-term">Initial term</label>
+            <select id="rv-term" name="term_months">{% for m in term_options %}<option value="{{ m }}" {% if t.term_months == m %}selected{% endif %}>{{ m }} months, then rolling</option>{% endfor %}</select></div>
+          <div class="rv-field"><label for="rv-notice">Notice to end</label>
+            <select id="rv-notice" name="notice_days">{% for d in notice_options %}<option value="{{ d }}" {% if t.notice_days == d %}selected{% endif %}>{{ d }} days</option>{% endfor %}</select></div>
+        </div>
+        <label class="cu-check"><input type="checkbox" name="buyout" value="1" {% if t.buyout %}checked{% endif %}> {{ builder.full_name }} can buy out {{ grower.full_name }}'s share</label>
+        <div class="rv-box" id="rv-buyout-box">
+          <div class="rv-field"><label for="rv-mult">Price: {{ grower.full_name }}'s last 12 months of share ×</label>
+            <div class="rv-row"><input type="range" id="rv-mult" name="buy_mult" min="1" max="4" step="0.5" value="{{ t.buy_mult }}"><output class="rv-big" id="rv-mult-out">{{ t.buy_mult }}×</output></div></div>
+          <p class="rv-hint">At the calculator's projection that's about <b id="rv-buyout-est"></b>.</p>
+        </div>
+        <label class="cu-check"><input type="checkbox" name="rofr" value="1" {% if t.rofr %}checked{% endif %}> {{ grower.full_name }} gets first refusal if {{ builder.full_name }} sells the app</label>
+        <div class="rv-nav"><button class="cu-btn cu-btn-secondary" type="button" data-step-go="-1">Back</button><button class="cu-btn cu-btn-primary" type="button" data-step-go="1">Next</button></div>
+      </section>
+
+      <section class="rv-step">
+        <p class="rv-eyebrow">Step 5 of 5</p>
+        <h2>Check and agree</h2>
+        <p class="rv-plain" id="rv-plain">Turn on JavaScript to see a summary here, or check each step above.</p>
+        <p class="cu-small"><b>Example month:</b> <span id="rv-example"></span></p>
+        <div class="rv-nomoney">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
+          <span>Crescopus never holds or moves money. Revenue stays in {{ builder.full_name }}'s own store and payment accounts, and {{ builder.full_name }} pays {{ grower.full_name }} directly.</span>
+        </div>
+        <label class="cu-check cu-check-top"><input type="checkbox" name="confirm" value="1" required>
+          <span>I agree to these revenue terms. They're an agreement between {{ builder.full_name }} and {{ grower.full_name }}; Crescopus isn't a party to it.</span></label>
+        <div class="rv-nav"><button class="cu-btn cu-btn-secondary" type="button" data-step-go="-1">Back</button>
+          <button class="cu-btn cu-btn-primary" type="submit">Agree and send to {{ other.full_name }}</button></div>
+      </section>
+    </form>
+  </div>
+
+  <aside class="cu-plan-side">
+    {% include "revenue/_calculator.html" %}
+  </aside>
+</div>
+{% endblock %}

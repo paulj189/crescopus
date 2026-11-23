@@ -14,6 +14,9 @@
         <a href="{{ url_for('auth.login') }}" class="btn-secondary">Log in →</a>
         <a href="#" onclick="crescoModal.open('modal-how');return false;">How it works →</a>
       </div>
+      <a class="watch" href="{{ url_for('static', filename='video/crescopus-tour.mp4') }}" data-tour>
+        <span class="watch-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+        <span><strong>Watch the 1-minute tour</strong><small>See how it works</small></span></a>
     </div>
     <div>
       <svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The Crescopus badge, with a sage arm for developers and a brass arm for growers on each side, joined by an emerald center arm" style="width:100%;max-width:440px;height:auto;overflow:visible;">
@@ -60,6 +63,23 @@
     </div>
   </div>
 </header>
+
+<section class="tour" aria-labelledby="tour-title">
+  <h2 id="tour-title">See it in a minute</h2>
+  <a class="tour-thumb" href="{{ url_for('static', filename='video/crescopus-tour.mp4') }}" data-tour>
+    <img src="{{ url_for('static', filename='video/crescopus-tour-poster.jpg') }}" width="1280" height="720" alt="A Builder and a Grower agreeing a shared CrescoPlan in Crescopus" loading="lazy">
+    <span class="tour-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+    <span class="tour-label">Play the tour</span>
+  </a>
+</section>
+
+<dialog class="tour-dialog" id="tour" aria-label="Crescopus tour">
+  <button type="button" class="tour-close" aria-label="Close the video">&times;</button>
+  <video controls playsinline preload="none" width="1920" height="1080" poster="{{ url_for('static', filename='video/crescopus-tour-poster.jpg') }}">
+    <source src="{{ url_for('static', filename='video/crescopus-tour.mp4') }}" type="video/mp4">
+  </video>
+  <p>No sound: the tour is all on screen.</p>
+</dialog>
 
 <section id="premise">
   <div class="section-head">
@@ -153,4 +173,20 @@
 </section>
 
 </div>
+<script>
+(function () {
+  var dlg = document.getElementById('tour');
+  if (!dlg || typeof dlg.showModal !== 'function') return;     // old browsers: links open the video file
+  var video = dlg.querySelector('video');
+  document.querySelectorAll('[data-tour]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault(); dlg.showModal(); video.currentTime = 0;
+      var p = video.play(); if (p && p.catch) p.catch(function () {});
+    });
+  });
+  dlg.querySelector('.tour-close').addEventListener('click', function () { dlg.close(); });
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+  dlg.addEventListener('close', function () { video.pause(); });
+})();
+</script>
 {% endblock %}

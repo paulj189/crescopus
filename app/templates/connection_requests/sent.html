@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Awaiting acceptance — Crescopus{% endblock %}
+{% block content %}
+<p class="cu-plan-kicker">{{ listing.title }}</p>
+<h1>Awaiting acceptance</h1>
+<p class="cu-muted">
+  You've asked {% if grower %}{{ grower.full_name }}{% else %}the builder of {{ listing.title }}{% endif %} to start a CrescoPlan
+  {%- if req.created_at %} on {{ req.created_at | short_date }}{% endif %}.
+  Your shared CrescoPlan and private messages open as soon as they accept. You'll see it on your Home page.
+</p>
+<p class="cu-section-label">Your intro</p>
+<blockquote class="cu-quote">{{ req.message }}</blockquote>
+<div class="cu-led-form-actions">
+  <a class="cu-btn cu-btn-primary" href="{{ url_for('dashboard.index') }}">Go to Home</a>
+  <a class="cu-btn cu-btn-secondary" href="{{ url_for('browse.index', tab='growers') if grower else url_for('browse.index') }}">Keep browsing</a>
+</div>
+
+<details class="cu-decline">
+  <summary class="cu-link-btn">Withdraw request</summary>
+  <form method="POST" action="{{ url_for('connection_requests.withdraw', request_id=req.id) }}">
+    <p class="cu-small cu-muted">They'll no longer see your request. You can send a new one later.</p>
+    <button type="submit" class="cu-btn cu-btn-secondary">Withdraw request</button>
+  </form>
+</details>
+{% endblock %}

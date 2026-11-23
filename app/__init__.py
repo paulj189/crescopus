@@ -18,6 +18,7 @@ def create_app():
     from app.browse.routes import browse_bp
     from app.plans.routes import plans_bp
     from app.ledger.routes import ledger_bp
+    from app.revenue.routes import revenue_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(listings_bp)
@@ -31,6 +32,7 @@ def create_app():
     app.register_blueprint(browse_bp)
     app.register_blueprint(plans_bp)
     app.register_blueprint(ledger_bp)
+    app.register_blueprint(revenue_bp)
 
     # Template filters: clean user rich text before showing it, and turn tag slugs into labels.
     from app.utils import clean_list_html, clean_pitch_html
