@@ -177,22 +177,11 @@ def app_detail(listing_id):
         elif viewer.get("is_grower") and viewer.get("grower_withdrawn_at"):
             action = {"kind": "self_withdrawn"}
         elif viewer.get("is_grower"):
-            existing = (
-                supabase.table("partnerships").select("id,status")
-                .eq("listing_id", listing_id).eq("grower_id", viewer["id"])
-                .in_("status", ["trial", "formalised"]).execute().data
-            )
-            pending = (
-                supabase.table("connection_requests").select("id")
-                .eq("listing_id", listing_id).eq("grower_id", viewer["id"])
-                .eq("status", "pending").execute().data
-            )
-            if existing:
-                action = {"kind": "open", "partnership_id": existing[0]["id"]}
-            elif pending:
-                action = {"kind": "pending"}
-            else:
-                action = {"kind": "connect"}
+            from app.connection_requests.routes import connection_state
+            state = connection_state(supabase, listing_id, viewer["id"], viewer["id"])
+            action = {"kind": {"sent": "pending"}.get(state["kind"], state["kind"]),
+                      "partnership_id": state.get("partnership_id"),
+                      "request_id": (state.get("request") or {}).get("id")}
         else:
             action = {"kind": "none"}
     elif listing.get("withdrawn_at"):
@@ -232,7 +221,13 @@ def grower_detail(grower_id):
                 .eq("developer_id", viewer["id"]).is_("withdrawn_at", "null")
                 .order("created_at", desc=True).execute().data
             )
-            action = {"kind": "connect"} if my_listings else {"kind": "need_listing"}
+            if my_listings:
+                from app.connection_requests.routes import connection_state
+                for l in my_listings:
+                    l["state"] = connection_state(supabase, l["id"], grower_id, viewer["id"])
+                action = {"kind": "connect"}
+            else:
+                action = {"kind": "need_listing"}
         else:
             action = {"kind": "none"}
     elif grower.get("grower_withdrawn_at"):

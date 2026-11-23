@@ -34,13 +34,22 @@
 
       <div class="cu-actions">
         {% if action.kind == "connect" %}
-          {% if my_listings | length == 1 %}
-            <a class="cu-btn cu-btn-primary" href="{{ url_for('connection_requests.new_from_grower', grower_id=grower.id, listing_id=my_listings[0].id) }}">Start a CrescoPlan</a>
-          {% else %}
-            <p class="cu-small cu-muted">Start a CrescoPlan for one of your apps:</p>
-            {% for l in my_listings %}
-              <a class="cu-btn cu-btn-secondary" href="{{ url_for('connection_requests.new_from_grower', grower_id=grower.id, listing_id=l.id) }}">{{ l.title }}</a>
-            {% endfor %}
+          {% if my_listings | length > 1 %}<p class="cu-small cu-muted">Start a CrescoPlan for one of your apps:</p>{% endif %}
+          {% for l in my_listings %}
+            {% set st = l.state %}
+            {% set label = (l.title ~ ": ") if my_listings | length > 1 else "" %}
+            {% if st.kind == "open" %}
+              <a class="cu-btn cu-btn-secondary" href="{{ url_for('plans.view', partnership_id=st.partnership_id) }}">{{ label }}Open your CrescoPlan</a>
+            {% elif st.kind == "sent" %}
+              <span class="cu-btn cu-btn-disabled" aria-disabled="true">{{ label }}Awaiting acceptance</span>
+            {% elif st.kind == "incoming" %}
+              <a class="cu-btn cu-btn-primary" href="{{ url_for('connection_requests.respond', request_id=st.request.id) }}">{{ label }}Respond to their request</a>
+            {% else %}
+              <a class="cu-btn {{ 'cu-btn-primary' if my_listings | length == 1 else 'cu-btn-secondary' }}" href="{{ url_for('connection_requests.new_from_grower', grower_id=grower.id, listing_id=l.id) }}">{{ l.title if my_listings | length > 1 else "Start a CrescoPlan" }}</a>
+            {% endif %}
+          {% endfor %}
+          {% if my_listings | selectattr("state.kind", "equalto", "sent") | list %}
+            <p class="cu-muted cu-small">A CrescoPlan opens when {{ grower.full_name }} accepts.</p>
           {% endif %}
         {% elif action.kind == "need_listing" %}
           <a class="cu-btn cu-btn-primary" href="{{ url_for('listings.new') }}">List your app first</a>

@@ -61,7 +61,11 @@
         {% if action.kind == "connect" %}
           <a class="cu-btn cu-btn-primary" href="{{ url_for('connection_requests.new_from_listing', listing_id=listing.id) }}">Start a CrescoPlan</a>
         {% elif action.kind == "pending" %}
-          <span class="cu-btn cu-btn-disabled" aria-disabled="true">Request sent</span>
+          <span class="cu-btn cu-btn-disabled" aria-disabled="true">Awaiting acceptance</span>
+          <p class="cu-muted cu-small">You've asked to start a CrescoPlan. It opens when the builder accepts.</p>
+        {% elif action.kind == "incoming" %}
+          <a class="cu-btn cu-btn-primary" href="{{ url_for('connection_requests.respond', request_id=action.request_id) }}">Respond to their request</a>
+          <p class="cu-muted cu-small">The builder has asked to start a CrescoPlan with you.</p>
         {% elif action.kind == "open" %}
           <a class="cu-btn cu-btn-primary" href="{{ url_for('plans.view', partnership_id=action.partnership_id) }}">Open your CrescoPlan</a>
         {% elif action.kind == "owner" %}

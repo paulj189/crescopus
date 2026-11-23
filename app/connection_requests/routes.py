@@ -7,6 +7,37 @@ connection_requests_bp = Blueprint(
 )
 
 
+def connection_state(supabase, listing_id, grower_id, viewer_id):
+    """Where this grower and this app stand, from the viewer's side:
+    open (a live partnership), sent (the viewer's request is waiting),
+    incoming (the other person's request is waiting for the viewer) or connect."""
+    live = (supabase.table("partnerships").select("id")
+            .eq("listing_id", listing_id).eq("grower_id", grower_id)
+            .in_("status", ["trial", "formalised"]).execute().data)
+    if live:
+        return {"kind": "open", "partnership_id": live[0]["id"]}
+    pending = (supabase.table("connection_requests").select("*")
+               .eq("listing_id", listing_id).eq("grower_id", grower_id)
+               .eq("status", "pending").order("created_at", desc=True).execute().data)
+    if pending:
+        req = pending[0]
+        return {"kind": "sent" if req["initiated_by"] == viewer_id else "incoming", "request": req}
+    return {"kind": "connect"}
+
+
+def _already_connected(state, listing, grower=None):
+    """The page to show instead of the intro form when a request or plan already exists."""
+    if state["kind"] == "open":
+        flash("You already have a CrescoPlan together.", "success")
+        return redirect(url_for("plans.view", partnership_id=state["partnership_id"]))
+    if state["kind"] == "incoming":
+        flash("They've already asked to start a CrescoPlan with you. You can accept it here.", "success")
+        return redirect(url_for("connection_requests.respond", request_id=state["request"]["id"]))
+    if state["kind"] == "sent":
+        return render_template("connection_requests/sent.html", req=state["request"], listing=listing, grower=grower)
+    return None
+
+
 @connection_requests_bp.route("/listing/<listing_id>/new", methods=["GET", "POST"])
 @login_required
 def new_from_listing(listing_id):
@@ -25,6 +56,10 @@ def new_from_listing(listing_id):
         flash("Your card is withdrawn. Restore it from your dashboard to send connection requests.", "error")
         return redirect(url_for("dashboard.index"))
 
+    page = _already_connected(connection_state(supabase, listing_id, profile["id"], profile["id"]), listing)
+    if page:
+        return page
+
     if request.method == "POST":
         if not request.form.get("consent_acknowledged"):
             flash("Please confirm you understand Crescopus's role before sending this.", "error")
@@ -37,8 +72,8 @@ def new_from_listing(listing_id):
             "message": request.form["message"],
             "status": "pending",
         }).execute()
-        flash("Connection request sent.", "success")
-        return redirect(url_for("listings.detail", listing_id=listing_id))
+        flash("Request sent.", "success")
+        return redirect(url_for("connection_requests.new_from_listing", listing_id=listing_id))
 
     return render_template("connection_requests/new.html", listing=listing)
 
@@ -63,6 +98,10 @@ def new_from_grower(grower_id, listing_id):
         flash("This grower has withdrawn their card from Crescopus, so they aren't taking new connections.", "error")
         return redirect(url_for("browse.index", tab="growers"))
 
+    page = _already_connected(connection_state(supabase, listing_id, grower_id, profile["id"]), listing, grower)
+    if page:
+        return page
+
     if request.method == "POST":
         if not request.form.get("consent_acknowledged"):
             flash("Please confirm you understand Crescopus's role before sending this.", "error")
@@ -75,8 +114,8 @@ def new_from_grower(grower_id, listing_id):
             "message": request.form["message"],
             "status": "pending",
         }).execute()
-        flash("Connection request sent.", "success")
-        return redirect(url_for("growers.detail", grower_id=grower_id))
+        flash("Request sent.", "success")
+        return redirect(url_for("connection_requests.new_from_grower", grower_id=grower_id, listing_id=listing_id))
 
     return render_template("connection_requests/new.html", listing=listing, grower=grower)
 
