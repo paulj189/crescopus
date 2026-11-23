@@ -136,6 +136,9 @@ def respond(request_id):
         flash("This connection request isn't addressed to you.", "error")
         return redirect(url_for("dashboard.index"))
 
+    if req["status"] == "withdrawn":
+        flash(f"{sender['full_name']} withdrew this request.", "error")
+        return redirect(url_for("dashboard.index"))
     return render_template("connection_requests/respond.html", req=req, listing=listing, grower=grower, sender=sender)
 
 
@@ -153,7 +156,8 @@ def accept(request_id):
         return redirect(url_for("dashboard.index"))
 
     if req["status"] != "pending":
-        flash("This connection request has already been responded to.", "error")
+        flash("This request was withdrawn by the person who sent it." if req["status"] == "withdrawn"
+              else "This connection request has already been responded to.", "error")
         return redirect(url_for("dashboard.index"))
 
     supabase.table("connection_requests").update({"status": "accepted"}).eq("id", request_id).execute()
@@ -171,6 +175,24 @@ def accept(request_id):
     return redirect(url_for("plans.view", partnership_id=partnership_id))
 
 
+@connection_requests_bp.route("/<request_id>/withdraw", methods=["POST"])
+@login_required
+def withdraw(request_id):
+    """The person who sent a request takes it back before it's answered."""
+    supabase = get_supabase()
+    rows = supabase.table("connection_requests").select("*").eq("id", request_id).execute().data
+    profile = current_profile()
+    if not rows or not profile or rows[0]["initiated_by"] != profile["id"]:
+        flash("Only the person who sent a request can withdraw it.", "error")
+        return redirect(url_for("dashboard.index"))
+    if rows[0]["status"] != "pending":
+        flash("This request has already been answered, so it can't be withdrawn.", "error")
+        return redirect(url_for("dashboard.index"))
+    supabase.table("connection_requests").update({"status": "withdrawn"}).eq("id", request_id).execute()
+    flash("Request withdrawn.", "success")
+    return redirect(url_for("dashboard.index"))
+
+
 @connection_requests_bp.route("/<request_id>/reject", methods=["POST"])
 @login_required
 def reject(request_id):
@@ -185,7 +207,8 @@ def reject(request_id):
         return redirect(url_for("dashboard.index"))
 
     if req["status"] != "pending":
-        flash("This connection request has already been responded to.", "error")
+        flash("This request was withdrawn by the person who sent it." if req["status"] == "withdrawn"
+              else "This connection request has already been responded to.", "error")
         return redirect(url_for("dashboard.index"))
 
     supabase.table("connection_requests").update({

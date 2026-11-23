@@ -145,10 +145,18 @@
         <span class="cu-panel-row">
           <span class="cu-todo-title">{{ r.listing_title }}</span>
           <span class="cu-pill {% if r.status == 'accepted' %}cu-pill-agreed{% elif r.status == 'pending' %}cu-pill-draft{% endif %}">
-            {{ {"pending": "Waiting for reply", "accepted": "Accepted", "rejected": "Declined"}.get(r.status, r.status) }}
+            {{ {"pending": "Awaiting acceptance", "accepted": "Accepted", "rejected": "Declined", "withdrawn": "Withdrawn"}.get(r.status, r.status) }}
           </span>
         </span>
         {% if r.status == 'rejected' and r.reject_reason %}<span class="cu-todo-note">Reason: {{ r.reject_reason }}</span>{% endif %}
+        {% if r.status == 'pending' %}
+          <details class="cu-decline">
+            <summary class="cu-link-btn cu-small">Withdraw</summary>
+            <form method="POST" action="{{ url_for('connection_requests.withdraw', request_id=r.id) }}">
+              <button type="submit" class="cu-btn cu-btn-secondary cu-btn-sm">Withdraw request</button>
+            </form>
+          </details>
+        {% endif %}
       </div>
     {% endfor %}
   </div>

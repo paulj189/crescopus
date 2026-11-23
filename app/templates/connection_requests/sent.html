@@ -14,4 +14,12 @@
   <a class="cu-btn cu-btn-primary" href="{{ url_for('dashboard.index') }}">Go to Home</a>
   <a class="cu-btn cu-btn-secondary" href="{{ url_for('browse.index', tab='growers') if grower else url_for('browse.index') }}">Keep browsing</a>
 </div>
+
+<details class="cu-decline">
+  <summary class="cu-link-btn">Withdraw request</summary>
+  <form method="POST" action="{{ url_for('connection_requests.withdraw', request_id=req.id) }}">
+    <p class="cu-small cu-muted">They'll no longer see your request. You can send a new one later.</p>
+    <button type="submit" class="cu-btn cu-btn-secondary">Withdraw request</button>
+  </form>
+</details>
 {% endblock %}
