@@ -847,3 +847,80 @@ button.cx-tag-match{font-weight:700;border-color:currentColor;}
 button.cx-tag-added{opacity:0.55;}
 .cx-who-builder{color:#176B3B;}
 .cx-who-grower{color:var(--brass-ink);}
+
+/* ---------- Revenue agreement (rv-) ---------- */
+.rv-step[hidden],.rv-box[hidden],.rv-field[hidden],.rv-rail[hidden]{display:none;}
+.rv-form{max-width:none;margin:0;gap:0;padding:24px;}
+.rv-step{display:flex;flex-direction:column;gap:18px;}
+.rv-form:not(.rv-js) .rv-step + .rv-step{border-top:1px solid var(--line);margin-top:24px;padding-top:24px;}
+.rv-form:not(.rv-js) .rv-nav button[type=button]{display:none;}
+.rv-step h2{margin:0;}
+.rv-eyebrow{margin:0;font-family:var(--mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--sage);}
+.rv-lead{margin:0;color:var(--cu-muted);max-width:62ch;}
+.rv-hint{margin:0;font-size:14px;color:var(--cu-muted);max-width:62ch;}
+.rv-opts{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
+.rv-legend-title{font-weight:700;padding:0;margin-bottom:6px;}
+label.rv-opt{display:flex;gap:12px;align-items:flex-start;margin:0;padding:14px;border:1px solid var(--cu-card-line);border-radius:var(--cu-radius-sm);background:var(--panel);cursor:pointer;
+  font-family:var(--sans);font-size:15px;text-transform:none;letter-spacing:normal;color:var(--ink);}
+label.rv-opt:has(input:checked){border-color:var(--emerald);background:var(--cu-needs-box);}
+label.rv-opt input{width:18px;height:18px;margin:3px 0 0;flex-shrink:0;accent-color:var(--emerald);}
+label.rv-opt b{display:block;}
+label.rv-opt small{display:block;color:var(--cu-muted);font-size:14px;}
+.rv-tag{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--emerald);margin-left:8px;}
+.rv-field{display:flex;flex-direction:column;gap:6px;min-width:0;}
+.rv-field label,.rv-label,.rv-mix label{margin:0;}
+.rv-label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);}
+.rv-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.rv-row-between{justify-content:space-between;}
+.rv-row input[type=range]{flex:1;min-width:140px;padding:0;border:0;background:none;accent-color:var(--emerald);}
+input[type=range]{accent-color:var(--emerald);}
+.rv-big{font-family:var(--serif);font-size:26px;font-weight:600;min-width:3.5ch;font-variant-numeric:tabular-nums;}
+.rv-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
+.rv-box{display:flex;flex-direction:column;gap:12px;padding:14px;border-left:3px solid var(--brass);background:var(--cu-offers-box);border-radius:0 var(--cu-radius-sm) var(--cu-radius-sm) 0;}
+.rv-nav{display:flex;justify-content:space-between;gap:12px;padding-top:16px;border-top:1px solid var(--line);}
+.rv-plain{font-family:var(--serif);font-size:18px;line-height:1.6;background:var(--cu-needs-box);padding:16px 18px;border-radius:var(--cu-radius-sm);margin:0;max-width:68ch;}
+.rv-nomoney{display:flex;gap:10px;font-size:14px;padding:12px 14px;border:1px solid var(--cu-card-line);border-radius:var(--cu-radius-sm);}
+.rv-nomoney svg{flex:none;color:var(--sage);}
+
+.rv-rail{display:flex;gap:4px;list-style:none;padding:0;margin:0 0 20px;overflow-x:auto;}
+.rv-rail button{all:unset;cursor:pointer;display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:3px solid var(--line);white-space:nowrap;color:var(--cu-muted);font-weight:600;font-size:14px;}
+.rv-rail button:focus-visible{outline:2px solid var(--emerald);outline-offset:2px;}
+.rv-n{font-family:var(--mono);font-size:12px;width:22px;height:22px;display:grid;place-items:center;border-radius:50%;border:1px solid currentColor;}
+.rv-rail button[aria-current="step"]{color:var(--ink);border-bottom-color:var(--emerald);}
+.rv-rail button[aria-current="step"] .rv-n{background:var(--emerald);border-color:var(--emerald);color:#FFFFFF;}
+.rv-rail button.rv-done{color:var(--sage);}
+.rv-rail button.rv-done .rv-n{background:var(--cu-needs-box);}
+
+.rv-summary{margin:0;border:1px solid var(--cu-card-line);border-radius:var(--cu-radius-sm);background:var(--panel);overflow:hidden;}
+.rv-summary div{display:grid;grid-template-columns:minmax(120px,200px) minmax(0,1fr);gap:12px;padding:12px 16px;border-top:1px solid var(--line);}
+.rv-summary div:first-child{border-top:0;}
+.rv-summary dt{font-weight:600;color:var(--cu-muted);font-size:14px;}
+.rv-summary dd{margin:0;}
+.rv-history{margin:0;padding-left:18px;font-size:14px;color:var(--cu-muted);}
+
+/* calculator */
+.rv-calc input[type=number],.rv-calc select{padding:8px 10px;font-size:14px;}
+.rv-mix{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+.rv-mix-2{grid-template-columns:repeat(2,minmax(0,1fr));}
+.rv-mix > div{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.rv-bar{display:flex;height:30px;border-radius:6px;overflow:hidden;background:var(--line);}
+.rv-bar span{display:block;height:100%;transition:width .25s;}
+.rv-c-fees{background:#C9CDBE;fill:#C9CDBE;}
+.rv-c-refunds{background:var(--coral);fill:var(--coral);}
+.rv-c-grower{background:var(--brass);fill:var(--brass);}
+.rv-c-builder{background:var(--emerald);fill:var(--emerald);}
+.rv-legend{display:grid;gap:6px;font-size:14px;}
+.rv-legend div{display:flex;justify-content:space-between;gap:10px;font-variant-numeric:tabular-nums;}
+.rv-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px;}
+.rv-legend-sum{border-top:1px dashed var(--line);padding-top:8px;}
+.rv-split{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.rv-split div{padding:12px;border-radius:var(--cu-radius-sm);display:flex;flex-direction:column;gap:2px;min-width:0;}
+.rv-split span{font-family:var(--mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--cu-muted);overflow-wrap:anywhere;}
+.rv-split strong{font-family:var(--serif);font-size:22px;font-variant-numeric:tabular-nums;}
+.rv-split-g{background:var(--cu-offers-box);}
+.rv-split-b{background:var(--cu-needs-box);}
+.rv-warn{margin:0;font-size:13px;color:var(--brass-ink);background:var(--cu-offers-box);padding:8px 10px;border-radius:6px;}
+.rv-spark{width:100%;height:auto;display:block;}
+.rv-spark text{fill:var(--cu-muted);font:10px var(--mono);}
+.rv-axis{stroke:var(--line);}
+@media (prefers-reduced-motion: reduce){.rv-bar span{transition:none;}}

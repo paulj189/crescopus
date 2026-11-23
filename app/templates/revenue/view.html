@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Revenue sharing — {{ listing.title }} — Crescopus{% endblock %}
+{% block main_class %}app-main-wide{% endblock %}
+{% block content %}
+{% set both_agreed = builder_agreed and grower_agreed %}
+{% set t = terms %}
+
+<div class="cu-plan-head">
+  <div>
+    <p class="cu-plan-kicker">{{ listing.title }} · {{ builder.full_name }} &amp; {{ grower.full_name }}</p>
+    <h1>Revenue sharing</h1>
+    {% if agreement %}
+    <p class="cu-muted cu-small">Version {{ agreement.version }}{% if updated_by_name %} · saved by {{ updated_by_name }}, {{ agreement.updated_at | short_date }}{% endif %}</p>
+    {% endif %}
+  </div>
+  {% if active and agreement %}
+  <div class="cu-plan-head-actions">
+    <a class="cu-btn cu-btn-secondary" href="{{ url_for('revenue.edit', partnership_id=partnership.id) }}">Change terms</a>
+  </div>
+  {% endif %}
+</div>
+{% set cresco_tab = "revenue" %}{% include "partnerships/_cresco_tabs.html" %}
+
+{% if not active %}
+  <p class="cu-conflict">This partnership has ended. Its revenue terms and history are kept here, read-only.</p>
+{% endif %}
+
+<div class="cu-plan-layout">
+  <div class="cu-plan-main">
+    {% if not agreement %}
+      <div class="cu-plan-empty">
+        <h2>Agree how revenue is shared</h2>
+        <p>Decide together what {{ grower.full_name }}'s share is taken from, how much it is, when it's paid and how the agreement ends. It takes five short steps, and the calculator shows what each choice means in money.</p>
+        <p>Crescopus never holds or moves money. Revenue stays in {{ builder.full_name }}'s own store and payment accounts, and {{ builder.full_name }} pays {{ grower.full_name }} directly.</p>
+        {% if active %}<a class="cu-btn cu-btn-primary" href="{{ url_for('revenue.edit', partnership_id=partnership.id) }}">Set up revenue sharing</a>{% endif %}
+      </div>
+    {% else %}
+      <p class="rv-plain">{{ summary }}</p>
+      <dl class="rv-summary">
+        <div><dt>Shared on</dt><dd>{{ bases[t.basis][0] }}</dd></div>
+        <div><dt>{{ grower.full_name }}'s share</dt><dd>{{ t.share }}%{% if t.tiers %}, then {{ t.share2 }}% above {{ t.tier_at | money(currency) }} a month{% endif %}</dd></div>
+        <div><dt>Statements</dt><dd>{{ freqs[t.freq] }}, paid within {{ t.due_days }} days of the store payout. Minimum {{ t.min_payout | money(currency) }}, otherwise carried over.</dd></div>
+        <div><dt>Refunds</dt><dd>{{ refund_opts[t.refunds][0] | replace("under 50", "under " ~ symbol ~ "50") }}</dd></div>
+        <div><dt>Term</dt><dd>{{ t.term_months }} months, then rolling. {{ t.notice_days }} days' notice.</dd></div>
+        <div><dt>Buy-out</dt><dd>{% if t.buyout %}{{ "%g" | format(t.buy_mult) }}× {{ grower.full_name }}'s last 12 months of share{% else %}None{% endif %}</dd></div>
+        <div><dt>First refusal</dt><dd>{{ "Yes" if t.rofr else "No" }}</dd></div>
+      </dl>
+
+      {% if versions | length > 1 %}
+      <section>
+        <h2 class="cu-section-label">History</h2>
+        <ul class="rv-history">
+          {% for v in versions %}<li>Version {{ v.version }} · {{ names.get(v.created_by, "Partner") }} · {{ v.created_at | local_time }}</li>{% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <aside class="cu-plan-side">
+    {% if agreement %}
+    <section class="cu-panel" id="agree">
+      <div class="cu-panel-row">
+        <h2 class="cu-section-label">Agreement</h2>
+        {% if both_agreed %}<span class="cu-pill cu-pill-agreed">Agreed by both</span>
+        {% elif not active %}<span class="cu-pill">Closed</span>
+        {% elif i_agreed %}<span class="cu-pill cu-pill-them">Waiting for {{ other.full_name }}</span>
+        {% else %}<span class="cu-pill cu-pill-you">Waiting for you</span>{% endif %}
+      </div>
+      <ul class="cu-signoffs">
+        {% for who, ok, role in [(builder, builder_agreed, "Builder"), (grower, grower_agreed, "Grower")] %}
+        <li>
+          {% if ok %}
+            <svg class="cu-verified" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+          {% else %}
+            <svg class="cu-pending-dot" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/></svg>
+          {% endif %}
+          <span><strong>{{ who.full_name }}</strong> <span class="cu-muted">({{ role }})</span><br>
+          <span class="cu-small {% if ok %}cu-needs-ink{% else %}cu-muted{% endif %}">{{ "Agreed to version " ~ agreement.version if ok else "Not yet agreed to version " ~ agreement.version }}</span></span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% if active and not i_agreed %}
+        <form method="POST" action="{{ url_for('revenue.agree', partnership_id=partnership.id) }}" class="cu-agree-form">
+          <input type="hidden" name="version" value="{{ agreement.version }}">
+          <label class="cu-check cu-check-top">
+            <input type="checkbox" name="confirm" value="1" required>
+            <span>I've read version {{ agreement.version }} and agree to these revenue terms. They're an agreement between {{ builder.full_name }} and {{ grower.full_name }}; Crescopus isn't a party to it.</span>
+          </label>
+          <button type="submit" class="cu-btn cu-btn-primary">Agree to version {{ agreement.version }}</button>
+        </form>
+      {% elif both_agreed %}
+        <p class="cu-small cu-muted">Any change creates a new version, and you'll both agree again.</p>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    {% include "revenue/_calculator.html" %}
+  </aside>
+</div>
+{% endblock %}
