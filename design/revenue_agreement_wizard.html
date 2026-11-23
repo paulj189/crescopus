@@ -1,0 +1,415 @@
+<title>Revenue Agreement Wizard</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: app header, step rail, then two columns: the step form (left) and a sticky live calculator (right); stacks on phones. Crescopus brand tokens. */
+:root{
+  --bg:#F3F4EF; --panel:#FFFFFF; --ink:#17231A; --muted:#48533F; --line:#DBDED0;
+  --sage:#3F6238; --sage-dim:#9BB48D; --emerald:#1E8A4C; --brass:#B98A2E; --brass-ink:#8C6118;
+  --coral:#E0632E; --soft:#EEF5EC; --soft-brass:#F6EEE1; --fees:#C9CDBE;
+  --display:"Fraunces",Georgia,serif; --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121A14; --panel:#1A241C; --ink:#E8EDE3; --muted:#A9B4A2; --line:#2F3D31;
+  --sage:#9BB48D; --sage-dim:#4E6B47; --emerald:#4CC47E; --brass:#D8AE55; --brass-ink:#E2BE73;
+  --coral:#F0844F; --soft:#203024; --soft-brass:#2E2718; --fees:#3D4A3E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121A14; --panel:#1A241C; --ink:#E8EDE3; --muted:#A9B4A2; --line:#2F3D31;
+  --sage:#9BB48D; --sage-dim:#4E6B47; --emerald:#4CC47E; --brass:#D8AE55; --brass-ink:#E2BE73;
+  --coral:#F0844F; --soft:#203024; --soft-brass:#2E2718; --fees:#3D4A3E; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;font-weight:600}
+h1{font-size:1.9rem;line-height:1.15}
+h2{font-size:1.35rem}
+h3{font-size:1rem;font-family:var(--body);font-weight:700}
+p{margin:0}
+.mono{font-family:var(--mono)}
+.muted{color:var(--muted)}
+.eyebrow{font:500 .72rem var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--sage)}
+.num{font-variant-numeric:tabular-nums}
+
+.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between;margin-bottom:18px}
+.parties{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font:500 .78rem var(--mono);padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel)}
+.chip.b{border-color:var(--sage-dim)}
+.chip.g{border-color:var(--brass)}
+.mock{font:500 .7rem var(--mono);color:var(--brass-ink);background:var(--soft-brass);padding:3px 8px;border-radius:4px}
+
+.steps{display:flex;gap:4px;list-style:none;padding:0;margin:0 0 20px;overflow-x:auto}
+.steps button{all:unset;cursor:pointer;display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:3px solid var(--line);white-space:nowrap;color:var(--muted);font-weight:600;font-size:.88rem}
+.steps button:focus-visible{outline:2px solid var(--emerald);outline-offset:2px}
+.steps .n{font:500 .75rem var(--mono);width:22px;height:22px;display:grid;place-items:center;border-radius:50%;border:1px solid currentColor}
+.steps button[aria-current="step"]{color:var(--ink);border-color:var(--emerald)}
+.steps button[aria-current="step"] .n{background:var(--emerald);color:var(--panel);border-color:var(--emerald)}
+.steps button.done{color:var(--sage)}
+.steps button.done .n{background:var(--soft)}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:24px}
+.step{display:flex;flex-direction:column;gap:20px}
+.lead{max-width:62ch;color:var(--muted)}
+fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
+legend{font-weight:700;margin-bottom:8px;padding:0}
+
+.opts{display:grid;gap:10px}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:8px;cursor:pointer}
+.opt:has(input:checked){border-color:var(--emerald);background:var(--soft)}
+.opt input{margin-top:4px;accent-color:var(--emerald)}
+.opt b{display:block}
+.opt small{color:var(--muted);font-size:.86rem;display:block}
+.tag{font:500 .68rem var(--mono);color:var(--emerald);margin-left:6px;letter-spacing:.06em;text-transform:uppercase}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:600;font-size:.9rem}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+input[type=range]{flex:1;min-width:140px;accent-color:var(--emerald)}
+input[type=number],select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:100px}
+select{width:auto}
+input:focus-visible,select:focus-visible{outline:2px solid var(--emerald);outline-offset:1px}
+.big{font:600 1.6rem var(--display);min-width:3.5ch}
+.hint{font-size:.84rem;color:var(--muted);max-width:62ch}
+.toggle{display:flex;gap:10px;align-items:center;font-weight:600;cursor:pointer}
+.toggle input{accent-color:var(--emerald);width:18px;height:18px}
+.tier{padding:14px;border-left:3px solid var(--brass);background:var(--soft-brass);border-radius:0 8px 8px 0;display:flex;flex-direction:column;gap:12px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+
+.nav{display:flex;justify-content:space-between;gap:12px;padding-top:8px;border-top:1px solid var(--line)}
+.btn{font:600 .92rem var(--body);padding:10px 18px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--emerald);border-color:var(--emerald);color:#fff}
+.btn:focus-visible{outline:2px solid var(--emerald);outline-offset:2px}
+.btn[disabled]{opacity:.45;cursor:default}
+
+/* calculator */
+.calc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);display:flex;flex-direction:column;gap:16px}
+.calc .card{padding:20px;display:flex;flex-direction:column;gap:14px}
+.inputs{display:grid;gap:12px}
+.mix{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mix input{width:100%}
+.mix label{font:500 .72rem var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.bar{display:flex;height:34px;border-radius:6px;overflow:hidden;background:var(--line)}
+.bar span{display:block;height:100%;transition:width .25s}
+@media (prefers-reduced-motion:reduce){.bar span,.spark rect{transition:none}}
+.legend{display:grid;gap:6px;font-size:.88rem}
+.legend div{display:flex;justify-content:space-between;gap:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px;vertical-align:0}
+.sum{border-top:1px dashed var(--line);padding-top:10px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.split div{padding:12px;border-radius:8px}
+.split .g{background:var(--soft-brass)}
+.split .b{background:var(--soft)}
+.split strong{display:block;font:600 1.45rem var(--display)}
+.split small{font:500 .7rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.spark{width:100%;height:auto;display:block}
+.spark text{fill:var(--muted);font:10px var(--mono)}
+.note{font-size:.82rem;color:var(--muted)}
+.warn{font-size:.84rem;color:var(--brass-ink);background:var(--soft-brass);padding:8px 10px;border-radius:6px}
+
+/* review */
+.summary{display:grid;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.summary div{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr);gap:12px;padding:11px 14px;border-top:1px solid var(--line)}
+.summary div:first-child{border-top:0}
+.summary dt{font-weight:600;color:var(--muted);font-size:.88rem}
+.summary dd{margin:0}
+.plain{font-family:var(--display);font-size:1.05rem;line-height:1.6;background:var(--soft);padding:16px 18px;border-radius:8px;max-width:68ch}
+.sign{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.sig{border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:4px}
+.ok{color:var(--emerald);font-weight:700}
+.wait{color:var(--brass-ink);font-weight:700}
+.nomoney{display:flex;gap:10px;font-size:.88rem;padding:12px 14px;border:1px solid var(--line);border-radius:8px}
+.nomoney svg{flex:none;color:var(--sage)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+      <span class="eyebrow">CrescoPlan · Revenue agreement</span>
+      <h1>Agree how revenue is shared</h1>
+      <div class="parties">
+        <span class="chip b">Builder · Sam Okafor</span>
+        <span class="chip g">Grower · Priya Nair</span>
+        <span class="chip">App · Tidepool (sleep sounds)</span>
+      </div>
+    </div>
+    <span class="mock">Mock-up · example partnership</span>
+  </header>
+
+  <ol class="steps" id="steps"></ol>
+
+  <div class="grid">
+    <main class="card" id="panel" aria-live="polite"></main>
+
+    <aside class="calc" aria-label="Live calculator">
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <h2 style="font-size:1.15rem">Calculator</h2>
+          <span class="eyebrow">per month</span>
+        </div>
+        <div class="inputs">
+          <div class="field">
+            <label for="rev">What customers pay</label>
+            <div class="row"><input type="range" id="rev" min="0" max="20000" step="100" value="2400"><span class="big num" id="revOut"></span></div>
+          </div>
+          <div class="field">
+            <span style="font-weight:600;font-size:.9rem">Where they pay (%)</span>
+            <div class="mix">
+              <div class="field"><label for="ios">App Store</label><input type="number" id="ios" min="0" max="100" value="55"></div>
+              <div class="field"><label for="android">Play</label><input type="number" id="android" min="0" max="100" value="30"></div>
+              <div class="field"><label for="web">Web</label><input type="number" id="web" min="0" max="100" value="15"></div>
+            </div>
+          </div>
+          <div class="two" style="grid-template-columns:1fr 1fr;gap:10px">
+            <div class="field"><label for="storeFee">Store fee</label>
+              <select id="storeFee"><option value="15" selected>15% (small business)</option><option value="30">30% (standard)</option></select></div>
+            <div class="field"><label for="refund">Refunds %</label><input type="number" id="refund" min="0" max="50" step="0.5" value="2"></div>
+          </div>
+        </div>
+
+        <div class="bar" id="bar" role="img" aria-label="Breakdown of monthly revenue"></div>
+        <div class="legend" id="legend"></div>
+        <div class="split">
+          <div class="g"><small>Priya receives</small><strong class="num" id="gOut"></strong></div>
+          <div class="b"><small>Sam keeps</small><strong class="num" id="bOut"></strong></div>
+        </div>
+        <div id="calcWarn"></div>
+
+        <div class="field">
+          <div class="row" style="justify-content:space-between"><label for="growth">Growth per month</label><span class="mono num" id="growthOut"></span></div>
+          <input type="range" id="growth" min="0" max="20" step="1" value="8">
+        </div>
+        <svg class="spark" id="spark" viewBox="0 0 340 120" role="img" aria-label="Twelve month projection"></svg>
+        <p class="note" id="yearOut"></p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+const S = {
+  step:0,
+  basis:"net", share:25, tiers:false, tierAt:5000, share2:15, costs:300,
+  freq:"monthly", dueDays:14, minPayout:25, refunds:"next",
+  term:"12", notice:"60", buyout:true, buyMult:2, rofr:true,
+  proposed:false
+};
+const STEPS = ["What's shared","Grower's share","Payment terms","Ending & buy-out","Review & agree"];
+const $ = id => document.getElementById(id);
+const gbp = n => "£" + Math.round(n).toLocaleString("en-GB");
+const gbp2 = n => "£" + n.toLocaleString("en-GB",{minimumFractionDigits:2,maximumFractionDigits:2});
+const BASIS = {
+  gross:{t:"Gross revenue",d:"What customers pay, less refunds. Sam pays the store and payment fees out of their share."},
+  net:{t:"Net revenue",d:"What actually reaches Sam after App Store, Play and payment fees, less refunds. The usual choice.",tag:"Recommended"},
+  profit:{t:"Profit",d:"Net revenue less agreed running costs (hosting, tools, ads). Costs come from confirmed CrescoLedger entries."}
+};
+
+/* ---------- calculation ---------- */
+function calc(revenue){
+  const ios=+$("ios").value||0, and=+$("android").value||0, web=+$("web").value||0;
+  const tot=ios+and+web||1;
+  const fee=+$("storeFee").value/100, refundPct=(+$("refund").value||0)/100;
+  const storeFees=revenue*((ios+and)/tot)*fee;
+  const webFees=revenue*(web/tot)*0.029;
+  const refunds=revenue*refundPct;
+  const net=Math.max(0,revenue-storeFees-webFees-refunds);
+  let base = S.basis==="gross" ? revenue-refunds : S.basis==="net" ? net : Math.max(0,net-S.costs);
+  let grower;
+  if(S.tiers && base>S.tierAt) grower=S.tierAt*S.share/100+(base-S.tierAt)*S.share2/100;
+  else grower=base*S.share/100;
+  grower=Math.min(grower,net);
+  const costs = S.basis==="profit" ? Math.min(S.costs,net) : 0;
+  return {revenue,storeFees,webFees,refunds,net,base,grower,builder:net-grower,costs,mixTotal:ios+and+web};
+}
+
+function renderCalc(){
+  const rev=+$("rev").value; $("revOut").textContent=gbp(rev);
+  const c=calc(rev);
+  const fees=c.storeFees+c.webFees;
+  const parts=[
+    ["Store & payment fees",fees,"var(--fees)"],
+    ["Refunds",c.refunds,"var(--coral)"],
+    ["Priya's share",c.grower,"var(--brass)"],
+    ["Sam keeps",c.builder,"var(--emerald)"]
+  ];
+  const total=rev||1;
+  $("bar").innerHTML=parts.map(p=>`<span style="width:${p[1]/total*100}%;background:${p[2]}" title="${p[0]}"></span>`).join("");
+  $("legend").innerHTML=parts.map(p=>`<div><span><i style="background:${p[2]}"></i>${p[0]}</span><span class="num mono">${gbp(p[1])}</span></div>`).join("")+
+    `<div class="sum"><span>Shared on (${BASIS[S.basis].t.toLowerCase()}${S.basis==="profit"?`, after ${gbp(S.costs)} costs`:""})</span><span class="num mono">${gbp(c.base)}</span></div>`;
+  $("gOut").textContent=gbp(c.grower);
+  $("bOut").textContent=gbp(c.builder);
+  const w=[];
+  if(c.mixTotal!==100) w.push(`The platform mix adds up to ${c.mixTotal}%. It's scaled to 100% for this estimate.`);
+  if(c.grower>0 && c.grower<S.minPayout) w.push(`Under the ${gbp(S.minPayout)} minimum, so this month's share would carry over to the next statement.`);
+  $("calcWarn").innerHTML=w.map(x=>`<p class="warn">${x}</p>`).join("");
+
+  // 12-month projection
+  const g=+$("growth").value/100; $("growthOut").textContent=`${Math.round(g*100)}%`;
+  const months=[...Array(12)].map((_,i)=>calc(rev*Math.pow(1+g,i)));
+  const max=Math.max(...months.map(m=>m.grower+m.builder),1);
+  const W=340,H=120,pad=18,bw=(W-8)/12;
+  let svg=`<line x1="0" y1="${H-pad}" x2="${W}" y2="${H-pad}" stroke="var(--line)"/>`;
+  months.forEach((m,i)=>{
+    const h1=(m.builder/max)*(H-pad-14), h2=(m.grower/max)*(H-pad-14), x=4+i*bw;
+    svg+=`<rect x="${x}" y="${H-pad-h1}" width="${bw-5}" height="${h1}" fill="var(--emerald)" rx="1"/>`;
+    svg+=`<rect x="${x}" y="${H-pad-h1-h2}" width="${bw-5}" height="${h2}" fill="var(--brass)" rx="1"/>`;
+    if(i===0||i===5||i===11) svg+=`<text x="${x+(bw-5)/2}" y="${H-4}" text-anchor="middle">M${i+1}</text>`;
+  });
+  $("spark").innerHTML=svg;
+  const yg=months.reduce((a,m)=>a+m.grower,0), yb=months.reduce((a,m)=>a+m.builder,0);
+  $("yearOut").innerHTML=`First 12 months at this growth: <b>Priya ${gbp(yg)}</b>, <b>Sam ${gbp(yb)}</b>. Estimates only. Real figures come from RevenueCat.`;
+}
+
+/* ---------- steps ---------- */
+function radio(name,val,title,desc,tag){
+  return `<label class="opt"><input type="radio" name="${name}" value="${val}" ${S[name]===val?"checked":""}>
+    <span><b>${title}${tag?`<span class="tag">${tag}</span>`:""}</b>${desc?`<small>${desc}</small>`:""}</span></label>`;
+}
+
+const VIEWS = [
+  () => `
+    <div><span class="eyebrow">Step 1 of 5</span><h2>What is the grower's share taken from?</h2></div>
+    <p class="lead">This decides which number the percentage applies to each month. Apple and Google keep their fee before paying Sam, so the choice makes a real difference.</p>
+    <fieldset><legend class="sr">Share basis</legend><div class="opts">
+      ${Object.entries(BASIS).map(([k,v])=>radio("basis",k,v.t,v.d,v.tag)).join("")}
+    </div></fieldset>
+    ${S.basis==="profit"?`<div class="field"><label for="costs">Expected running costs per month</label>
+      <div class="row"><input type="number" id="costs" min="0" step="10" value="${S.costs}"><span class="hint">For the estimate only. Real costs are the ones you both confirm in CrescoLedger.</span></div></div>`:""}
+    <p class="hint">Sales tax and VAT are never shared. The stores collect and pay them before anything reaches Sam.</p>`,
+
+  () => `
+    <div><span class="eyebrow">Step 2 of 5</span><h2>How much does Priya receive?</h2></div>
+    <p class="lead">Growers on Crescopus typically agree 15–35% of net revenue. Move the slider and watch the calculator.</p>
+    <div class="field"><label for="share">Priya's share</label>
+      <div class="row"><input type="range" id="share" min="5" max="60" step="1" value="${S.share}"><span class="big num" id="shareOut">${S.share}%</span></div></div>
+    <label class="toggle"><input type="checkbox" id="tiers" ${S.tiers?"checked":""}> Use a lower rate above a monthly amount</label>
+    ${S.tiers?`<div class="tier">
+      <p class="hint" style="color:var(--ink)">Keeps the deal fair if the app takes off. Priya gets ${S.share}% up to the threshold, then a lower rate on everything above it.</p>
+      <div class="two">
+        <div class="field"><label for="tierAt">Threshold per month (£)</label><input type="number" id="tierAt" min="0" step="500" value="${S.tierAt}"></div>
+        <div class="field"><label for="share2">Rate above it (%)</label><input type="number" id="share2" min="0" max="60" value="${S.share2}"></div>
+      </div></div>`:""}`,
+
+  () => `
+    <div><span class="eyebrow">Step 3 of 5</span><h2>When and how is Priya paid?</h2></div>
+    <p class="lead">Sam pays Priya directly from their own bank or PayPal. Crescopus prepares the statement and tracks when it's paid.</p>
+    <div class="two">
+      <div class="field"><label for="freq">Statement</label><select id="freq">
+        <option value="monthly" ${S.freq==="monthly"?"selected":""}>Monthly</option>
+        <option value="quarterly" ${S.freq==="quarterly"?"selected":""}>Quarterly</option></select></div>
+      <div class="field"><label for="dueDays">Pay within (days of the store payout)</label><input type="number" id="dueDays" min="1" max="60" value="${S.dueDays}"></div>
+      <div class="field"><label for="minPayout">Minimum payment (£)</label><input type="number" id="minPayout" min="0" step="5" value="${S.minPayout}"></div>
+    </div>
+    <p class="hint">Apple and Google pay about 30–45 days after the end of each month. Statements follow the money actually received, so Sam is never asked to pay a share before it arrives.</p>
+    <fieldset><legend>Refunds after a payment</legend><div class="opts">
+      ${radio("refunds","next","Take off the next statement","The simplest option. Nobody pays anything back.","Recommended")}
+      ${radio("refunds","ignore","Ignore refunds under £50 a month","Saves fuss for small apps.")}
+    </div></fieldset>`,
+
+  () => `
+    <div><span class="eyebrow">Step 4 of 5</span><h2>How long it runs, and how it ends</h2></div>
+    <p class="lead">Sam keeps ownership of Tidepool throughout. These terms only cover Priya's share.</p>
+    <div class="two">
+      <div class="field"><label for="term">Initial term</label><select id="term">
+        ${["6","12","24"].map(v=>`<option value="${v}" ${S.term===v?"selected":""}>${v} months, then rolling</option>`).join("")}</select></div>
+      <div class="field"><label for="notice">Notice to end</label><select id="notice">
+        ${["30","60","90"].map(v=>`<option value="${v}" ${S.notice===v?"selected":""}>${v} days</option>`).join("")}</select></div>
+    </div>
+    <label class="toggle"><input type="checkbox" id="buyout" ${S.buyout?"checked":""}> Sam can buy out Priya's share</label>
+    ${S.buyout?`<div class="tier"><div class="field"><label for="buyMult">Buy-out price: Priya's last 12 months of share ×</label>
+      <div class="row"><input type="range" id="buyMult" min="1" max="4" step="0.5" value="${S.buyMult}"><span class="big num">${S.buyMult}×</span></div></div>
+      <p class="hint" style="color:var(--ink)">At the calculator's projection that's about <b>${gbp(buyoutEstimate())}</b>.</p></div>`:""}
+    <label class="toggle"><input type="checkbox" id="rofr" ${S.rofr?"checked":""}> Priya gets first refusal if Sam sells the app</label>`,
+
+  () => {
+    const c=calc(+$("rev").value);
+    return `
+    <div><span class="eyebrow">Step 5 of 5</span><h2>Check and agree</h2></div>
+    <p class="plain">${plainEnglish()}</p>
+    <dl class="summary">
+      <div><dt>Shared on</dt><dd>${BASIS[S.basis].t}</dd></div>
+      <div><dt>Priya's share</dt><dd>${S.share}%${S.tiers?`, then ${S.share2}% above ${gbp(S.tierAt)} a month`:""}</dd></div>
+      <div><dt>Statements</dt><dd>${S.freq==="monthly"?"Monthly":"Quarterly"}, paid within ${S.dueDays} days of the store payout. Minimum ${gbp(S.minPayout)}, otherwise carried over.</dd></div>
+      <div><dt>Refunds</dt><dd>${S.refunds==="next"?"Taken off the next statement":"Ignored under £50 a month"}</dd></div>
+      <div><dt>Term</dt><dd>${S.term} months, then rolling. ${S.notice} days' notice.</dd></div>
+      <div><dt>Buy-out</dt><dd>${S.buyout?`${S.buyMult}× Priya's last 12 months of share`:"None"}</dd></div>
+      <div><dt>First refusal</dt><dd>${S.rofr?"Yes":"No"}</dd></div>
+      <div><dt>Example month</dt><dd class="num">${gbp(c.revenue)} paid by customers → Priya ${gbp2(c.grower)}, Sam ${gbp2(c.builder)}</dd></div>
+    </dl>
+    <div class="nomoney">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
+      <span>Crescopus never holds or moves money. All revenue stays in Sam's store and payment accounts. Crescopus works out each statement from RevenueCat, and Sam pays Priya directly.</span>
+    </div>
+    <div class="sign">
+      <div class="sig"><span class="eyebrow">Builder</span><b>Sam Okafor</b><span class="${S.proposed?"ok":"wait"}">${S.proposed?"Agreed · version 1":"Not yet agreed"}</span></div>
+      <div class="sig"><span class="eyebrow">Grower</span><b>Priya Nair</b><span class="wait">${S.proposed?"Asked to agree":"Not yet agreed"}</span></div>
+    </div>`;
+  }
+];
+
+function buyoutEstimate(){
+  const rev=+$("rev").value, g=+$("growth").value/100;
+  let y=0; for(let i=0;i<12;i++) y+=calc(rev*Math.pow(1+g,i)).grower;
+  return y*S.buyMult;
+}
+
+function plainEnglish(){
+  const base={gross:"what customers pay (less refunds)",net:"what reaches Sam after store and payment fees and refunds",profit:"what reaches Sam after fees, refunds and agreed running costs"}[S.basis];
+  return `Priya receives ${S.share}% of ${base}${S.tiers?`, falling to ${S.share2}% on anything above ${gbp(S.tierAt)} a month`:""}. `+
+    `Crescopus prepares a ${S.freq} statement, and Sam pays Priya within ${S.dueDays} days of receiving the money from the stores. `+
+    `The agreement runs for ${S.term} months and then continues until either of them gives ${S.notice} days' notice. `+
+    (S.buyout?`Sam can end Priya's share at any time by paying ${S.buyMult}× what Priya earned in the previous 12 months. `:"")+
+    `Sam owns Tidepool throughout.`;
+}
+
+function renderSteps(){
+  $("steps").innerHTML=STEPS.map((s,i)=>`<li><button type="button" data-go="${i}" class="${i<S.step?"done":""}" ${i===S.step?'aria-current="step"':""}><span class="n">${i<S.step?"✓":i+1}</span>${s}</button></li>`).join("");
+}
+
+function render(){
+  renderSteps();
+  const last=S.step===STEPS.length-1;
+  $("panel").innerHTML=`<div class="step">${VIEWS[S.step]()}
+    <div class="nav">
+      <button class="btn" type="button" data-go="${S.step-1}" ${S.step===0?"disabled":""}>Back</button>
+      ${last?`<button class="btn primary" type="button" id="propose" ${S.proposed?"disabled":""}>${S.proposed?"Sent to Priya":"Agree and send to Priya"}</button>`
+            :`<button class="btn primary" type="button" data-go="${S.step+1}">Next: ${STEPS[S.step+1]}</button>`}
+    </div></div>`;
+  renderCalc();
+}
+
+function toast(msg){
+  const t=document.createElement("div"); t.className="toast"; t.textContent=msg; document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2600);
+}
+
+document.addEventListener("click",e=>{
+  const go=e.target.closest("[data-go]");
+  if(go && !go.disabled){S.step=+go.dataset.go; render(); window.scrollTo({top:0,behavior:"smooth"}); return;}
+  if(e.target.id==="propose"){S.proposed=true; render(); toast("Sent to Priya to agree");}
+});
+
+const STATE_INPUTS={share:"num",tierAt:"num",share2:"num",costs:"num",dueDays:"num",minPayout:"num",buyMult:"num",freq:"str",term:"str",notice:"str"};
+document.addEventListener("input",e=>{
+  const el=e.target;
+  if(el.name && el.type==="radio"){S[el.name]=el.value; render(); return;}
+  if(el.type==="checkbox" && el.id in S){S[el.id]=el.checked; render(); return;}
+  if(el.id in STATE_INPUTS){
+    S[el.id]=STATE_INPUTS[el.id]==="num"?(+el.value||0):el.value;
+    if(el.id==="share") $("shareOut").textContent=S.share+"%";
+    if(el.id==="buyMult"){render(); $("buyMult").focus(); return;}
+    renderCalc(); return;
+  }
+  if(["rev","ios","android","web","storeFee","refund","growth"].includes(el.id)){
+    renderCalc();
+    if(S.step===4||S.step===3){ const id=el.id; render(); $(id).focus(); }
+  }
+});
+
+render();
+</script>
