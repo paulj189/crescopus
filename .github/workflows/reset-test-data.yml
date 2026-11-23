@@ -1,15 +1,21 @@
-# Clears all Crescopus test data (scripts/reset_test_data.py). Run it from GitHub:
-# Actions > Reset test data > Run workflow. Needs repository secrets
-# SUPABASE_URL and SUPABASE_SECRET_KEY, and repository variable RESET_ALLOWED_REF
-# (the test project's ref): it refuses to run against any other project.
+# Backs up, then clears, all Crescopus test data (scripts/reset_test_data.py). Run it from GitHub:
+# Actions > Reset test data > Run workflow.
+# Needs repository secrets SUPABASE_URL, SUPABASE_SECRET_KEY and SUPABASE_DB_URL (Supabase >
+# Connect > Session pooler connection string, with the password filled in), and repository
+# variable RESET_ALLOWED_REF (the test project's ref): it refuses to touch any other project.
+# The backup is a download on the run's page (Artifacts), kept 30 days.
 name: Reset test data
 
 on:
   workflow_dispatch:
     inputs:
+      backup_only:
+        description: "Back up only (don't delete anything)"
+        type: boolean
+        default: false
       confirm:
-        description: "Type RESET to delete all Crescos, plans, ledgers, cards, messages and images"
-        required: true
+        description: "To delete: type RESET (deletes all Crescos, plans, ledgers, cards, messages and images)"
+        required: false
       keep_users:
         description: "Keep user accounts (and their profiles and images)"
         type: boolean
@@ -20,16 +26,57 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check confirmation
-        if: inputs.confirm != 'RESET'
+        if: ${{ !inputs.backup_only && inputs.confirm != 'RESET' }}
         run: |
-          echo "Cancelled: type RESET (in capitals) to run."
+          echo "Cancelled: type RESET (in capitals) to delete, or tick 'Back up only'."
           exit 1
+
+      - name: Check the backup is of the test project
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          RESET_ALLOWED_REF: ${{ vars.RESET_ALLOWED_REF }}
+        run: |
+          if [ -z "$RESET_ALLOWED_REF" ] || [ -z "$SUPABASE_DB_URL" ]; then
+            echo "RESET_ALLOWED_REF and SUPABASE_DB_URL must be set."; exit 1
+          fi
+          case "$SUPABASE_DB_URL" in
+            *"$RESET_ALLOWED_REF"*) echo "Backing up project $RESET_ALLOWED_REF" ;;
+            *) echo "Refusing: SUPABASE_DB_URL isn't for project $RESET_ALLOWED_REF."; exit 1 ;;
+          esac
+
+      - name: Install pg_dump 17
+        run: |
+          sudo apt-get install -y -q postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -q postgresql-client-17
+
+      - name: Back up the database
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          mkdir backup
+          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" \
+            --schema=public --schema=auth --schema=storage --no-owner --no-privileges \
+            --file="backup/crescopus-test-$(date -u +%Y%m%d-%H%M).sql"
+          ls -lh backup
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: database-backup
+          path: backup/
+          retention-days: 30
+          if-no-files-found: error
+
       - uses: actions/checkout@v4
+        if: ${{ !inputs.backup_only }}
       - uses: actions/setup-python@v5
+        if: ${{ !inputs.backup_only }}
         with:
           python-version: "3.12"
       - run: pip install "supabase>=2.32,<3" python-dotenv
+        if: ${{ !inputs.backup_only }}
       - name: Reset
+        if: ${{ !inputs.backup_only }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
