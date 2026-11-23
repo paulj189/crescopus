@@ -1,0 +1,37 @@
+# Clears all Crescopus test data (scripts/reset_test_data.py). Run it from GitHub:
+# Actions > Reset test data > Run workflow. Needs repository secrets
+# SUPABASE_URL and SUPABASE_SECRET_KEY, and repository variable RESET_ALLOWED_REF
+# (the test project's ref): it refuses to run against any other project.
+name: Reset test data
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type RESET to delete all Crescos, plans, ledgers, cards, messages and images"
+        required: true
+      keep_users:
+        description: "Keep user accounts (and their profiles and images)"
+        type: boolean
+        default: false
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check confirmation
+        if: inputs.confirm != 'RESET'
+        run: |
+          echo "Cancelled: type RESET (in capitals) to run."
+          exit 1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "supabase>=2.32,<3" python-dotenv
+      - name: Reset
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          RESET_ALLOWED_REF: ${{ vars.RESET_ALLOWED_REF }}
+        run: python scripts/reset_test_data.py --yes ${{ inputs.keep_users && '--keep-users' || '' }}
